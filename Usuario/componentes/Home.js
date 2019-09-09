@@ -23,6 +23,8 @@ export default class Home extends Component {
             showButtonsDelete:true,
             //  State to show the position to arrival 
             showPositionArrival:false,
+            // Hide or show button retweet
+            showButtonPlaces: true,
             // Position of arrivals 
             place2:"",
             place1:"",
@@ -103,7 +105,8 @@ export default class Home extends Component {
     // Hide the delete buttons
     hideDeleteButtons(){
         this.setState({
-            showButtonsDelete: false
+            showButtonsDelete: false,
+            showButtonPlaces: false
         })
     }
     
@@ -113,7 +116,7 @@ export default class Home extends Component {
         if(varplaceArrival<4){
             
 
-            if(place=="place"){
+            if(place=="place 1"){
                 
             
                 this.setState({
@@ -174,7 +177,7 @@ export default class Home extends Component {
                         }
                         }
                     />
-                   
+                    {this.state.showButtonPlaces?
                     <Icon
                         name="retweet"
                         size={30}
@@ -185,6 +188,32 @@ export default class Home extends Component {
                         }
                         }
                     />
+                    
+                    :   <View>
+
+                            <Icon
+                                name="ban"
+                                size={30}
+                                onPress={() => this.hideDeleteButtons()}
+                                style={{
+                                    paddingLeft: 250
+
+                                }
+                                }
+                            />
+                            <Button
+                            title="Ok"
+                            style={{
+                                paddingLeft:270
+                                }}
+                            >
+                            </Button>
+                                />
+
+
+                        </View>
+                        
+                    }
                  
                 </View>
                 {/* View lugares */}
@@ -226,7 +255,7 @@ export default class Home extends Component {
                                 
                                 title={this.state.place2}
                                 
-                                onPress={()=>this.setplaceArrival("place 2")}
+                                onPress={()=>this.setplaceArrival("place 3")}
                                     style={
                                         {
                                             width: 40
@@ -271,7 +300,7 @@ export default class Home extends Component {
                             }>
 
                                 <Button title={this.state.place1}
-                                    onPress={() => this.setplaceArrival("place 1")}
+                                    onPress={() => this.setplaceArrival("place 2")}
                                 ></Button>
 
                             </View>
@@ -305,7 +334,7 @@ export default class Home extends Component {
                         }>
 
                             <Button title={this.state.place}
-                                onPress={() => this.setplaceArrival("place")}
+                                onPress={() => this.setplaceArrival("place 1")}
                             ></Button>
 
                         </View>
