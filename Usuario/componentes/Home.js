@@ -104,10 +104,13 @@ export default class Home extends Component {
     }
     // Hide the delete buttons
     hideDeleteButtons(){
-        this.setState({
-            showButtonsDelete: false,
-            showButtonPlaces: false
-        })
+        if (showNewArrival==true){
+
+            this.setState({
+                showButtonsDelete: false,
+                showButtonPlaces: false
+            })
+        }
     }
     
 
@@ -145,6 +148,13 @@ export default class Home extends Component {
          
         }
 
+    }
+    
+    ViewOption(){
+        this.setState({
+
+            showViewOptions: true
+        })
     }
     
     static navigationOptions = {
@@ -189,29 +199,46 @@ export default class Home extends Component {
                         }
                     />
                     
-                    :   <View>
-
-                            <Icon
-                                name="ban"
-                                size={30}
-                                onPress={() => this.hideDeleteButtons()}
-                                style={{
-                                    paddingLeft: 250
-
-                                }
-                                }
-                            />
-                            <Button
-                            title="Ok"
+                    :   
+                        <View
                             style={{
-                                paddingLeft:270
-                                }}
-                            >
-                            </Button>
-                                />
+                                flexDirection: "row"
+                            }}>
 
+                            <View>
+
+                                <Icon
+                                    name="ban"
+                                    size={30}
+                                    onPress={() => this.hideDeleteButtons()}
+                                    style={{
+                                        paddingLeft: 210
+
+                                    }
+                                    }
+                                />
+                            </View>
+
+                            <View style={{
+                                paddingLeft: 15,
+                                marginBottom:5
+
+                            }}>
+                              
+
+                                <Button
+                                title="Ok"
+                                onPress={()=>this.ViewOption()}
+                                >
+                             
+                                </Button>
+
+                            </View>
 
                         </View>
+                         
+
+
                         
                     }
                  
@@ -480,7 +507,9 @@ export default class Home extends Component {
                                 }
                             }>Visualizar vehículos por radio</Text>
                         </View>
-                        <Icon name="chevron-right" size={20}
+                        <Icon name="chevron-right" 
+                            onPress={()=>this.props.navigation.navigate("Travel")}
+                        size={20}
                             style={
                                 {
                                     paddingLeft: 70,

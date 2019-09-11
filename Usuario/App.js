@@ -10,15 +10,20 @@ import { Divider } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 
 import HomeTravel from "./componentes/Home";
+import Travel from "./componentes/Travel";
 
 const MainStack = createStackNavigator({
 
   Home:{
     screen:HomeTravel
+  },
+
+  Travel:{
+    screen:Travel
   }
 },
   {
-    initialRouteName: "Home",
+    initialRouteName: "Travel",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"
@@ -35,7 +40,10 @@ const MainStack = createStackNavigator({
 const RootStack = createStackNavigator(
   {
     Main: {
-      screen: MainStack
+      screen: MainStack,
+      navigationOptions:{
+        header:null
+      }
     }
   }
 
