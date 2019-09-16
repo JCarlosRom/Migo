@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Chofer",
-    "slug": "Chofer",
+    "name": "usuario",
+    "slug": "Usuario",
     "privacy": "public",
     "sdkVersion": "34.0.0",
     "platforms": [

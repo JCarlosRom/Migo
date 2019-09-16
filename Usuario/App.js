@@ -11,6 +11,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 
 import HomeTravel from "./componentes/Home";
 import Travel from "./componentes/Travel";
+import Travel2 from "./componentes/Travel2";
 
 const MainStack = createStackNavigator({
 
@@ -20,10 +21,13 @@ const MainStack = createStackNavigator({
 
   Travel:{
     screen:Travel
+  },
+  Travel2:{
+    screen:Travel2
   }
 },
   {
-    initialRouteName: "Travel",
+    initialRouteName: "Travel2",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"

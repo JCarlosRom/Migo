@@ -10,6 +10,7 @@ import {
 import { createStackNavigator } from "react-navigation-stack";
 import { stringify } from "qs";
 import MapView from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import Home from "./Home";
 
 
 export default class Travel extends Component {
@@ -21,11 +22,20 @@ export default class Travel extends Component {
             luxeSelected:false,
             VanSelected:false,
             TruckSelected:false,
-            showLeftCars:false
+            showLeftCars:false,
+            showFavoritePlaces: false
 
         };
 
+    
         
+    }
+
+    functionShowFavoritePlaces(){
+        this.setState({
+            showFavoritePlaces: true
+        });
+        this.props.navigation.navigate("Home");
         
     }
 
@@ -104,6 +114,7 @@ export default class Travel extends Component {
 
 
 
+    
 
 
     render() {
@@ -119,7 +130,7 @@ export default class Travel extends Component {
                 <Icon
                     name="times-circle"
                     size={30}
-                    onPress={() => this.reinitializeComponents()}
+                    // onPress={() => this.reinitializeComponents()}
                     style={{
 
                         paddingLeft: 15,
@@ -148,8 +159,11 @@ export default class Travel extends Component {
                         style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
                         placeholder=" ¿A dónde vamos?"
                         placeholderTextColor="gray"
+                        onFocus={() => this.functionShowFavoritePlaces()}
                     ></TextInput>
-                        <Icon name="plus" onPress={() => this.showArrival()} size={30} style={{ paddingLeft: 15 }}></Icon>
+                        <Icon name="plus"
+                        //  onPress={() => this.showArrival()} 
+                         size={30} style={{ paddingLeft: 15 }}></Icon>
                     
                 </View>
 
@@ -158,10 +172,10 @@ export default class Travel extends Component {
 
                         style={styles.map}
                         region={{
-                            latitude: 37.78825,
-                            longitude: -122.4324,
-                            latitudeDelta: 0.015,
-                            longitudeDelta: 0.0121,
+                            latitude: 19.2398017,
+                            longitude: - 103.7546414,
+                            latitudeDelta: 1,
+                            longitudeDelta: 1,
                         }}
                     >
                     </MapView>

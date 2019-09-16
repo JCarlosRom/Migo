@@ -28,24 +28,19 @@ export default class Home extends Component {
             // Position of arrivals 
             place2:"",
             place1:"",
-            place:""
+            place:"",
+            showFavoritePlaces:false
      
         };
+
         showNewArrival=false;
         showNewArrival2 = false;
         varplaceArrival=1;
 
     }
-    reinitializeComponents() {
-        this.state = {
-        
-            showViewOptions: true,
-    
 
-        };
-  
-      
-    }
+
+ 
     // Function to show the buttons of position of arrivals
     showPositionArrival(){
         this.state={
@@ -463,6 +458,9 @@ export default class Home extends Component {
                         }>Elige tus lugares favoritos</Text>
                         </View>
                         <Icon name="chevron-right" size={20}
+                        onPress={()=>this.setState({
+                            showFavoritePlaces: !this.state.showFavoritePlaces
+                        })}
                         style={
                             {
                                 paddingLeft: 85,
@@ -472,6 +470,135 @@ export default class Home extends Component {
     
                     
                     </View>
+                        {/* Lista de destinos favoritos */}
+                    {this.state.showFavoritePlaces?
+                        <View>
+                            <View style={styles.area}>
+                                <Icon
+
+                                    name="map-marker-alt"
+                                    size={20}
+                                    style={
+                                        {
+                                            paddingTop: 5,
+                                            paddingLeft: 15
+                                        }
+                                    }></Icon>
+
+                                <View style={
+                                    {
+                                        flexDirection: "column"
+                                    }
+                                }>
+
+                                    <Text style={
+                                        {
+                                            fontWeight: "bold",
+                                            paddingLeft: 20,
+                                            fontSize: 10
+                                        }
+                                    }
+                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                    >Aeropuerto Internacional de Guadalajara
+                                    </Text>
+                                    <Text style={
+                                        {
+                                            fontWeight: "normal",
+                                            paddingLeft: 20,
+                                            fontSize: 10
+                                        }
+                                    }
+                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                    >Carr. Guadalajara chapala 17.5km, Jalisco, México</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.area}>
+                                <Icon
+
+                                    name="map-marker-alt"
+                                    size={20}
+                                    style={
+                                        {
+                                            paddingTop: 5,
+                                            paddingLeft: 15
+                                        }
+                                    }></Icon>
+
+                                <View style={
+                                    {
+                                        flexDirection: "column"
+                                    }
+                                }>
+
+                                <Text style={
+                                    {
+                                        fontWeight: "bold",
+                                        paddingLeft: 20,
+                                        fontSize: 10
+                                    }
+                                }
+                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                >Aeropuerto Internacional de Guadalajara
+                            </Text>
+                                <Text style={
+                                    {
+                                        fontWeight: "normal",
+                                        paddingLeft: 20,
+                                        fontSize: 10
+                                    }
+                                }
+                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                >Carr. Guadalajara chapala 17.5km, Jalisco, México</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.area}>
+                                <Icon
+
+                                    name="map-marker-alt"
+                                    size={20}
+                                    style={
+                                        {
+                                            paddingTop: 5,
+                                            paddingLeft: 15
+                                        }
+                                    }></Icon>
+
+                                <View style={
+                                    {
+                                        flexDirection: "column"
+                                    }
+                                }>
+
+                                <Text style={
+                                        {
+                                            fontWeight: "bold",
+                                            paddingLeft: 20,
+                                            fontSize: 10
+                                        }
+                                    }
+                                        onPress={() => this.props.navigation.navigate("Travel2")}
+                                    >Aeropuerto Internacional de Guadalajara
+                                </Text>
+                                    <Text style={
+                                        {
+                                            fontWeight: "normal",
+                                            paddingLeft: 20,
+                                            fontSize: 10
+                                        }
+                                    }
+                                        onPress={() => this.props.navigation.navigate("Travel2")}
+                                    >Carr. Guadalajara chapala 17.5km, Jalisco, México</Text>
+                                </View>
+                            </View>
+
+                        </View>
+                    : 
+                    null}
+                    
+                        
+                       
                     <View style={{
                         flexDirection: "row",
                         backgroundColor: "#fff", paddingLeft: 25,
