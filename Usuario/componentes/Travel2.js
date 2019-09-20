@@ -11,13 +11,18 @@ import { createStackNavigator } from "react-navigation-stack";
 import { stringify } from "qs";
 import MapView from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { ScrollView } from "react-native-gesture-handler";
+import RadioForm, { RadioButton, RadioButtonInput, RadioButtonLabel } from 'react-native-simple-radio-button';
+
+
 
 export default class Travel2 extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            showEstimations:true,
-            Home:false
+            Home:false,
+            showEstimations:false,
+            Pay:false,
+            Onway:true
 
         };
 
@@ -29,6 +34,7 @@ export default class Travel2 extends Component {
     static navigationOptions = {
         title: "Viaje"
     };
+
 
  
     render() {
@@ -71,8 +77,32 @@ export default class Travel2 extends Component {
                             </View>
                         
                         </View>
+            
+
+                        <View style={styles.area}>
+                            <Icon name="money-bill-alt" size={30} onPress={() => this.setState({
+                                showEstimations: false,
+                                Home: false,
+                                Pay: true
+                            })
+
+                            }></Icon>
+                            <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>Efectivo</Text>
+                            <Icon style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
+                                showEstimations: false,
+                                Home: false,
+                                Pay: true
+                            })}></Icon>
+                        </View>
+                        <View >
+                            <Button title="Confirmar MiGo Express Estándar"
+                                style={{ width: '100%' }}
+                                type="outline" ></Button>
+                        </View>
+                        
                 
                     </View>
+                    
                 :
                     null
                 }
@@ -134,22 +164,152 @@ export default class Travel2 extends Component {
                             ></Icon>
                         </View>
                     </View>
+                    
+
+                        <View style={styles.area}>
+                            <Icon name="money-bill-alt" size={30} onPress={() => this.setState({
+                                showEstimations: false,
+                                Home: false,
+                                Pay: true
+                            })
+
+                            }></Icon>
+                            <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>Efectivo</Text>
+                            <Icon style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
+                                showEstimations: false,
+                                Home: false,
+                                Pay: true
+                            })}></Icon>
+                        </View>
+                        <View >
+                            <Button title="Confirmar MiGo Express Estándar"
+                                style={{ width: '100%' }}
+                                type="outline" ></Button>
+                        </View>
+                        
                 
                 </View>
                 :
                     null
                 }
 
-                <View style={styles.area}>
-                    <Icon name="money-bill-alt" size={30}></Icon>
-                    <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>Efectivo</Text>
-                    <Icon style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20}></Icon>
-                </View>
-                <View >
-                    <Button title="Confirmar"
-                        style={{ width: '100%' }}
-                        type="outline" ></Button>
-                </View>
+
+                {this.state.Pay?
+                    <View>
+                        <View style={styles.area}>
+                            <Text style={{fontSize:16, fontWeight:"bold"}}> Método de pago</Text>
+                        </View>
+
+                        <View style={styles.area}>
+
+                            <Icon name="money-bill-alt" size={25} style={{paddingLeft:10}}></Icon>
+
+                            <Text style={{paddingLeft:10}}>Efectivo</Text>
+
+                            <RadioForm
+                                style={{paddingLeft:153}}
+                                radio_props={[{ label: ''}]}
+                                initial={0}
+                                buttonColor={"#000000"}
+                                animation={true}
+                                onPress={(value) => {
+                                    this.setState({
+                                        showEstimations: true,
+                                        Home: false,
+                                        Pay: false
+                                    })
+                                }}
+
+                            />
+
+                        </View>
+
+
+
+                        <View style={styles.area}>
+
+                            <Icon name="credit-card" size={25} style={{ paddingLeft: 10 }}></Icon>
+
+                            <Text style={{paddingLeft:10}}>Tarjeta de crédito / débito </Text>
+
+                            <RadioForm
+                                style={{ paddingLeft: 45 }}
+                                radio_props={[{ label: '' }]}
+                                initial={1}
+                                buttonColor={'#000000'}
+                                animation={true}
+                                onPress={(value) => {
+                                    this.setState({
+                                        showEstimations: true,
+                                        Home: false,
+                                        Pay: false }) 
+                                }}
+
+                            />
+
+
+                        </View>
+
+                    </View>
+                :
+                  null
+                }
+
+                {this.state.Onway?
+                    <View>
+                        <View styles={styles.area}>
+                            <Icon name="chevron-up"
+                            style={{alignSelf:"center", paddingTop:5}}
+                            size={30}
+                            ></Icon>
+
+                        </View>
+                        <View styles={styles.area}>
+                            <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
+                        </View>
+                        <View
+                        style={
+                            {
+                                backgroundColor:"black",
+                            }}
+                        >
+                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf:"center"}}>Verifica la matricula y los detalles del auto</Text>
+                        </View>
+
+                        <View style={styles.area}>
+                            <Icon name="user-circle" size={60}></Icon>
+                            <Icon name="car" size={45}  style={{paddingLeft:10}}></Icon>
+                            <View style={{paddingLeft:130}}>
+                                <Text>Dodge Attitude</Text>
+                                <Text style={{fontWeight:"bold", fontSize:16}}>FRS408A</Text>
+                                <Button color="red" title="Cancelar"></Button>
+
+                            </View>
+                        </View>
+                  
+                        <View style={{ alignSelf: "center" }}>
+                            <Text >Oscar Dario<Text>*4.8</Text> <Icon name="star"></Icon> <Text>* Habla inglés y español</Text></Text>
+                        </View>
+
+                        <View style={styles.area}>
+                            <Icon name="phone" size={30}></Icon>
+                            <TextInput
+                                style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
+                                placeholder=" Ingrese el punto de partida"
+                                placeholderTextColor="red"
+                            ></TextInput>
+                        </View>
+
+            
+
+
+                    </View>
+
+            
+                :
+                    null
+                }
+             
 
 
 

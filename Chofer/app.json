@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "usuario",
-    "slug": "Usuario",
+    "name": "Chofer",
+    "slug": "Chofer",
     "privacy": "public",
     "sdkVersion": "34.0.0",
     "platforms": [
@@ -24,7 +24,10 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.kiotrack.chofer"
+    },
+    "android": {
+      "package": "com.kiotrack.chofer"
     }
   }
 }
