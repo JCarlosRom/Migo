@@ -27,7 +27,7 @@ const MainStack = createStackNavigator({
   }
 },
   {
-    initialRouteName: "Travel2",
+    initialRouteName: "Home",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"

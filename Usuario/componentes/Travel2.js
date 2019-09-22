@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import {Modal, View, Text, StyleSheet, TextInput, TouchableHighlight } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableHighlight } from "react-native";
 import { Divider, CheckBox, Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import {
@@ -335,24 +335,7 @@ export default class Travel2 extends Component {
                         null
                     }
 
-                    <Modal
-                        animationType="fade"
-                        transparent={false}
-                        visible={true}
-                        >
-                        <View style={{ marginTop: 22 }}>
-                            <View>
-                                <Text>Hello World!</Text>
-
-                                <TouchableHighlight
-                                    onPress={() => {
-                                        this.setModalVisible(!this.state.modalVisible);
-                                    }}>
-                                    <Text>Hide Modal</Text>
-                                </TouchableHighlight>
-                            </View>
-                        </View>
-                    </Modal>
+              
 
                 </View>
             

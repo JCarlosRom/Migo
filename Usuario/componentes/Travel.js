@@ -9,9 +9,12 @@ import {
 } from "react-navigation"; // Version can be specified in package.json
 import { createStackNavigator } from "react-navigation-stack";
 import { stringify } from "qs";
-import MapView from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import Home from "./Home";
 
+const LATITUDE = 19.263753;
+const LONGITUDE = -103.750219;
+const SPACE = 0.01;
 
 export default class Travel extends Component {
     constructor(props) {
@@ -23,7 +26,8 @@ export default class Travel extends Component {
             VanSelected:false,
             TruckSelected:false,
             showLeftCars:false,
-            showFavoritePlaces: false
+            showFavoritePlaces: false,
+
 
         };
 
@@ -172,12 +176,19 @@ export default class Travel extends Component {
 
                         style={styles.map}
                         region={{
-                            latitude: 19.2398017,
-                            longitude: - 103.7546414,
-                            latitudeDelta: 1,
-                            longitudeDelta: 1,
+                            latitude: LATITUDE,
+                            longitude: LONGITUDE,
+                            latitudeDelta: 0.0422,
+                            longitudeDelta: 0.0421,
                         }}
                     >
+                            <Marker
+                            coordinate={{
+                                latitude: LATITUDE + SPACE,
+                                longitude: LONGITUDE + SPACE,
+                            }}
+                       
+                            ></Marker>
                     </MapView>
                 </View>
              
