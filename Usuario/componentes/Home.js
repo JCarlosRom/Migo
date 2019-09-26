@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, TextInput  } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
+import { View, Text, StyleSheet, TextInput  } from "react-native";
+import { Divider, CheckBox, Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import {
     createAppContainer,
@@ -31,13 +31,16 @@ export default class Home extends React.Component {
             place2:"",
             place1:"",
             place:"",
-            showFavoritePlaces:false
+            showFavoritePlaces:false,
+            Destinos:[]
+            
      
         };
 
         showNewArrival=false;
         showNewArrival2 = false;
         varplaceArrival=1;
+
 
         
 
@@ -160,30 +163,47 @@ export default class Home extends React.Component {
     static navigationOptions = {
         title: "Solicitar taxi"
     };
+
+    
     
     async componentDidMount() {
         //console.log(TopTemplate.props.switchValue);
         //console.log(db);
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://187.144.62.47:3001/webservice/interfaz204/MostrarDestinosFavoritos', {
+            const res = await axios.post('http://187.214.4.151:3001/webservice/interfaz204/MostrarDestinosFavoritos', {
                 id_usuario: this.state.id_usuario
             });
+            
+           var DestinosTemp ={};
+            var i=0;
+            res.data.datos.forEach(function(element){
+                
+                var jsonDestinos = { nombre: element["nombre"], direccion: element["direccion"] }
+            
+                DestinosTemp[i]=(jsonDestinos)
+                i++
+                
+            });
+            this.setState({ Destinos: DestinosTemp });
+
+
+            // console.log(this.state.Destinos);
 
             //console.log(res);
-            // handle success
-            console.log(res.data.datos);
-            console.log("ws");
-
+   
+          
         } catch (e) {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
     }
-    
+  
     
 
     render() {
+
+     
         return (
             <View style={styles.container}>
             {/* Barra de herramientas*/}
@@ -391,16 +411,19 @@ export default class Home extends React.Component {
                 </View>
                 
                 <View style={{
-                    flexDirection: "row",
+                    flexDirection:"row",
                     backgroundColor: "#fff",
                     paddingRight: 120
                 }}>
-                 
-                    <CheckBox></CheckBox>
-                    <Text style={{ marginTop: 15, marginLeft:-20 }}> Ida y vuelta</Text>
-              
-           
+                    <View style={{ paddingLeft: 200}}>
+                        <CheckBox></CheckBox>
+                    </View>
 
+                    <View style={{ paddingLeft: 20, flexDirection: "row",}}>
+
+                        <Text style={{ marginTop: 15, marginLeft:-20 }}> Ida y vuelta</Text>
+
+                    </View>
 
                 </View>
                 
@@ -415,34 +438,42 @@ export default class Home extends React.Component {
                       }>
                         <View style={
                             {
-                                width: 130
+                                width: 130,
+                                backgroundColor:"silver"
                             }
                         }>
-                            <Button color="silver" icon={
+                            <Button  icon={
                                 <Icon
                                     name="home"
                                     size={15}
                                     color="white"
                                 />
-                            } title="Añadir casa"
+                            } title=" Añadir casa"
+                            type="outline"
+                            titleStyle={{ color: "white" }}
                             ></Button>
 
                         </View>
 
                     <View style={
                         {
-                            width: 180,
-                            paddingLeft:45
+                            width: 150,
+                            marginLeft:35,
+                            backgroundColor:"silver"
                         }
                     }>
 
-                        <Button color="silver" icon={
+                        <Button  icon={
                             <Icon
                                 name="briefcase"
                                 size={15}
                                 color="white"
                             />
-                        }  title="Añadir trabajo"></Button>
+                        }  
+                        type="outline"
+                        title=" Añadir trabajo"
+                        titleStyle={{color:"white"}}
+                        ></Button>
                     </View>
 
                       </View>
@@ -494,6 +525,7 @@ export default class Home extends React.Component {
     
                     
                     </View>
+                        
                         {/* Lista de destinos favoritos */}
                     {this.state.showFavoritePlaces?
                         <View>
@@ -522,24 +554,32 @@ export default class Home extends React.Component {
                                             fontSize: 10
                                         }
                                     }
-                                    onPress={() => this.props.navigation.navigate("Travel2")}
-                                    >Aeropuerto Internacional de Guadalajara
-                                    </Text>
-                                    <Text style={
-                                        {
-                                            fontWeight: "normal",
-                                            paddingLeft: 20,
-                                            fontSize: 10
+                                        onPress={() => this.props.navigation.navigate("Travel2")}
+                                        >Little Caesars Pizza
+                                </Text>
+                                    <View style={{width:250}}>
+
+                                        <Text style={
+                                            {
+                                                fontWeight: "normal",
+                                                paddingLeft: 20,
+                                                fontSize: 10
+                                            }
                                         }
-                                    }
-                                    onPress={() => this.props.navigation.navigate("Travel2")}
-                                    >Carr. Guadalajara chapala 17.5km, Jalisco, México</Text>
+                                            onPress={() => this.props.navigation.navigate("Travel2")}
+                                            >"Av, María Ahumada de Gómez 14, La Frontera, 28975 Villa de Álvarez, Col."</Text>
+                                    </View>
                                 </View>
+                                    <Icon name="chevron-right"
+                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                    size={20}
+                                    style={
+                                        {
+                                            paddingTop: 5,
+                                            paddingLeft: 15
+                                        }
+                                    }></Icon>
                             </View>
-
-                          
-
-                         
 
                         </View>
                     : 
@@ -644,6 +684,19 @@ export default class Home extends React.Component {
 
                     </View>
 
+                }
+
+                {!this.state.showViewOptions?
+
+                    <View style={{backgroundColor:"white"}}>
+
+                        <Button title="Confirmar"
+                            style={{ width: '100%' }}
+                            type="outline" ></Button>
+
+                    </View>
+                :
+                null
                 }
                     
             

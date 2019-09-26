@@ -12,6 +12,8 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import HomeTravel from "./componentes/Home";
 import Travel from "./componentes/Travel";
 import Travel2 from "./componentes/Travel2";
+import DesgloseTarifa from "./componentes/DesgloseTarifa";
+import InfoTravel from "./componentes/InfoTravel";
 
 const MainStack = createStackNavigator({
 
@@ -24,6 +26,12 @@ const MainStack = createStackNavigator({
   },
   Travel2:{
     screen:Travel2
+  },
+  DesgloseTarifa:{
+    screen:DesgloseTarifa
+  },
+  InfoTravel:{
+    screen: InfoTravel
   }
 },
   {

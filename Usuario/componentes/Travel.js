@@ -10,16 +10,18 @@ import {
 import { createStackNavigator } from "react-navigation-stack";
 import { stringify } from "qs";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import Home from "./Home";
+import axios from 'axios';
+import MapViewDirections from 'react-native-maps-directions';
 
-const LATITUDE = 19.263753;
-const LONGITUDE = -103.750219;
-const SPACE = 0.01;
+
+
+
 
 export default class Travel extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            id_usuario:"2",
             slideDistance:0,
             standarSelected:false,
             luxeSelected:false,
@@ -27,12 +29,71 @@ export default class Travel extends Component {
             TruckSelected:false,
             showLeftCars:false,
             showFavoritePlaces: false,
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+            
+            },
+      
 
 
         };
 
     
         
+    }
+
+    //  origin = { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude };
+    //  destination = { latitude: this.state.Destino.latitude, longitude: this.state.Destino.longitude };
+    //  GOOGLE_MAPS_APIKEY = '…';
+
+    
+
+     
+
+    async componentDidMount() {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+          
+                this.setState({
+                    myPosition:{
+                    
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    
+                    },
+                    error: null,
+                });
+            },
+            (error) => this.setState({ error: error.message }),
+            { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
+        );
+
+    
+        try {
+            //console.log(this.props.switchValue);
+            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
+                id_usuario: this.state.id_usuario
+            });
+
+
+            this.setState({
+                Destino:{
+                    latitude: parseFloat(res.data.datos[0]["coordenadas"].substring(0,9)),
+                    longitude: parseFloat(res.data.datos[0]["coordenadas"].substring(10,22)),
+                }
+
+              
+            })
+            
+
+            //console.log(res);
+
+
+        } catch (e) {
+            console.log(e);
+            alert("No hay conexión al web service", "Error");
+        }
     }
 
     functionShowFavoritePlaces(){
@@ -176,19 +237,23 @@ export default class Travel extends Component {
 
                         style={styles.map}
                         region={{
-                            latitude: LATITUDE,
-                            longitude: LONGITUDE,
-                            latitudeDelta: 0.0422,
-                            longitudeDelta: 0.0421,
+                            latitude: this.state.myPosition.latitude,
+                            longitude: this.state.myPosition.longitude,
+                            latitudeDelta: 0.0105,
+                            longitudeDelta: 0.0105,
                         }}
                     >
-                            <Marker
-                            coordinate={{
-                                latitude: LATITUDE + SPACE,
-                                longitude: LONGITUDE + SPACE,
-                            }}
-                       
-                            ></Marker>
+                        <Marker
+                        coordinate={{
+                            latitude: this.state.myPosition.latitude,
+                            longitude: this.state.myPosition.longitude,
+                        }}
+                    
+                            >
+                                <Icon name="map-pin" size={20} color="orange"></Icon> 
+                            </Marker>
+                  
+                          
                     </MapView>
                 </View>
              
