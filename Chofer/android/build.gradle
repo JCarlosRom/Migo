@@ -10,6 +10,8 @@ buildscript {
     supportLibVersion = '28.0.0'
     kotlinVersion = '1.3.21'
     repositoryUrl = "file:${System.env.HOME}/.m2/repository/"
+    googlePlayServicesVersion = "11.8.0"
+    androidMapsUtilsVersion = "0.5+"
   }
   repositories {
     google()
