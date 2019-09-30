@@ -2,10 +2,8 @@ import React, { Component } from "react";
 import { Text, View, StyleSheet, FlatList, TextInput, TouchableHighlight } from "react-native";
 import { Divider, CheckBox, Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { stringify } from "qs";
-import axios from 'axios';
-
-export default class Home extends React.Component {
+import axios from "axios";
+import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 // import keys from "../../config/Keys";
 
