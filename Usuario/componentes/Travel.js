@@ -1,17 +1,11 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, TextInput, ScrollView, Slider } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
-import { createStackNavigator } from "react-navigation-stack";
-import { stringify } from "qs";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
-import MapViewDirections from 'react-native-maps-directions';
+import * as Location from "expo-location";
+import Home from "./Home";
+
 
 
 
@@ -34,6 +28,11 @@ export default class Travel extends Component {
                 longitude: 0,
             
             },
+            Vehicles:null,
+            location:null, 
+     
+            
+        
       
 
 
@@ -47,9 +46,7 @@ export default class Travel extends Component {
     //  destination = { latitude: this.state.Destino.latitude, longitude: this.state.Destino.longitude };
     //  GOOGLE_MAPS_APIKEY = '…';
 
-    
-
-     
+  
 
     async componentDidMount() {
         navigator.geolocation.getCurrentPosition(
@@ -87,24 +84,70 @@ export default class Travel extends Component {
             })
             
 
-            //console.log(res);
+
+        } catch (e) {
+            console.log(e);
+            alert("No hay conexión al web service", "Error");
+        }
+
+        try {
+            //console.log(this.props.switchValue);
+            const res = await axios.get('http://34.95.33.177:3004/get_conductores');
+
+            this.state.Vehicles = res.data
 
 
         } catch (e) {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
+
+    
+
+    
+   
+        try {
+            var location = await Location.reverseGeocodeAsync({
+                latitude: this.state.myPosition.latitude,
+                longitude: this.state.myPosition.longitude
+            });
+    
+
+            locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
+            
+            this.setState({ location:locationStr });
+           
+        } catch (e) {
+            this.setState({ errorMessage: e });
+        }
+        console.log("Error: " + this.state.errorMessage);
+        // this.props.navigation.navigate("Save", {
+        //     result: this.state.location,
+        //     error: this.state.errorMessage,
+        //     flag: true
+        // });
+
+
+        
     }
 
     functionShowFavoritePlaces(){
         this.setState({
             showFavoritePlaces: true
         });
-        this.props.navigation.navigate("Home");
+
+        this.props.navigation.navigate("Home",{
+            direction: this.state.location,
+            coordinates: this.state.myPosition,
+            flag:true
+        });
         
     }
 
     setSelectedVehicle(name){
+
+        this.getVehicles();
+
         if (name == "Car standar"){
             
 
@@ -117,7 +160,7 @@ export default class Travel extends Component {
 
             })
 
-            console.log(this.state.standarSelected);
+         
 
      
 
@@ -166,10 +209,28 @@ export default class Travel extends Component {
             }
            
         }
+
+       
     }
 
     
-         
+    
+    async getVehicles() {
+        try {
+            //console.log(this.props.switchValue);
+            const res = await axios.get('http://34.95.33.177:3004/get_conductores');
+
+            this.state.Vehicles = res.data
+
+            // console.log(this.state.vehicles);
+
+        } catch (e) {
+            console.log(e);
+            alert("No hay conexión al web service", "Error");
+        }
+
+
+    }
 
 
 
@@ -177,16 +238,61 @@ export default class Travel extends Component {
         title: "Viaje"
     };
 
+    onMapPress = async e => {
+        latitudePress=e.nativeEvent.coordinate.latitude;
+        longitudePress=e.nativeEvent.coordinate.longitude;
+        try {
+            let result = await Location.reverseGeocodeAsync({
+                latitude: e.nativeEvent.coordinate.latitude,
+                longitude: e.nativeEvent.coordinate.longitude
+            });
+            locationStr = result[0]["street"] + " #" + result[0]["name"] + " " + result[0]["city"] + " " + result[0]["region"];
 
+            this.setState({ location: locationStr });
 
+            this.setState({
+                myPosition: {
+
+                    latitude: latitudePress,
+                    longitude: longitudePress
+
+                },
+                error: null,
+            });
+        } catch (e) {
+            this.setState({ errorMessage: e });
+        }
+        console.log(this.state.result);
     
+      
+    };
 
+    _onMapReady = () => this.setState({ marginBottom: 0 })
+
+
+    // Vehicles = setInterval(async function (){
+    //     try {
+    //         //console.log(this.props.switchValue);
+    //         const res = await axios.get('http://34.95.33.177:3004/get_conductores');
+
+    //         return res.data
+           
+
+    //     } catch (e) {
+    //         console.log(e);
+    //         alert("No hay conexión al web service", "Error");
+    //     }
+    // }, 3000);
 
     render() {
+
+   
+        
         return (
             <ScrollView contentContainerStyle={styles.contentContainer}>
             
             <View style={styles.container}>
+               
                 <View style={{
                     flexDirection: "row",
                     backgroundColor: "#fff", paddingLeft: 10,
@@ -209,8 +315,9 @@ export default class Travel extends Component {
 
                 <View>
                     <TextInput
+                  
                         style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
-                        placeholder=" Plaza galerías"
+                        value={this.state.location}
                         placeholderTextColor="gray"
                     ></TextInput>
                 </View>
@@ -242,6 +349,13 @@ export default class Travel extends Component {
                             latitudeDelta: 0.0105,
                             longitudeDelta: 0.0105,
                         }}
+                        
+                        showsUserLocation={true}
+                        followsUserLocation={true}
+                        showsMyLocationButton={false}
+                   
+
+                        onLongPress={this.onMapPress.bind(this)}
                     >
                         <Marker
                         coordinate={{
@@ -252,6 +366,28 @@ export default class Travel extends Component {
                             >
                                 <Icon name="map-pin" size={20} color="orange"></Icon> 
                             </Marker>
+
+                            {
+                                this.state.Vehicles!=null?
+                                this.state.Vehicles.map(marker => (
+                            
+                                    <Marker
+                                        key={marker.id}
+                                        coordinate={{
+                                            latitude: marker.latitud,
+                                            longitude: marker.longitud
+                                        }}
+                                        // title={marker.title}
+                                        // description={marker.description}
+                                    >
+                                        <Icon name="car" size={20} color="black"></Icon> 
+
+                                    </Marker>
+                                ))
+                                :
+                                null
+
+                            }
                   
                           
                     </MapView>
@@ -369,7 +505,9 @@ export default class Travel extends Component {
 
                         <Slider
                             value={this.state.slideDistance}
+                            minimumValue={1}
                             maximumValue={10}
+                            step={4}
                             onValueChange={value => this.setState({ slideDistance:value })}
                         />
                         <Text>Distancia: {parseInt(this.state.slideDistance)}</Text>
@@ -414,7 +552,7 @@ const styles = StyleSheet.create({
     containerMap: {
         // ...StyleSheet.absoluteFillObject,
         height: 300,
-        width: 400,
+        width: '100%',
         justifyContent: 'flex-end',
         alignItems: 'center',
     },

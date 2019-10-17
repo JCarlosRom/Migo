@@ -9,10 +9,12 @@ import {
 } from "react-navigation"; // Version can be specified in package.json
 import { createStackNavigator } from "react-navigation-stack";
 import { stringify } from "qs";
-import MapView from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import BottomNavigation, {
     FullTab
 } from 'react-native-material-bottom-navigation'
+import axios from 'axios';
+import MapViewDirections from 'react-native-maps-directions';
 
 
 
@@ -22,12 +24,47 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-       
+            id_usuario: "2",
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+
+            },
+            Destino: {
+                latitude: 0,
+                longitude: 0,
+
+            },
      
         };
     
 
     }
+
+
+
+    async componentDidMount() {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+
+                this.setState({
+                    myPosition: {
+
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+
+                    },
+                    error: null,
+                });
+            },
+            (error) => this.setState({ error: error.message }),
+            { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
+        );
+
+
+   
+    }
+
 
     tabs = [
         {
@@ -118,12 +155,14 @@ export default class Home extends Component {
 
                             style={styles.map}
                             region={{
-                                latitude: 19.2398017,
-                                longitude: - 103.7546414,
-                                latitudeDelta: 1,
-                                longitudeDelta: 1,
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                                latitudeDelta: 0.0105,
+                                longitudeDelta: 0.0105,
                             }}
                         >
+
+                      
                         </MapView>
                     
                     </View>
@@ -145,6 +184,7 @@ export default class Home extends Component {
                             }
                         }> 
                             <Button title="Viaje integrado"
+                                onPress={() => this.props.navigation.navigate("Travel_Integrado")}
                             ></Button>
                         </View>
                         <View style={

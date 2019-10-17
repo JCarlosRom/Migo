@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, TextInput, Switch, ScrollView, Slider } from "react-native";
-import { Button  } from "react-native-elements";
+import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import {
     createAppContainer,
@@ -12,58 +12,50 @@ import axios from 'axios';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
-export default class TravelMP extends Component {
+export default class Travel_Integrado extends Component {
     constructor(props) {
         super(props);
         this.state = {
             id_usuario: "2",
-            puntoEncuentro:false,
-            HomeTravel:true,
-            aceptViaje:false,
-            initravel:false,
+            puntoEncuentro: false,
+            HomeTravel: true,
+            aceptViaje: false,
+            initravel: false,
             Travel: false,
-            showMapDirections:false,
+            showMapDirections: false,
             positionUser: {
                 latitude: 0,
                 longitude: 0,
 
             },
-        
+
             latitude: 19.273247,
             longitude: -103.715795,
-            parada1:{
+            parada1: {
                 latitude: 19.264983,
                 longitude: -103.713446,
             },
-            parada2:{
-                latitude: 19.269277,
-                longitude: -103.716364,
+            myPosition: {
+                latitude: 0,
+                longitude: 0
             },
-            parada3:{
-                latitude: 19.273247,
-                longitude: -103.715795,
-            },
-            myPosition:{
-                latitude:0,
-                longitude:0
-            },
-            distance:0,
-            duration:0,
-            categoriaVehiculo:1,
-            Tarifa:0
-         
-            
-            
+            distance: 0,
+            duration: 0,
+            categoriaVehiculo: 1,
+            Tarifa: 0
 
-       
+
+
+
+
 
         };
 
-        
-        
+
+
     }
 
-  
+
 
     async componentDidMount() {
         navigator.geolocation.getCurrentPosition(
@@ -110,7 +102,7 @@ export default class TravelMP extends Component {
             alert("No hay conexión al web service", "Error");
         }
 
-        
+
     }
 
     Go = () => {
@@ -133,24 +125,17 @@ export default class TravelMP extends Component {
                     value: "navigate"       // this instantly initializes navigation using the given travel mode
                 }
             ],
-            
-          
+
+
         }
 
-        if (this.state.Travel==true){
+        if (this.state.Travel == true) {
             data.waypoints = [
                 {
                     latitude: this.state.parada1.latitude,
                     longitude: this.state.parada1.longitude,
                 },
-                {
-                    latitude: this.state.parada2.latitude,
-                    longitude: this.state.parada2.longitude,
-                },
-                {
-                    latitude: this.state.parada3.latitude,
-                    longitude: this.state.parada3.longitude,
-                },
+           
 
 
             ]
@@ -163,48 +148,49 @@ export default class TravelMP extends Component {
         title: "Viaje"
     };
 
-    puntoEncuentro(){
+    puntoEncuentro() {
         this.setState({
             HomeTravel: false,
             aceptViaje: false,
-            initravel:true,
-      
+            initravel: true,
+            showMapDirections: true
+
 
         })
     }
 
-     async iniciarViaje(){
+    async iniciarViaje() {
 
-         try {
-             //console.log(this.props.switchValue);
-             const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
-                 distancia_km: this.state.distance,
-                 tiempo_min: this.state.duration
-             });
-
-
-             res.data.datos.forEach(element => {
+        try {
+            //console.log(this.props.switchValue);
+            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+                distancia_km: this.state.distance,
+                tiempo_min: this.state.duration
+            });
 
 
+            res.data.datos.forEach(element => {
 
-                 if (element["categoria_servicio"] == this.state.categoriaVehiculo) {
 
-                     this.setState({
+
+                if (element["categoria_servicio"] == this.state.categoriaVehiculo) {
+
+                    this.setState({
 
                         Tarifa: element["out_costo_viaje"],
 
 
-                     })
-                 }
-       
+                    })
+                }
 
 
-             });
 
-         } catch (e) {
-             console.log(e);
-             alert("No hay conexión al web service", "Error");
-         }
+            });
+
+        } catch (e) {
+            console.log(e);
+            alert("No hay conexión al web service", "Error");
+        }
 
         this.setState({
             HomeTravel: false,
@@ -215,10 +201,10 @@ export default class TravelMP extends Component {
         })
     }
 
-   
 
 
-  
+
+
 
     render() {
         return (
@@ -258,8 +244,8 @@ export default class TravelMP extends Component {
                         </View>
                     </View>
                     {/* Barra superior de punto de encuentro  */}
-                    {this.state.HomeTravel?
-                     
+                    {this.state.HomeTravel ?
+
                         <View >
 
                             <View style={{
@@ -294,12 +280,12 @@ export default class TravelMP extends Component {
                                 <Text style={{ marginLeft: 10 }}>Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col.</Text>
                             </View>
                         </View>
-                    :
-                       null
+                        :
+                        null
                     }
                     {/* Barra superior para aceptar el viaje  */}
 
-                    {this.state.aceptViaje || this.state.Travel?
+                    {this.state.aceptViaje || this.state.Travel ?
 
 
                         <View >
@@ -308,25 +294,25 @@ export default class TravelMP extends Component {
 
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <View  style={{width:280}}>
+                                <View style={{ width: 280 }}>
                                     <Text style={{ marginLeft: 10 }}>Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col.</Text>
-                                    <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
+                                    <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
                                     <Icon name="chevron-up" size={30} onPress={this.Go}></Icon>
-                                    <Text style={{paddingLeft:4}}>Go</Text>
+                                    <Text style={{ paddingLeft: 4 }}>Go</Text>
                                 </View>
                             </View>
                         </View>
-                    :
+                        :
                         null
                     }
-    
-                  
-    
-                        </View>
-                    <View style={styles.containerMap}>
-                        <MapView
+
+
+
+                </View>
+                <View style={styles.containerMap}>
+                    <MapView
 
                         style={styles.map}
                         region={{
@@ -340,8 +326,8 @@ export default class TravelMP extends Component {
                         zoomEnabled={true}
                         showsUserLocation={true}
 
-                        >
-           
+                    >
+
                         {/* Ubicación del usuario */}
                         <Marker
                             coordinate={{
@@ -353,7 +339,7 @@ export default class TravelMP extends Component {
                             <Icon name="map-pin" size={20} color="green"></Icon>
                         </Marker>
 
-                        {this.state.showMapDirections?
+                        {this.state.showMapDirections ?
                             <View>
                                 {/* Ubicación del destino 1 */}
                                 <Marker
@@ -366,34 +352,21 @@ export default class TravelMP extends Component {
                                     <Icon name="map-pin" size={20} color="orange"></Icon>
                                 </Marker>
                                 {/* Ubicación del destino 2 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada2.latitude,
-                                        longitude: this.state.parada2.longitude,
-                                    }}
-
-                                >
-                                    <Icon name="map-pin" size={20} color="orange"></Icon>
-                                </Marker>
-                                {/* Ubicación del destino 3 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada3.latitude,
-                                        longitude: this.state.parada3.longitude,
-                                    }}
-
-                                >
-                                    <Icon name="map-pin" size={20} color="red"></Icon>
-                                </Marker>
+                            
 
                             </View>
-                    
-                        :
+
+                            :
                             null
                         }
-                        
-                 
 
+
+                        {this.state.initravel?
+                            
+                            null
+                    
+                        :
+                        
                             <MapViewDirections
 
 
@@ -419,31 +392,33 @@ export default class TravelMP extends Component {
                                 }}
 
                             />
-                             
+                        }
 
-                            {this.state.showMapDirections ?
+
+                        {this.state.showMapDirections ?
+                           
                             <View>
 
-                                
+
                                 <MapViewDirections
 
 
                                     origin={{
-                                        latitude: this.state.myPosition.latitude,
-                                        longitude: this.state.myPosition.longitude,
-                                    }}
-
-                                    destination={{
                                         latitude: this.state.positionUser.latitude,
                                         longitude: this.state.positionUser.longitude,
                                     }}
+
+                                    destination={{
+                                        latitude: this.state.parada1.latitude,
+                                        longitude: this.state.parada1.longitude,
+                                    }}
                                     apikey={GOOGLE_MAPS_APIKEY}
                                     strokeWidth={1}
-                                    strokeColor="red"
+                                    strokeColor="orange"
                                     onReady={result => {
                                         this.setState({
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
+                                            distance: this.state.distance + parseInt(result.distance),
+                                            duration: this.state.duration + parseInt(result.duration)
 
                                         })
 
@@ -451,186 +426,105 @@ export default class TravelMP extends Component {
                                     }}
 
                                 />
-                        
-                            <MapViewDirections
 
-
-                                origin={{
-                                    latitude: this.state.positionUser.latitude,
-                                    longitude: this.state.positionUser.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada1.latitude,
-                                    longitude: this.state.parada1.longitude,
-                                }}
-                                apikey={GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="orange"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: this.state.distance+parseInt(result.distance),
-                                        duration: this.state.duration+parseInt(result.duration)
-
-                                    })
-
-
-                                }}
-
-                            />
-
-                            <MapViewDirections
-
-
-                                origin={{
-                                    latitude: this.state.parada1.latitude,
-                                    longitude: this.state.parada1.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada2.latitude,
-                                    longitude: this.state.parada2.longitude,
-                                }}
-                                apikey={GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="green"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: this.state.distance + parseInt(result.distance),
-                                        duration: this.state.duration + parseInt(result.duration)
-
-                                    })
-
-
-                                }}
-
-                            />
-
-
-                            <MapViewDirections
-
-
-                                origin={{
-                                    latitude: this.state.parada2.latitude,
-                                    longitude: this.state.parada2.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada3.latitude,
-                                    longitude: this.state.parada3.longitude,
-                                }}
-                                apikey={GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="blue"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: this.state.distance + parseInt(result.distance),
-                                        duration: this.state.duration + parseInt(result.duration)
-
-                                    })
-
-
-                                }}
-
-                            />
-                        </View>
+                            </View>
 
                             :
-                            
-                        null
+
+                            null
                         }
-                      
-                     
+
+
 
                     </MapView>
-                    </View>
-                    {/* Barra inferior de punto de encuentro */}
-                    {this.state.aceptViaje?
-                        <View>
+                </View>
+                {/* Barra inferior de punto de encuentro */}
+                {this.state.aceptViaje ?
+                    <View>
 
-                            <View style={styles.area}>
+                        <View style={styles.area}>
 
-                            <Text style={{marginLeft:5}}> Contacta al usuario si llegas después de las 21:11</Text>
+                            <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las 21:11</Text>
 
 
-                            </View>
-                            <View style={styles.area}>
-                              
-                                <Icon style={
-                                    {
-                                        paddingLeft: 10
-                                    }
-                                } name="user" size={20}></Icon>
-                              
-                          
-                                    <Text style={
-                                        {
-                                            paddingLeft: 10,
-                                            paddingTop:5
-                                        }
-                                    }>Leonel Guardado</Text>
+                        </View>
+                        <View style={styles.area}>
 
-                                <Icon name="times"
-                                style={{ paddingLeft:10}}
+                            <Icon style={
+                                {
+                                    paddingLeft: 10
+                                }
+                            } name="user" size={20}></Icon>
+
+
+                            <Text style={
+                                {
+                                    paddingLeft: 10,
+                                    paddingTop: 5
+                                }
+                            }>Leonel Guardado</Text>
+
+                            <Icon name="times"
+                                style={{ paddingLeft: 10 }}
                                 color="red"
                                 size={25}
-                                ></Icon>  
-                                
-                                <Icon name="angle-double-right"
-                                style={{paddingLeft:10}}
+                            ></Icon>
+
+                            <Icon name="angle-double-right"
+                                style={{ paddingLeft: 10 }}
                                 color="red"
                                 size={25}></Icon>
-                               
-                                <Icon name="comment-dots"
-                                    style={{ paddingLeft: 40 }}
-                                    size={25}></Icon>
-                             
 
-                                <Icon name="phone"
-                                    style={{ paddingLeft: 15 }}
-                                    size={25}></Icon>
-
-                            </View>
-                            <View style={styles.area}>
-                                
-                                <View style={{paddingLeft:120}}>
-                                    <Text style={{ paddingLeft: 20 }}>1234567890</Text>
-                                    <Text>soporte@migo.com</Text>
-                                </View>
-
-                            </View>
-                            <View>
-
-                            </View>
-                            <View style={styles.area}>
-
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10 }}></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 50
-                                    }
-                                }>
-                                    <Button
-
-                                        title="En el punto de encuentro"
-                                        type="clear"
-                                        onPress={() => {
-                                            this.puntoEncuentro()
-                                        }}
-                                    />
-                           
-                                </View>
+                            <Icon name="comment-dots"
+                                style={{ paddingLeft: 40 }}
+                                size={25}></Icon>
 
 
+                            <Icon name="phone"
+                                style={{ paddingLeft: 15 }}
+                                size={25}></Icon>
+
+                        </View>
+                        <View style={styles.area}>
+
+                            <View style={{ paddingLeft: 120 }}>
+                                <Text style={{ paddingLeft: 20 }}>1234567890</Text>
+                                <Text>soporte@migo.com</Text>
                             </View>
 
                         </View>
+                        <View>
+
+                        </View>
+                        <View style={styles.area}>
+
+                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10 }}></Icon>
+                            <View style={
+                                {
+                                    paddingLeft: 50
+                                }
+                            }>
+                                <Button
+
+                                    title="En el punto de encuentro"
+                                    type="clear"
+                                    onPress={() => {
+                                        this.puntoEncuentro()
+                                    }}
+                                />
+
+                            </View>
+
+
+                        </View>
+
+                    </View>
                     :
-                        null
-                    
-                    }
-                    {/* Barra inferior para aceptar el viaje  */}
-                    {this.state.HomeTravel?
+                    null
+
+                }
+                {/* Barra inferior para aceptar el viaje  */}
+                {this.state.HomeTravel ?
                     <View style={styles.area}>
 
                         <Icon name="angle-double-right" size={30} style={{ paddingLeft: 10 }}></Icon>
@@ -647,7 +541,7 @@ export default class TravelMP extends Component {
                                     this.setState({
                                         HomeTravel: false,
                                         aceptViaje: true,
-                                        showMapDirections:true
+                                        showMapDirections: true
 
                                     });
                                 }}
@@ -662,8 +556,8 @@ export default class TravelMP extends Component {
 
                     </View>
                     :
-                        null
-                    }
+                    null
+                }
                 {/* Barra inferior de inicio de viaje */}
                 {this.state.initravel ?
                     <View>
@@ -724,7 +618,7 @@ export default class TravelMP extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop:10 }}></Icon>
+                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 10 }}></Icon>
                             <View style={
                                 {
                                     paddingLeft: 110
@@ -749,7 +643,7 @@ export default class TravelMP extends Component {
                     null
 
                 }
-                {this.state.Travel?
+                {this.state.Travel ?
                     <View>
 
                         <View style={styles.area}>
@@ -822,7 +716,7 @@ export default class TravelMP extends Component {
                                         this.terminarViaje()
                                     }}
                                 />
-                                <Text style={{paddingLeft:25}}>${this.state.Tarifa} MXN</Text>
+                                <Text style={{ paddingLeft: 25 }}>${this.state.Tarifa} MXN</Text>
 
                             </View>
 
@@ -830,12 +724,12 @@ export default class TravelMP extends Component {
                         </View>
 
                     </View>
-                :
-                null
+                    :
+                    null
                 }
-                  
 
-           
+
+
             </ScrollView>
         );
     }
@@ -882,7 +776,7 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
         backgroundColor: "#fff",
         paddingTop: 15,
-        borderColor:"black"
+        borderColor: "black"
     },
     text: {
         paddingLeft: 15,
@@ -905,5 +799,5 @@ const styles = StyleSheet.create({
     },
 
 
- 
+
 });

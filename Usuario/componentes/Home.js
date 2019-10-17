@@ -5,9 +5,12 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
+import { NavigationEvents } from 'react-navigation';
 // import keys from "../../config/Keys";
 
 export default class Home extends Component {
+
+
     constructor(props) {
         super(props);
         this.state = {
@@ -24,12 +27,11 @@ export default class Home extends Component {
             // Hide or show button retweet
             showButtonPlaces: true,
             // Position of arrivals 
+            place3: "",
             place2: "",
             place1: "",
-            place: "",
             showFavoritePlaces: false,
-            Destinos: [],
-            destination: "",
+            Destinos: null,
             destination2:"",
             destination3:"",
             destination4:"",
@@ -42,7 +44,23 @@ export default class Home extends Component {
             showListdestination2:false,
             showListdestination3:false,
             showListdestination4:false,
-            flagDestino:""
+            flagDestino:"",
+            direccion:null,
+            coordinatesPuntoPartida:null,
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+                address:"",
+                addressInput:"",
+
+            },
+            travelInfo:{
+                puntoPartida:null,
+                Parada1:null,
+                Parada2:null,
+                Parada3:null
+            }
+
 
 
         };
@@ -62,28 +80,7 @@ export default class Home extends Component {
             showPositionArrival: false
         };
     }
-    // Function to shows a new stop in a view
-    showArrival() {
 
-        if (showNewArrival == false) {
-
-            this.setState({
-                showNewArrival: true,
-                showViewOptions: false
-            })
-            showNewArrival = true;
-        } else {
-            if (showNewArrival == true) {
-                if (showNewArrival2 == false) {
-
-                    this.setState({
-                        showNewArrival2: true
-                    })
-                    showNewArrival2 = true;
-                }
-            }
-        }
-    }
     // Function to hide the field of stops
     hideArrival() {
 
@@ -116,11 +113,12 @@ export default class Home extends Component {
     }
     // Hide the delete buttons
     hideDeleteButtons() {
+     
         if (showNewArrival == true) {
 
             this.setState({
                 showButtonsDelete: false,
-                showButtonPlaces: false
+                showButtonPlaces: true
             })
         }
     }
@@ -128,31 +126,36 @@ export default class Home extends Component {
 
     setplaceArrival(place) {
 
+
         if (varplaceArrival < 4) {
 
 
-            if (place == "place 1") {
+            if (place == "Place 1") {
 
 
                 this.setState({
-                    place: varplaceArrival.toString()
+                    place1: varplaceArrival.toString()
                 })
                 varplaceArrival++;
 
+                console.log(this.state.place1)
+
             } else {
-                if (place == "place 2") {
+                if (place == "Place 2") {
 
                     this.setState({
-                        place1: varplaceArrival.toString()
+                        place2: varplaceArrival.toString()
                     })
                     varplaceArrival++;
+                    console.log(this.state.place2)
 
                 } else {
-                    if (place == "place 3") {
+                    if (place == "Place 3") {
                         this.setState({
-                            place2: varplaceArrival.toString()
+                            place3: varplaceArrival.toString()
                         })
                         varplaceArrival++;
+                        console.log(this.state.place3)
 
                     }
                 }
@@ -173,32 +176,23 @@ export default class Home extends Component {
         title: "Solicitar taxi"
     };
 
+  
 
 
     async componentDidMount() {
+     
 
-        //console.log(TopTemplate.props.switchValue);
-        //console.log(db);
+        // Método para consultar destinos
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://187.214.4.151:3001/webservice/interfaz204/MostrarDestinosFavoritos', {
+            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
                 id_usuario: this.state.id_usuario
             });
 
-            var DestinosTemp = {};
-            var i = 0;
-            res.data.datos.forEach(function (element) {
+            this.state.Destinos = res.data.datos
+         
 
-                var jsonDestinos = { nombre: element["nombre"], direccion: element["direccion"] }
-
-                DestinosTemp[i] = (jsonDestinos)
-                i++
-
-            });
-            this.setState({ Destinos: DestinosTemp });
-
-
-            // console.log(this.state.Destinos);
+        
 
             //console.log(res);
 
@@ -209,21 +203,47 @@ export default class Home extends Component {
         }
 
         const location = await Location.getCurrentPositionAsync({});
-        const latitude = location.coords.latitude;
-        const longitude = location.coords.longitude;
-        if (!this.props.navigation.getParam("flag")) {
-            this.setState({
-                hit:
-                    "Ingresa la dirección de tu " +
-                    this.props.navigation.getParam("type"),
-                type: this.props.navigation.getParam("type"),
-                latitude,
-                longitude
+        latitude = location.coords.latitude;
+        longitude = location.coords.longitude;
+
+  
+        this.setState({
+            myPosition: {
+
+                latitude:latitude,
+                longitude:longitude
+
+            }
+        });
+
+        try {
+            var locationAddress = await Location.reverseGeocodeAsync({
+                latitude: this.state.myPosition.latitude,
+                longitude: this.state.myPosition.longitude
             });
-        } else {
-            this.setState({ hit: "Ingresa una dirección" });
+
+
+            locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["name"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
+
+
+            this.setState({
+                myPosition:{
+                    address:locationAddress,
+                    addressInput:locationStr,
+                    latitude: this.state.myPosition.latitude,
+                    longitude: this.state.myPosition.longitude
+                }
+            })
+
+        } catch (e) {
+            this.setState({ errorMessage: e });
         }
+        console.log("Error: " + this.state.errorMessage);
+         
+    
     }
+
+
 
     autocompleteGoogle = async destination => {
         this.setState({ destination:destination
@@ -236,7 +256,7 @@ export default class Home extends Component {
             showListdestination4:false,
             flagDestino:"1"
         })
-        console.log(this.state.destination);
+
         const apiUrl =
             "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=" +
             'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY' +
@@ -253,6 +273,9 @@ export default class Home extends Component {
             this.setState({
                 predictions: json.predictions
             });
+
+          
+ 
         } catch (error) {
             console.error(error);
         }
@@ -286,7 +309,6 @@ export default class Home extends Component {
             this.setState({
                 predictions: json.predictions
             });
-            console.log(this.state.predictions);
         } catch (error) {
             console.error(error);
         }
@@ -305,7 +327,7 @@ export default class Home extends Component {
             showListdestination4: false,
             flagDestino: "3"
         })
-        console.log(this.state.destination3);
+       
         const apiUrl =
             "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=" +
             'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY' +
@@ -338,7 +360,7 @@ export default class Home extends Component {
             showListdestination4: true,
             flagDestino: "4"
         })
-        console.log(this.state.destination4);
+
         const apiUrl =
             "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=" +
             'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY' +
@@ -364,9 +386,11 @@ export default class Home extends Component {
 
 
     Item = ({ item }) => {
-        console.log(item);
+     
+
         return (
             <View>
+                <NavigationEvents onDidFocus={() => console.log('I am triggered')} />
                 <TouchableHighlight
                
                     onPress={() => this.setDirectionInput(item.description)}
@@ -432,7 +456,94 @@ export default class Home extends Component {
 
   
 
+    showArrival = (e) => {
+
+       
+
+        if (showNewArrival == false) {
+
+            this.setState({
+                showNewArrival: true,
+                showViewOptions: false
+            })
+            showNewArrival = true;
+
+            setTimeout(() => {
+                this.parada1Focus.focus();
+
+            }, 500);
+
+        } else {
+            if (showNewArrival == true) {
+                if (showNewArrival2 == false) {
+
+                    this.setState({
+                        showNewArrival2: true
+                    })
+                    showNewArrival2 = true;
+                    setTimeout(() => {
+                        this.parada2Focus.focus();
+
+                    }, 500);
+                }
+            }
+        };
+       
+    }
+
+    clear = () => {
+        this.setState({ 
+            myPosition:{
+                addressInput:""
+            } 
+    });
+    };
+
+ 
+    Travel = () =>{
+
+        if(this.state.showNewArrival==false){
+
+            this.state.travelInfo.puntoPartida = this.state.myPosition;
+            this.state.travelInfo.Parada1 = this.state.destination4;
+
+            this.props.navigation.navigate("Travel2", {
+                travelInfo: this.state.travelInfo,
+                flag: true,
+                type: "Unico"
+            });
+
+            
+
+        }else{
+
+            
+            this.state.travelInfo.puntoPartida=this.state.myPosition;
+            this.state.travelInfo.Parada1 = this.state.destination2;
+            this.state.travelInfo.Parada2 = this.state.destination3;
+            this.state.travelInfo.Parada3 = this.state.destination4;
+    
+            var Paradas={
+                Parada1:this.state.place1,
+                Parada2: this.state.place2,
+                Parada3: this.state.place3
+            }
+          
+    
+    
+            this.props.navigation.navigate("Travel2", {
+                travelInfo: this.state.travelInfo,
+                Paradas:Paradas,
+                flag: true,
+                type:"Multiple"
+            });
+        }
+        
+    }
+    
+
     render() {
+
         return (
             <ScrollView style={styles.container}>
                 {/* Barra de herramientas*/}
@@ -519,16 +630,39 @@ export default class Home extends Component {
 
                     <View style={{ flexDirection: "row" }}>
 
+                    {this.state.addressInput!=""?
+                    
                         <Input
-
-                            placeholder={this.state.hit}
-                            value={this.state.destination}
+                        
+                            value={this.state.myPosition.addressInput}
                             placeholder="Ingrese el punto de partida"
 
-                        
-
-                            onChangeText={destination => this.autocompleteGoogle(destination)}
+                            rightIcon={
+                                <Icon
+                                    name="undo-alt"
+                                    onPress={this.clear}
+                                    size={24}
+                                    color="black"
+                                />
+                            }
                         />
+                
+                    :   
+                            <Input
+
+                                placeholder="Ingrese el punto de partida"
+                                rightIcon={
+                                    <Icon
+                                        name="undo-alt"
+                                        onPress={this.clear}
+                                        size={24}
+                                        color="black"
+                                    />
+                                }
+                            />
+                    
+                    }
+                  
 
                    
 
@@ -561,27 +695,42 @@ export default class Home extends Component {
                     }}>
 
                         <View style={{ flexDirection: "row" }}>
-
-                            <Input
-
-                                placeholder={this.state.hit}
-                                value={this.state.destination2}
-                                placeholder="Agregar parada"
-
-                                rightIcon={
-                                    this.state.showButtonsDelete ?
-                                        <Icon name="times-circle" 
-                                        onPress={() => this.hideArrival()} 
-                                        size={30} style={{ paddingLeft: 15 }}></Icon>
-                                    :
+                            <View style={!this.state.showButtonsDelete?{width:300}:{width:330}}>
+                                <Input
                                     
-                                    null
+                                    ref={input => this.parada1Focus = input}
+                                    placeholder={this.state.hit}
+                                    value={this.state.destination2}
+                                    placeholder="Agregar parada"
 
-                                }
-                            
+                                    rightIcon={
+                                        this.state.showButtonsDelete ?
+                                            <Icon name="times-circle" 
+                                            onPress={() => this.hideArrival()} 
+                                            size={30} style={{ paddingLeft: 15 }}></Icon>
+                                        :
+                                        
+                                        null
 
-                                onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
-                            />
+                                    }
+                                
+
+                                    onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
+                                />
+
+                            </View>
+
+
+                            {!this.state.showButtonsDelete ?
+
+                                <Button title={this.state.place1}
+                                onPress={()=>this.setplaceArrival("Place 1")}
+                                ></Button>
+
+                                :
+                                null
+                            }
+
 
 
 
@@ -613,8 +762,10 @@ export default class Home extends Component {
 
                         <View style={{ flexDirection: "row" }}>
 
-                            <Input
+                            <View style={!this.state.showButtonsDelete ? { width: 300 } : { width: 330 }}>
 
+                            <Input
+                                ref={input => this.parada2Focus = input}
                                 placeholder={this.state.hit}
                                 value={this.state.destination3}
                                 placeholder="Agregar parada"
@@ -635,6 +786,20 @@ export default class Home extends Component {
 
                                 onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
                             />
+
+                            </View>
+
+
+
+                            {!this.state.showButtonsDelete ?
+
+                                <Button title={this.state.place2}
+                                onPress={() => this.setplaceArrival("Place 2")}
+                                ></Button>
+
+                                :
+                                null
+                            }
 
 
 
@@ -662,27 +827,47 @@ export default class Home extends Component {
                 }}>
 
                     <View style={{flexDirection:"row"}}>
+                        <View style={!this.state.showButtonsDelete ? { width: 300} : { width: 330 }}>
 
-                        <Input
-                          
-                            placeholder={this.state.hit}
-                            value={this.state.destination4}
-                            placeholder="¿A dónde vamos?"
-                        
-                            rightIcon={
-                                this.state.showButtonsDelete?
+                            <Input
+                                ref={this.stop2}
+                                placeholder={this.state.hit}
+                                value={this.state.destination4}
+                                placeholder="¿A dónde vamos?"
+                            
+                                rightIcon={
+                                    this.state.showButtonsDelete?
+                                    
+                                        <Icon name="plus"
+                                        onPress={this.showArrival}
+                                        size={30} 
+                                        style={{ paddingLeft: 15 }}></Icon>
+                                    :
+                                        null
+
+                                }
+
+                                onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
+                            />
+
+                        </View>
+
+
+
+                        {!this.state.showButtonsDelete ?
+                            
+                            <View style={{ width: 25 }}>
                                 
-                                    <Icon name="plus"
-                                    onPress={() => this.showArrival()} 
-                                    size={30} 
-                                    style={{ paddingLeft: 15 }}></Icon>
-                                :
-                                    null
+                                <Button 
+                                title={this.state.place3}
+                                onPress={() => this.setplaceArrival("Place 3")}
+                                ></Button>
 
-                            }
+                            </View>
 
-                            onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
-                        />
+                            :
+                            null
+                        }
 {/* 
                         {this.state.showButtonsDelete ?
                             <Icon name="plus" onPress={() => this.showArrival()} size={30} style={{ paddingLeft: 15 }}></Icon>
@@ -839,62 +1024,77 @@ export default class Home extends Component {
 
                         {/* Lista de destinos favoritos */}
                         {this.state.showFavoritePlaces ?
-                            <View>
-                                <View style={styles.area}>
-                                    <Icon
 
-                                        name="map-marker-alt"
-                                        size={20}
-                                        style={
-                                            {
-                                                paddingTop: 5,
-                                                paddingLeft: 15
-                                            }
-                                        }></Icon>
+                            this.state.Destinos!=null?
 
-                                    <View style={
-                                        {
-                                            flexDirection: "column"
-                                        }
-                                    }>
+                         
+                                this.state.Destinos.map(Destino => (
 
-                                        <Text style={
-                                            {
-                                                fontWeight: "bold",
-                                                paddingLeft: 20,
-                                                fontSize: 10
-                                            }
-                                        }
-                                            onPress={() => this.props.navigation.navigate("Travel2")}
-                                        >Little Caesars Pizza
-                                </Text>
-                                        <View style={{ width: 250 }}>
+                                    <View key={Destino.coordenadas}>
+                                        <View style={{
+                                            flexDirection: "row",
+                                            paddingTop: 5,
+                                            paddingBottom: 5,
+                                            paddingLeft: 20,
+                                            backgroundColor: "#fff"}}>
+                                            <Icon
 
-                                            <Text style={
+                                                name="map-marker-alt"
+                                                size={20}
+                                                style={
+                                                    {
+                                                        paddingTop: 5,
+                                                        paddingLeft: 15
+                                                    }
+                                                }></Icon>
+
+                                            <View style={
                                                 {
-                                                    fontWeight: "normal",
-                                                    paddingLeft: 20,
-                                                    fontSize: 10
+                                                    flexDirection: "column"
                                                 }
-                                            }
-                                                onPress={() => this.props.navigation.navigate("Travel2")}
-                                            >"Av, María Ahumada de Gómez 14, La Frontera, 28975 Villa de Álvarez, Col."</Text>
-                                        </View>
-                                    </View>
-                                    <Icon name="chevron-right"
-                                        onPress={() => this.props.navigation.navigate("Travel2")}
-                                        size={20}
-                                        style={
-                                            {
-                                                paddingTop: 5,
-                                                paddingLeft: 15
-                                            }
-                                        }></Icon>
-                                </View>
+                                            }>
 
-                            </View>
+                                                <Text style={
+                                                    {
+                                                        fontWeight: "bold",
+                                                        paddingLeft: 20,
+                                                        fontSize: 10
+                                                    }
+                                                }
+                                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                                >{Destino.nombre}
+                                        </Text>
+                                                <View style={{ width: 250 }}>
+
+                                                    <Text style={
+                                                        {
+                                                            fontWeight: "normal",
+                                                            paddingLeft: 20,
+                                                            fontSize: 10
+                                                        }
+                                                    }
+                                                        onPress={() => this.props.navigation.navigate("Travel2")}
+                                                    >{Destino.direccion}</Text>
+                                                </View>
+                                            </View>
+                                            <Icon name="chevron-right"
+                                                onPress={() => this.props.navigation.navigate("Travel2")}
+                                                size={20}
+                                                style={
+                                                    {
+                                                        paddingTop: 5,
+                                                        paddingLeft: 15
+                                                    }
+                                                }></Icon>
+                                        </View>
+
+                                    </View>
+
+                                ))
+                            : 
+                                null
                             :
-                            null}
+                                null}
 
 
 
@@ -997,18 +1197,18 @@ export default class Home extends Component {
 
                 }
 
-                {!this.state.showViewOptions ?
+           
 
-                    <View style={{ backgroundColor: "white" }}>
+                    <View style={{ backgroundColor: "white", position:"relative", marginTop:120 }}>
 
                         <Button title="Confirmar"
                             style={{ width: '100%' }}
-                            type="outline" ></Button>
+                            type="outline" 
+                        onPress={()=>this.Travel()}
+                            ></Button>
 
                     </View>
-                    :
-                    null
-                }
+                 
 
 
                 <Divider style={styles.block} />
@@ -1017,26 +1217,10 @@ export default class Home extends Component {
 
 
        
-           
-
-                {/* <View style={[styles.area, { paddingBottom: 10 }]}>
-                    <Icon
-                        onPress={() => this.props.navigation.navigate("Map")}
-                        name="map-pin"
-                        style={styles.iconLeft}
-                        size={30}
-                    />
-                    <View style={{ justifyContent: "center" }}>
-                        <Text
-                            onPress={() => this.props.navigation.navigate("Map")}
-                            style={styles.text}
-                        >
-                            Fijar ubicación en el mapa
-            </Text>
-                    </View>
-                </View> */}
+     
             </ScrollView>
         );
+
     }
 }
 

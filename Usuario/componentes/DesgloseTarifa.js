@@ -1,20 +1,8 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableHighlight } from "react-native";
-import { Divider, CheckBox, Button } from "react-native-elements";
-import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
 import { createStackNavigator } from "react-navigation-stack";
-import { stringify } from "qs";
-import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { ScrollView } from "react-native-gesture-handler";
-import RadioForm, { RadioButton, RadioButtonInput, RadioButtonLabel } from 'react-native-simple-radio-button';
-import MapViewDirections from 'react-native-maps-directions';
 import axios from 'axios';
-
 
 
 export default class DesgloseTarifa extends Component {

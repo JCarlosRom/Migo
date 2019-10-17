@@ -14,6 +14,8 @@ import Travel from "./componentes/Travel";
 import Travel2 from "./componentes/Travel2";
 import DesgloseTarifa from "./componentes/DesgloseTarifa";
 import InfoTravel from "./componentes/InfoTravel";
+import Chat from "./componentes/Chat.js";
+
 
 const MainStack = createStackNavigator({
 
@@ -32,7 +34,11 @@ const MainStack = createStackNavigator({
   },
   InfoTravel:{
     screen: InfoTravel
-  }
+  },
+  Chat: {
+    screen: Chat
+  },
+ 
 },
   {
     initialRouteName: "Home",

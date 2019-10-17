@@ -11,6 +11,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 
 import HomeTravel from "./componentes/Home";
 import TravelMP from "./componentes/TravelMP";
+import Travel_Integrado from "./componentes/Travel_Integrado";
 
 const MainStack = createStackNavigator({
 
@@ -20,6 +21,9 @@ const MainStack = createStackNavigator({
 
   TravelMP:{
     screen:TravelMP
+  },
+  Travel_Integrado:{
+    screen:Travel_Integrado
   }
 },
   {
