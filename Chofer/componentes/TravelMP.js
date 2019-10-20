@@ -50,7 +50,10 @@ export default class TravelMP extends Component {
             distance:0,
             duration:0,
             categoriaVehiculo:1,
-            Tarifa:0
+            Tarifa:0,
+            nombreUsuario: "Leonel Ortega",
+            ubicacionUsuario: "Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col",
+            usuarioTelefono: "3121942513"
          
             
             
@@ -277,7 +280,7 @@ export default class TravelMP extends Component {
                                         marginLeft: 10
                                     }
                                 }>
-                                    <Text>Leonel Guardado</Text>
+                                    <Text>{this.state.nombreUsuario}</Text>
                                 </View>
                                 <View >
                                     <Text style={{ fontWeight: "bold", marginLeft: 100 }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
@@ -291,7 +294,7 @@ export default class TravelMP extends Component {
 
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <Text style={{ marginLeft: 10 }}>Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col.</Text>
+                                <Text style={{ marginLeft: 10 }}>{this.state.ubicacionUsuario}</Text>
                             </View>
                         </View>
                     :
@@ -309,7 +312,7 @@ export default class TravelMP extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}>Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col.</Text>
+                                    <Text style={{ marginLeft: 10 }}>{this.state.ubicacionUsuario}</Text>
                                     <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -568,7 +571,7 @@ export default class TravelMP extends Component {
                                             paddingLeft: 10,
                                             paddingTop:5
                                         }
-                                    }>Leonel Guardado</Text>
+                                    }>{this.state.nombreUsuario}</Text>
 
                                 <Icon name="times"
                                 style={{ paddingLeft:10}}
@@ -594,7 +597,7 @@ export default class TravelMP extends Component {
                             <View style={styles.area}>
                                 
                                 <View style={{paddingLeft:120}}>
-                                    <Text style={{ paddingLeft: 20 }}>1234567890</Text>
+                                    <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
                                     <Text>soporte@migo.com</Text>
                                 </View>
 
@@ -688,7 +691,7 @@ export default class TravelMP extends Component {
                                     paddingLeft: 10,
                                     paddingTop: 5
                                 }
-                            }>Leonel Guardado</Text>
+                            }>{this.state.nombreUsuario}</Text>
 
                             <Icon name="times"
                                 style={{ paddingLeft: 10 }}
@@ -714,7 +717,7 @@ export default class TravelMP extends Component {
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>1234567890</Text>
+                                <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
                                 <Text>soporte@migo.com</Text>
                             </View>
 
@@ -772,7 +775,7 @@ export default class TravelMP extends Component {
                                     paddingLeft: 10,
                                     paddingTop: 5
                                 }
-                            }>Leonel Guardado</Text>
+                            }>{this.state.nombreUsuario}</Text>
 
                             <Icon name="times"
                                 style={{ paddingLeft: 10 }}
@@ -798,7 +801,7 @@ export default class TravelMP extends Component {
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>1234567890</Text>
+                                <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
                                 <Text>soporte@migo.com</Text>
                             </View>
 

@@ -11,6 +11,7 @@ import Home from "./Home";
 
 
 
+
 export default class Travel extends Component {
     constructor(props) {
         super(props);
@@ -30,6 +31,7 @@ export default class Travel extends Component {
             },
             Vehicles:null,
             location:null, 
+            leftVehicles:0
      
             
         
@@ -51,7 +53,8 @@ export default class Travel extends Component {
     async componentDidMount() {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-          
+
+    
                 this.setState({
                     myPosition:{
                     
@@ -61,56 +64,34 @@ export default class Travel extends Component {
                     },
                     error: null,
                 });
+              
             },
             (error) => this.setState({ error: error.message }),
             { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
         );
 
-    
-        try {
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
-                id_usuario: this.state.id_usuario
-            });
 
-
-            this.setState({
-                Destino:{
-                    latitude: parseFloat(res.data.datos[0]["coordenadas"].substring(0,9)),
-                    longitude: parseFloat(res.data.datos[0]["coordenadas"].substring(10,22)),
-                }
-
-              
-            })
-            
-
-
-        } catch (e) {
-            console.log(e);
-            alert("No hay conexión al web service", "Error");
-        }
 
         try {
-            //console.log(this.props.switchValue);
-            const res = await axios.get('http://34.95.33.177:3004/get_conductores');
 
+            const res = await axios.post('http://34.95.33.177:3001/get_conductores');
             this.state.Vehicles = res.data
-
+            console.log(this.state.Vehicles);
 
         } catch (e) {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
 
-    
 
-    
-   
         try {
+       
             var location = await Location.reverseGeocodeAsync({
                 latitude: this.state.myPosition.latitude,
                 longitude: this.state.myPosition.longitude
             });
+
+       
     
 
             locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
@@ -146,24 +127,21 @@ export default class Travel extends Component {
 
     setSelectedVehicle(name){
 
-        this.getVehicles();
-
+        
         if (name == "Car standar"){
             
-
+            
             this.setState({
                 standarSelected: true,
                 luxeSelected: false,
                 VanSelected: false,
                 TruckSelected: false,
                 showLeftCars:true
-
+                
             })
+            this.getVehicles("1");
 
          
-
-     
-
         }else{
             if (name =="Car luxe"){
 
@@ -177,6 +155,8 @@ export default class Travel extends Component {
 
                 });
 
+                this.getVehicles("2");
+
             }else{
                 if (name =="Van car"){
 
@@ -189,6 +169,7 @@ export default class Travel extends Component {
                         showLeftCars: true
                     });
 
+                    this.getVehicles("1");
 
                 
                 }else{
@@ -204,6 +185,8 @@ export default class Travel extends Component {
 
                         });
 
+                        this.getVehicles("2");
+
                     }
                 }
             }
@@ -215,14 +198,34 @@ export default class Travel extends Component {
 
     
     
-    async getVehicles() {
+    async getVehicles(typeVehicle) {
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.get('http://34.95.33.177:3004/get_conductores');
+            const res = await axios.post('http://34.95.33.177:3001/get_conductores');
 
-            this.state.Vehicles = res.data
+            this.setState({
 
-            // console.log(this.state.vehicles);
+                Vehicles: res.data
+
+            })
+
+            VehiclesArray =[];
+            cont=0;
+
+            this.state.Vehicles.forEach(Vehicles => {
+                if (Vehicles.id == typeVehicle){
+                    VehiclesArray.push(Vehicles)
+                    cont++;
+                }
+            });
+
+            this.setState({
+                Vehicles:VehiclesArray,
+                leftVehicles:cont
+            })
+
+
+            console.log(this.state.Vehicles);
 
         } catch (e) {
             console.log(e);
@@ -270,19 +273,6 @@ export default class Travel extends Component {
     _onMapReady = () => this.setState({ marginBottom: 0 })
 
 
-    // Vehicles = setInterval(async function (){
-    //     try {
-    //         //console.log(this.props.switchValue);
-    //         const res = await axios.get('http://34.95.33.177:3004/get_conductores');
-
-    //         return res.data
-           
-
-    //     } catch (e) {
-    //         console.log(e);
-    //         alert("No hay conexión al web service", "Error");
-    //     }
-    // }, 3000);
 
     render() {
 
@@ -299,6 +289,7 @@ export default class Travel extends Component {
      
                 }}>
                 <Icon
+                    color="#ff8834"
                     name="times-circle"
                     size={30}
                     // onPress={() => this.reinitializeComponents()}
@@ -334,6 +325,7 @@ export default class Travel extends Component {
                         onFocus={() => this.functionShowFavoritePlaces()}
                     ></TextInput>
                         <Icon name="plus"
+                        color="#ff8834"
                         //  onPress={() => this.showArrival()} 
                          size={30} style={{ paddingLeft: 15 }}></Icon>
                     
@@ -364,7 +356,7 @@ export default class Travel extends Component {
                         }}
                     
                             >
-                                <Icon name="map-pin" size={20} color="orange"></Icon> 
+                                <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
                             </Marker>
 
                             {
@@ -380,7 +372,7 @@ export default class Travel extends Component {
                                         // title={marker.title}
                                         // description={marker.description}
                                     >
-                                        <Icon name="car" size={20} color="black"></Icon> 
+                                        <Icon color="#ff8834" name="car" size={20} color="black"></Icon> 
 
                                     </Marker>
                                 ))
@@ -418,7 +410,7 @@ export default class Travel extends Component {
                                 paddingLeft:70
                             }
                         }>
-                            Vehículos disponibles: {this.props.carsLeftStandar}
+                            Vehículos disponibles: {this.state.leftVehicles}
                     </Text>
                     :
                         null
@@ -439,9 +431,10 @@ export default class Travel extends Component {
              
           >
                     <Icon
+                        color="#ff8834"
                         name="car-side"
                         size={40}
-                        color={this.state.standarSelected? "green": "black"}
+                        color={this.state.standarSelected ? "green" : "#ff8834"}
                         onPress={()=>this.setSelectedVehicle("Car standar")}
                         style={
                             {
@@ -450,10 +443,11 @@ export default class Travel extends Component {
                         }
                     ></Icon>
                     <Icon
+                        color="#ff8834"
                         name="car"
                         size={35}
-                        color={this.state.luxeSelected ? "green" : "black"}
-                            onPress={() => this.setSelectedVehicle("Car luxe")}
+                        color={this.state.luxeSelected ? "green" : "#ff8834"}
+                        onPress={() => this.setSelectedVehicle("Car luxe")}
                         style={
                             {
                                 marginRight: 15
@@ -461,9 +455,10 @@ export default class Travel extends Component {
                         }
                     ></Icon>
                     <Icon
+                        color="#ff8834"
                         name="shuttle-van"
                         size={35}
-                        color={this.state.VanSelected ? "green" : "black"}
+                        color={this.state.VanSelected ? "green" : "#ff8834"}
                         onPress={() => this.setSelectedVehicle("Van car")}
                         style={
                             {
@@ -472,8 +467,9 @@ export default class Travel extends Component {
                         }
                     ></Icon>
                     <Icon
+        
                         name="truck-pickup"
-                        color={this.state.TruckSelected ? "green" : "black"}
+                        color={this.state.TruckSelected ? "green" : "#ff8834"}
                         size={35}
                         onPress={() => this.setSelectedVehicle("Pick up Car")}
                         style={
@@ -523,12 +519,7 @@ export default class Travel extends Component {
     }
 }
 
-Travel.defaultProps = {
-    carsLeftStandar:5,
-    luxeSelected:10,
-    VanSelected:2,
-    TruckSelected:7,
-}
+
 
 const styles = StyleSheet.create({
     container: {

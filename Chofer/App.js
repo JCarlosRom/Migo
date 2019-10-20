@@ -12,6 +12,8 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import HomeTravel from "./componentes/Home";
 import TravelMP from "./componentes/TravelMP";
 import Travel_Integrado from "./componentes/Travel_Integrado";
+import Pago from "./componentes/Pago";
+
 
 const MainStack = createStackNavigator({
 
@@ -24,10 +26,13 @@ const MainStack = createStackNavigator({
   },
   Travel_Integrado:{
     screen:Travel_Integrado
+  },
+  Pago:{
+    screen:Pago
   }
 },
   {
-    initialRouteName: "Home",
+    initialRouteName: "Pago",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"

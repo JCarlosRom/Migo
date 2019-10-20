@@ -59,7 +59,8 @@ export default class Home extends Component {
                 Parada1:null,
                 Parada2:null,
                 Parada3:null
-            }
+            },
+            checked: false
 
 
 
@@ -245,8 +246,13 @@ export default class Home extends Component {
 
 
 
-    autocompleteGoogle = async destination => {
-        this.setState({ destination:destination
+    autocompleteGoogle1 = async destination => {
+        this.setState({ 
+            myPosition:{
+
+                addressInput:destination
+
+            }
         });
 
         this.setState({
@@ -261,7 +267,7 @@ export default class Home extends Component {
             "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=" +
             'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY' +
             "&input=" +
-            this.state.destination +
+            this.state.myPosition.addressInput +
             "&location=" +
             this.state.latitude +
             ",%20" +
@@ -396,7 +402,7 @@ export default class Home extends Component {
                     onPress={() => this.setDirectionInput(item.description)}
               >
                     <View style={[styles.area, { paddingTop: 10, paddingBottom: 10 }]}>
-                        <Icon name="map-marker-alt" style={styles.iconLeft} size={30} />
+                        <Icon color="#ff8834" name="map-marker-alt" style={styles.iconLeft} size={30} />
                         <View style={{ justifyContent: "center", width: 250 }}>
                             <Text
                                 style={styles.text}
@@ -415,7 +421,9 @@ export default class Home extends Component {
     setDirectionInput =(description)=>{
         if(this.state.flagDestino=="1"){
             this.setState({
-                destination:description,
+                myPosition:{
+                   addressInput:description
+                },
                 showListdestination:false,
                 showListdestination2:false,
                 showListdestination3:false,
@@ -499,6 +507,29 @@ export default class Home extends Component {
     });
     };
 
+
+    DestinosFavoritosTravel(Destino){
+        
+        console.log(this.state.myPosition);
+
+        if(this.state.myPosition.addressInput!=""){
+
+            this.state.travelInfo.puntoPartida = this.state.myPosition;
+            this.state.travelInfo.Parada1 = Destino;
+    
+            this.props.navigation.navigate("Travel2", {
+                travelInfo: this.state.travelInfo,
+                flag: true,
+                type: "Unico"
+            });
+
+        }else{
+
+            alert("Favor de ingresar un punto de partida válido");
+
+        }
+    }
+
  
     Travel = () =>{
 
@@ -541,6 +572,56 @@ export default class Home extends Component {
         
     }
     
+    reinitializeComponents = () => {
+        this.setState({
+            id_usuario: "2",
+            // Arrivals
+            showNewArrival: false,
+            showNewArrival2: false,
+            // Change options below screen
+            showViewOptions: true,
+            // Delete buttons delete 
+            showButtonsDelete: true,
+            //  State to show the position to arrival 
+            showPositionArrival: false,
+            // Hide or show button retweet
+            showButtonPlaces: true,
+            // Position of arrivals 
+            place3: "",
+            place2: "",
+            place1: "",
+            showFavoritePlaces: false,
+            Destinos: null,
+            destination2: "",
+            destination3: "",
+            destination4: "",
+            hit: "",
+            type: "",
+            predictions: [],
+            latitude: 0,
+            longitude: 0,
+            showListdestination: false,
+            showListdestination2: false,
+            showListdestination3: false,
+            showListdestination4: false,
+            flagDestino: "",
+            direccion: null,
+            coordinatesPuntoPartida: null,
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+                address: "",
+                addressInput: "",
+
+            },
+            travelInfo: {
+                puntoPartida: null,
+                Parada1: null,
+                Parada2: null,
+                Parada3: null
+            }
+        })
+    }
 
     render() {
 
@@ -557,6 +638,7 @@ export default class Home extends Component {
                 >
 
                     <Icon
+                        color="#ff8834"
                         name="times-circle"
                         size={30}
                         onPress={() => this.reinitializeComponents()}
@@ -568,6 +650,7 @@ export default class Home extends Component {
                     />
                     {this.state.showButtonPlaces ?
                         <Icon
+                            color="#ff8834"
                             name="retweet"
                             size={30}
                             onPress={() => this.hideDeleteButtons()}
@@ -633,16 +716,15 @@ export default class Home extends Component {
                     {this.state.addressInput!=""?
                     
                         <Input
-                        
                             value={this.state.myPosition.addressInput}
                             placeholder="Ingrese el punto de partida"
-
+                            onChangeText={addressInput => this.autocompleteGoogle1(addressInput)} 
                             rightIcon={
                                 <Icon
                                     name="undo-alt"
                                     onPress={this.clear}
                                     size={24}
-                                    color="black"
+                                    color="#ff8834"
                                 />
                             }
                         />
@@ -656,7 +738,7 @@ export default class Home extends Component {
                                         name="undo-alt"
                                         onPress={this.clear}
                                         size={24}
-                                        color="black"
+                                        color="#ff8834"
                                     />
                                 }
                             />
@@ -839,6 +921,7 @@ export default class Home extends Component {
                                     this.state.showButtonsDelete?
                                     
                                         <Icon name="plus"
+                                        color="#ff8834"
                                         onPress={this.showArrival}
                                         size={30} 
                                         style={{ paddingLeft: 15 }}></Icon>
@@ -912,7 +995,11 @@ export default class Home extends Component {
                     paddingRight: 120
                 }}>
                     <View style={{ paddingLeft: 200 }}>
-                        <CheckBox></CheckBox>
+
+                        <CheckBox
+                            checked={this.state.checked}
+                            onPress={() => this.setState({ checked: !this.state.checked })}
+                        />
                     </View>
 
                     <View style={{ paddingLeft: 20, flexDirection: "row", }}>
@@ -942,7 +1029,7 @@ export default class Home extends Component {
                                     <Icon
                                         name="home"
                                         size={15}
-                                        color="white"
+                                        color="#ff8834"
                                     />
                                 } title=" Añadir casa"
                                     type="outline"
@@ -963,7 +1050,7 @@ export default class Home extends Component {
                                     <Icon
                                         name="briefcase"
                                         size={15}
-                                        color="white"
+                                        color="#ff8834"
                                     />
                                 }
                                     type="outline"
@@ -979,7 +1066,7 @@ export default class Home extends Component {
                             paddingTop: 10
                         }}>
                             <Icon
-
+                                color="#ff8834"
                                 name="star"
                                 size={25}
                                 style={
@@ -1009,6 +1096,7 @@ export default class Home extends Component {
                                 }>Elige tus lugares favoritos</Text>
                             </View>
                             <Icon name="chevron-right" size={20}
+                                color="#ff8834"
                                 onPress={() => this.setState({
                                     showFavoritePlaces: !this.state.showFavoritePlaces
                                 })}
@@ -1038,7 +1126,7 @@ export default class Home extends Component {
                                             paddingLeft: 20,
                                             backgroundColor: "#fff"}}>
                                             <Icon
-
+                                                color="#ff8834"
                                                 name="map-marker-alt"
                                                 size={20}
                                                 style={
@@ -1061,7 +1149,7 @@ export default class Home extends Component {
                                                         fontSize: 10
                                                     }
                                                 }
-                                                    onPress={() => this.props.navigation.navigate("Travel2")}
+                                                    onPress={() => this.DestinosFavoritosTravel(Destino.direccion)}
                                                 >{Destino.nombre}
                                         </Text>
                                                 <View style={{ width: 250 }}>
@@ -1073,12 +1161,13 @@ export default class Home extends Component {
                                                             fontSize: 10
                                                         }
                                                     }
-                                                        onPress={() => this.props.navigation.navigate("Travel2")}
+                                                        onPress={() => this.DestinosFavoritosTravel(Destino.direccion)}
                                                     >{Destino.direccion}</Text>
                                                 </View>
                                             </View>
                                             <Icon name="chevron-right"
-                                                onPress={() => this.props.navigation.navigate("Travel2")}
+                                                color="#ff8834"
+                                                onPress={() => this.DestinosFavoritosTravel(Destino.direccion)}
                                                 size={20}
                                                 style={
                                                     {
@@ -1104,7 +1193,7 @@ export default class Home extends Component {
                             paddingTop: 10
                         }}>
                             <Icon
-
+                                color="#ff8834"
                                 name="map-pin"
                                 size={25}
                                 style={
@@ -1134,6 +1223,7 @@ export default class Home extends Component {
                                 }>Visualizar vehículos por radio</Text>
                             </View>
                             <Icon name="chevron-right"
+                                color="#ff8834"
                                 onPress={() => this.props.navigation.navigate("Travel")}
                                 size={20}
                                 style={
@@ -1153,6 +1243,7 @@ export default class Home extends Component {
                         <View >
 
                             <Icon name="clock" size={60}
+                                color="#ff8834"
                                 style={
                                     {
                                         textAlign: 'center'

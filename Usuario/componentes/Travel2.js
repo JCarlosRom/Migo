@@ -18,6 +18,7 @@ export default class Travel2 extends Component {
             id_usuario: "2",
             Home:true,
             showEstimations:false,
+            helperPay:false,
             Pay:false,
             Onway:false,
             showModalCancel:false,
@@ -55,7 +56,13 @@ export default class Travel2 extends Component {
             isNextVehicles:true,
             routeParada1: false,
             routeParada2: false, 
-            routeParada3:false
+            routeParada3:false,
+            cashPay:true,
+            creditPay:false,
+            infoVehicleTipo:"",
+            infoVehicleLlegada:"",
+            infoVehicleTarifa:0
+
             
 
         };
@@ -64,7 +71,47 @@ export default class Travel2 extends Component {
 
     }
 
-    
+    showPay(){
+        
+
+        if(this.state.showEstimations==true){
+
+            this.setState({
+                helperPay: true,
+                showEstimations: false,
+                Home: false,
+                Pay: true
+            })
+
+
+        }else{
+
+            this.setState({
+                helperPay: false,
+                showEstimations: false,
+                Home: false,
+                Pay: true
+            })
+            
+        }
+    }
+
+    closePay(){
+        if(this.state.helperPay==true){
+            this.setState({
+                Pay:false, 
+                showEstimations:true,
+                Home:false
+            })
+        }else{
+            this.setState({
+                Pay: false,
+                showEstimations: false,
+                Home: true
+            })
+        }
+    }
+
     async getTarifas(){
         try {
             //console.log(this.props.switchValue);
@@ -349,7 +396,51 @@ export default class Travel2 extends Component {
         this.setState({ ModalCancel: !visible });
 
     }
+    
+    showInfoVehicle(typeVehicle){
 
+        var d = new Date(); // get current date
+        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
+    
+    
+        if(typeVehicle=="Express Estandar"){
+            this.setState({
+                infoVehicleTipo: "Express Estandar",
+                infoVehicleLlegada: d.toLocaleTimeString(),
+                infoVehicleTarifa: this.state.Express_Estandar.out_costo_viaje
+            })
+
+        }else{
+            if(typeVehicle=="Express Lujo"){
+                this.setState({
+                    infoVehicleTipo: "Express Lujo",
+                    infoVehicleLlegada: d.toLocaleTimeString(),
+                    infoVehicleTarifa: this.state.Express_Lujo.out_costo_viaje
+                })
+            }else{
+                if(typeVehicle=="Pool Estandar"){
+                    this.setState({
+                        infoVehicleTipo: "Pool Estandar",
+                        infoVehicleLlegada: d.toLocaleTimeString(),
+                        infoVehicleTarifa: this.state.Pool_Estandar.out_costo_viaje
+                    })
+                }else{
+                    if(typeVehicle=="Pool Lujo"){
+                        this.setState({
+                            infoVehicleTipo: "Pool Lujo",
+                            infoVehicleLlegada: d.toLocaleTimeString(),
+                            infoVehicleTarifa: Pool_Lujo.out_costo_viaje
+                        })
+                    }
+                }
+            }
+        }
+
+        this.setState({
+            showEstimations: true,
+            Home: false
+        })
+    }
 
  
     render() {
@@ -545,7 +636,7 @@ export default class Travel2 extends Component {
 
                             <View style={styles.areawrow}>
                             
-                                <Icon name="car-side" size={30} style={{ alignSelf: "center", paddingTop:5 }}></Icon>
+                                <Icon name="car-side" color="#ff8834" size={30} style={{ alignSelf: "center", paddingTop:5 }}></Icon>
                             
                             </View>
 
@@ -554,45 +645,43 @@ export default class Travel2 extends Component {
                             <View style={styles.area}>
                         
                                 <View>
-                                    <Text>Migo Estándar <Icon name="info-circle" size={18}
+                                    <Text>{this.state.infoVehicleTipo} <Icon name="info-circle" color="#ff8834" size={18}
                                     onPress={() => this.props.navigation.navigate("DesgloseTarifa")}
                                     ></Icon> </Text>
-                                    <Text> Llegada: 9:46 p.m.</Text>
+                                    <Text> {this.state.infoVehicleLlegada}</Text>
                                 </View>
 
                                 <View style={{paddingLeft:120}}>
-                                    <Text> MX$ {this.state.distance}</Text>
+                                    <Text> MX$ {this.state.infoVehicleTarifa}</Text>
                                 </View>
                             
                             </View>
                 
 
                             <View style={styles.area}>
-                                <Icon name="money-bill-alt" size={30} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })
+                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" :"credit-card"} size={30} onPress={() => this.showPay() }></Icon>
 
-                                }></Icon>
-                                <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>Efectivo</Text>
-                                <Icon style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })}></Icon>
+                                <Text color="#ff8834" style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashpay? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
+                                
+                                <Icon color="#ff8834" style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.showPay()}></Icon>
+
                             </View>
-                            <View >
-                                <Button title="Confirmar MiGo Express Estándar"
-                                    style={{ width: '100%' }}
-                                    type="outline" 
-                                    onPress={()=>this.setState({
-                                        Onway:true,
-                                        showEstimations:false
-                                      
-                                    })}
-                                    ></Button>
-                            </View>
+                            {!this.state.Pay?
+                            
+                                <View >
+                                    <Button title="Confirmar YiMi Express Estándar"
+                                        style={{ width: '100%' }}
+                                        type="outline" 
+                                        onPress={()=>this.setState({
+                                            Onway:true,
+                                            showEstimations:false
+                                        
+                                        })}
+                                        ></Button>
+                                </View>
+                            :
+                                null
+                            }
                             
                     
                         </View>
@@ -610,9 +699,9 @@ export default class Travel2 extends Component {
                         <View style={styles.area}>
                             <Text style={{fontWeight:"bold", fontSize:16}}>{
                                 this.state.isNextVehicles?
-                                    "Migo Express"
+                                    "YiMi Express"
                                 :
-                                "Migo Pool"
+                                "YiMi Pool"
                             }</Text>
                         </View>
                      
@@ -622,6 +711,7 @@ export default class Travel2 extends Component {
                                 null
                                 :
                                     <Icon name="chevron-left"
+                                    color="#ff8834"
                                     size={25}
                                     onPress={() => this.setState({
                                         isNextVehicles: !this.state.isNextVehicles
@@ -631,12 +721,10 @@ export default class Travel2 extends Component {
                             
                             <View style={{paddingLeft:30}}> 
                                 <Icon name="car-side"
+                                    color="#ff8834"
                                     size={25}
                                     style={{alignSelf:"center"}}
-                                    onPress={()=>this.setState({
-                                        showEstimations:true,
-                                        Home:false
-                                    })}
+                                    onPress={()=>this.showInfoVehicle(this.state.isNextVehicles?"Express Estandar": "Pool Estandar")}
                                 ></Icon>
                                 <Text
                                 style={{ alignSelf: "center",
@@ -663,6 +751,8 @@ export default class Travel2 extends Component {
                             </View>
                             <View style={{ paddingLeft: 35 }}>
                                 <Icon name="car-side"
+                                    color="#ff8834"
+                                    onPress={() => this.showInfoVehicle(this.state.isNextVehicles ? "Express Lujo" : "Pool Lujo")}
                                     size={25}
                                     style={{ alignSelf: "center" }}
                                 ></Icon>
@@ -701,6 +791,7 @@ export default class Travel2 extends Component {
                             {this.state.isNextVehicles ?
                               
                                 <Icon name="chevron-right"
+                                    color="#ff8834"
                                     size={25}
                                     onPress={() => this.setState({
                                         isNextVehicles: !this.state.isNextVehicles
@@ -714,26 +805,33 @@ export default class Travel2 extends Component {
                         </View>
                         
 
+
                             <View style={styles.area}>
-                                <Icon name="money-bill-alt" size={30} onPress={() => this.setState({
+                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" : "credit-card"} size={30} onPress={() => this.setState({
                                     showEstimations: false,
                                     Home: false,
                                     Pay: true
                                 })
 
                                 }></Icon>
-                                <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>Efectivo</Text>
-                                <Icon style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
+                                <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashPay ? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
+                                <Icon color="#ff8834"  style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
                                     showEstimations: false,
                                     Home: false,
                                     Pay: true
                                 })}></Icon>
                             </View>
-                            <View >
-                                <Button title="Confirmar MiGo Express Estándar"
-                                    style={{ width: '100%' }}
-                                    type="outline" ></Button>
-                            </View>
+                            {!this.state.Pay?
+                            
+                                <View >
+                                    <Button title="Confirmar YiMi Express Estándar"
+                                        style={{ width: '100%' }}
+                                        type="outline" ></Button>
+                                </View>
+                        
+                            :
+                                null
+                            }
                             
                     
                     </View>
@@ -746,29 +844,27 @@ export default class Travel2 extends Component {
                         <View>
                             <View style={styles.area}>
                                 <Text style={{fontSize:16, fontWeight:"bold"}}> Método de pago</Text>
+
+                                {this.state.showEstimations?
+                                
+                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
+                                :
+                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
+                                }
+
+                                
                             </View>
 
                             <View style={styles.area}>
 
-                                <Icon name="money-bill-alt" size={25} style={{paddingLeft:10}}></Icon>
+                                <Icon color="#ff8834" name="money-bill-alt" size={25} style={{paddingLeft:10}}></Icon>
 
                                 <Text style={{paddingLeft:10}}>Efectivo</Text>
 
-                                <RadioForm
-                                    style={{paddingLeft:153}}
-                                    radio_props={[{ label: ''}]}
-                                    initial={0}
-                                    buttonColor={"#000000"}
-                                    animation={true}
-                                    onPress={(value) => {
-                                        this.setState({
-                                            showEstimations: true,
-                                            Home: false,
-                                            Pay: false
-                                        })
-                                    }}
-
-                                />
+                                <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 155 }} onPress={() => this.setState({
+                                    cashPay: true,
+                                    creditPay: false
+                                })}></Icon>
 
                             </View>
 
@@ -776,49 +872,23 @@ export default class Travel2 extends Component {
 
                             <View style={styles.area}>
 
-                                <Icon name="credit-card" size={25} style={{ paddingLeft: 10 }}></Icon>
+                                <Icon color="#ff8834" name="credit-card" size={25} style={{ paddingLeft: 10 }}></Icon>
 
-                                <Text style={{paddingLeft:10}}>Tarjeta de crédito / débito </Text>
+                                <Text color="#ff8834" style={{paddingLeft:10}}>Tarjeta de crédito / débito </Text>
 
-                                <RadioForm
-                                    style={{ paddingLeft: 45 }}
-                                    radio_props={[{ label: '' }]}
-                                    initial={1}
-                                    buttonColor={'#000000'}
-                                    animation={true}
-                                    onPress={(value) => {
-                                        this.setState({
-                                            showEstimations: true,
-                                            Home: false,
-                                            Pay: false }) 
-                                    }}
-
-                                />
+                                <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 45 }} onPress={() => this.setState({
+                                    cashPay: false,
+                                    creditPay: true
+                                })}></Icon>
 
 
                             </View>
 
                             <View style={styles.area}>
-                                <Icon name="cc-visa" size={25} style={{ paddingLeft: 30 }}></Icon>
+                                <Icon color="#ff8834" name="cc-visa" size={25} style={{ paddingLeft: 30 }}></Icon>
 
                                 <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
 
-                                <RadioForm
-                                    style={{ paddingLeft: 65 }}
-                                    radio_props={[{ label: '' }]}
-                                    initial={1}
-                                    buttonColor={'#000000'}
-                                    animation={true}
-                                    onPress={(value) => {
-                                        this.setState({
-                                            showEstimations: true,
-                                            Home: false,
-                                            Pay: false
-                                        })
-                                    }}
-                                    
-
-                                />
 
                             </View>
 
@@ -834,7 +904,7 @@ export default class Travel2 extends Component {
                     {this.state.Onway?
                         <View>
                             <View styles={styles.area}>
-                                <Icon name="chevron-up"
+                                <Icon color="#ff8834" name="chevron-up"
                                 style={{alignSelf:"center", paddingTop:5}}
                                 size={30}
                                 onPress={() => this.props.navigation.navigate("InfoTravel")}
@@ -855,8 +925,8 @@ export default class Travel2 extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon name="user-circle" size={60}></Icon>
-                                <Icon name="car" size={45}  style={{paddingLeft:10}}></Icon>
+                                <Icon color="#ff8834" name="user-circle" size={60}></Icon>
+                                <Icon color="#ff8834" name="car" size={45}  style={{paddingLeft:10}}></Icon>
                                 <View style={{paddingLeft:120}}>
                                     <Text>Dodge Attitude</Text>
                                     <Text style={{fontWeight:"bold", fontSize:16}}>FRS408A</Text>
@@ -874,7 +944,7 @@ export default class Travel2 extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name="phone" size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <TextInput
                                     style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC'}}
