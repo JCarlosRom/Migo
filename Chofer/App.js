@@ -13,6 +13,8 @@ import HomeTravel from "./componentes/Home";
 import TravelMP from "./componentes/TravelMP";
 import Travel_Integrado from "./componentes/Travel_Integrado";
 import Pago from "./componentes/Pago";
+import viajeFinalizado from "./componentes/viajeFinalizado";
+import Travel_Waze from './componentes/Travel_Waze'
 
 
 const MainStack = createStackNavigator({
@@ -29,10 +31,16 @@ const MainStack = createStackNavigator({
   },
   Pago:{
     screen:Pago
+  },
+  viajeFinalizado:{
+    screen:viajeFinalizado
+  },
+  Travel_Waze:{
+    screen:Travel_Waze
   }
 },
   {
-    initialRouteName: "Pago",
+    initialRouteName: "Home",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"
