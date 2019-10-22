@@ -2,14 +2,19 @@ import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, TextInput, Switch, ScrollView  } from "react-native";
 import { Divider, CheckBox } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import {
+    createAppContainer,
+    StackActions,
+    NavigationActions
+} from "react-navigation"; // Version can be specified in package.json
+import { createStackNavigator } from "react-navigation-stack";
+import { stringify } from "qs";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import BottomNavigation, {
     FullTab
 } from 'react-native-material-bottom-navigation'
 import axios from 'axios';
-import * as Location from 'expo-location';
-import * as Permissions from 'expo-permissions';
-
+import MapViewDirections from 'react-native-maps-directions';
 
 
 
@@ -19,11 +24,18 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            id_chofer: "2",
-            id_usuario:"1",
-            nombreUsuario:"Leonel Ortega",
-            numeroUsuario:"3121942513"
-        
+            id_usuario: "2",
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+
+            },
+            Destino: {
+                latitude: 0,
+                longitude: 0,
+
+            },
+     
         };
     
 
@@ -32,24 +44,22 @@ export default class Home extends Component {
 
 
     async componentDidMount() {
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-            if (status !== 'granted') {
-            this.setState({
-                errorMessage: 'Permission to access location was denied',
-            });
-            }
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
 
-            let location = await Location.getCurrentPositionAsync({});
+                this.setState({
+                    myPosition: {
 
-            console.log(location);
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
 
-            this.setState({ 
-                myPosition:{
-                    latitude: location.latitude,
-                    longitude: location.longitude
-                }
-
-             });
+                    },
+                    error: null,
+                });
+            },
+            (error) => this.setState({ error: error.message }),
+            { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
+        );
 
 
    
@@ -64,8 +74,6 @@ export default class Home extends Component {
             barColor: 'white',
             pressColor: 'rgba(255, 255, 255, 0.16)'
         },
-
-
         {
             key: 'Mi billetera',
             icon: 'wallet',
@@ -116,10 +124,17 @@ export default class Home extends Component {
                   <View>
                     <Text >Conectado</Text>
                   </View>
-                
+                  <View style={
+                      {
+                        paddingLeft:120
+                      }
+                  }>
+                    <Icon name="exclamation-circle"
+                    size={30}></Icon>
+                  </View>
                     <View style={
                         {
-                            paddingLeft: 130
+                            paddingLeft: 10
                         }
                     }>
                         <Icon name="question-circle"
@@ -146,65 +161,41 @@ export default class Home extends Component {
                                 longitudeDelta: 0.0105,
                             }}
                         >
-                           
-                        
 
                       
                         </MapView>
-
-                        <View >
-
-                            <View style={{paddingLeft:180}}>
-
-                                <Icon name="exclamation-circle"
-                                    size={30}></Icon>
-
-                            </View>
-
-                            <View style={{paddingLeft:90}}>
-
-                                <View style={{width:160}}>
-
-                                  <Button title="Múltiples paradas" 
-                                    onPress={() => this.props.navigation.navigate("TravelMP")} 
-                                    ></Button>
-                                
-                                </View>
-
-                            </View>
-
-
-                            <View style={{
-                                flexDirection: "row",
-                                paddingLeft: 10,
-                                paddingTop: 10}}>
-                                    
-                                <View>
-
-                                    <Button title="Viaje integrado"
-                                        onPress={() => this.props.navigation.navigate("Travel_Integrado")}
-                                    ></Button>
-
-                                </View>
-
-                                <View style={{ paddingLeft: 5 }}>
-
-                                    <Button title="Viaje Waze"
-                                        onPress={() => this.props.navigation.navigate("Travel_Waze")}
-                                    ></Button>
-
-                                </View>
-
-
-
-                            </View>
-
-                        </View>
-
-
-
+                    
                     </View>
-                   
+                    <View
+                        style={styles.area}
+                    >
+                        <View  style={
+                            {
+                                width:130
+                               
+                            }
+                        }>
+                            <Button title="Multiples paradas" onPress={() => this.props.navigation.navigate("TravelMP")} ></Button>
+                        </View>
+                        <View style={
+                            {
+                                width: 100,
+                                marginLeft: 10
+                            }
+                        }> 
+                            <Button title="Viaje integrado"
+                                onPress={() => this.props.navigation.navigate("Travel_Integrado")}
+                            ></Button>
+                        </View>
+                        <View style={
+                            {
+                                width: 90,
+                                marginLeft: 10
+                            }
+                        }>
+                            <Button title="Viaje Waze" ></Button>
+                        </View>
+                    </View>
                     <View style={
                         styles.area
                     }>
@@ -212,12 +203,8 @@ export default class Home extends Component {
                             {
                                 textAlign: 'center'
                             }
-                        }>Solicitud de coolaboración</Text>
+                        }>Banner promocional de referidos</Text>
 
-                    </View>
-                    <View style={styles.area}>
-                        
-                        <Icon name="user-circle"></Icon>
                     </View>
                     <View style={
                         styles.area
@@ -322,7 +309,7 @@ const styles = StyleSheet.create({
     },
     containerMap: {
         // ...StyleSheet.absoluteFillObject,
-        height: 450,
+        height: 300,
         width: 400,
         justifyContent: 'flex-end',
         alignItems: 'center',

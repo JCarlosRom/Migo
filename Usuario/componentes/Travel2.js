@@ -8,89 +8,72 @@ import RadioForm, { RadioButton, RadioButtonInput, RadioButtonLabel } from 'reac
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from "expo-location";
 import axios from 'axios';
-import SocketIOClient from 'socket.io-client/dist/socket.io.js'
 
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel2 extends Component {
-    state = {
-        id_usuario: "2",
-        datos_usuario: 'Juan Hernandez',
-        coordenadas_destino_latitud: '19.238363',
-        coordenadas_destino_longitud: '-103.733399',
-        datos_usuario: 'Juan Hernandez',
-        estrellas: '4.1',
-        geocoder_destino: 'soriana',
-        geocoder_origen: 'rancho blanco',
-        data_driver_response: null,
-        id_servicio: '',
-        id_recorrido: '',
-        Home:true,
-        showEstimations:false,
-        helperPay:false,
-        Pay:false,
-        Onway:false,
-        showModalCancel:false,
-        showModalCancelAcept:false,
-        myPosition: {
-            latitude: 0,
-            longitude: 0,
-
-        },
-        Paradas:null,
-    
-        distance:0,
-        duration:0,
-
-        Express_Estandar:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Express_Lujo:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Pool_Estandar:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Pool_Lujo:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        isNextVehicles:true,
-        routeParada1: false,
-        routeParada2: false, 
-        routeParada3:false,
-        cashPay:true,
-        creditPay:false,
-        infoVehicleTipo:"",
-        infoVehicleLlegada:"",
-        infoVehicleTarifa:0
-
-        
-
-    };
-
     constructor(props) {
         super(props);
-        this.socket = SocketIOClient('http://34.95.33.177:3001/');
-        //this.sendDataDriver();
-        this.socket.on('recorrido_id_usuario', num => {
-            console.log('Llego respuesta: ', num);
-            this.state.id_recorrido = num;
-            //this.state.datos_solicitud=num;
-            console.log(this.state.id_recorrido);
-        // 
-        });
+        this.state = {
+            id_usuario: "2",
+            Home:true,
+            showEstimations:false,
+            helperPay:false,
+            Pay:false,
+            Onway:false,
+            showModalCancel:false,
+            showModalCancelAcept:false,
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+
+            },
+            Paradas:null,
+        
+            distance:0,
+            duration:0,
+    
+            Express_Estandar:{
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Express_Lujo:{
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Pool_Estandar:{
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Pool_Lujo:{
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            isNextVehicles:true,
+            routeParada1: false,
+            routeParada2: false, 
+            routeParada3:false,
+            cashPay:true,
+            creditPay:false,
+            infoVehicleTipo:"",
+            infoVehicleLlegada:"",
+            infoVehicleTarifa:0
+
+            
+
+        };
+
+   
 
     }
 
     showPay(){
+        
+
         if(this.state.showEstimations==true){
 
             this.setState({
@@ -205,31 +188,6 @@ export default class Travel2 extends Component {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
-    }
-
-    generarSolicitud = () => {
-
-     
-        usuario_latitud = this.state.myPosition.latitude;
-        usuario_longitud = this.state.myPosition.longitude;
-        usuario_solicitante = this.state.username;
-        usuario_destino_latitud = this.state.coordenadas_destino_latitud;
-        usuario_destino_longitud = this.state.coordenadas_destino_longitud;
-        datos_usuario = this.state.datos_usuario;
-        estrellas = this.state.estrellas;
-        geocoder_destino = this.state.geocoder_destino;
-        geocoder_origen = this.state.geocoder_origen;
-        this.socket.emit('usuario_solicitud', {
-            usuario_latitud, usuario_longitud, usuario_solicitante, usuario_destino_latitud, usuario_destino_longitud, datos_usuario,
-            estrellas, geocoder_destino, geocoder_origen
-        });
-
-        console.log(this.state.id_recorrido);
-
-        console.log(this.state.id_servicio);
-
-
-        //this.setState({startDisable : true})
     }
 
     async componentDidMount() {
@@ -714,7 +672,11 @@ export default class Travel2 extends Component {
                                     <Button title="Confirmar YiMi Express Estándar"
                                         style={{ width: '100%' }}
                                         type="outline" 
-                                        onPress={()=>this.generarSolicitud()}
+                                        onPress={()=>this.setState({
+                                            Onway:true,
+                                            showEstimations:false
+                                        
+                                        })}
                                         ></Button>
                                 </View>
                             :
@@ -864,7 +826,6 @@ export default class Travel2 extends Component {
                                 <View >
                                     <Button title="Confirmar YiMi Express Estándar"
                                         style={{ width: '100%' }}
-                                        onPress={() => this.generarSolicitud()}
                                         type="outline" ></Button>
                                 </View>
                         

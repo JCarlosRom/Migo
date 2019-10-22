@@ -64,30 +64,11 @@ export default class Travel extends Component {
                     },
                     error: null,
                 });
-
-                
               
             },
             (error) => this.setState({ error: error.message }),
             { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
         );
-
-          try {
-       
-            var location = await Location.reverseGeocodeAsync({
-                latitude: this.state.myPosition.latitude,
-                longitude: this.state.myPosition.longitude
-            });
-
-
-            locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
-            
-            this.setState({ location:locationStr });
-           
-        } catch (e) {
-            this.setState({ errorMessage: e });
-        }
-        console.log("Error: " + this.state.errorMessage);
 
 
 
@@ -103,7 +84,24 @@ export default class Travel extends Component {
         }
 
 
-      
+        try {
+       
+            var location = await Location.reverseGeocodeAsync({
+                latitude: this.state.myPosition.latitude,
+                longitude: this.state.myPosition.longitude
+            });
+
+       
+    
+
+            locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
+            
+            this.setState({ location:locationStr });
+           
+        } catch (e) {
+            this.setState({ errorMessage: e });
+        }
+        console.log("Error: " + this.state.errorMessage);
         // this.props.navigation.navigate("Save", {
         //     result: this.state.location,
         //     error: this.state.errorMessage,

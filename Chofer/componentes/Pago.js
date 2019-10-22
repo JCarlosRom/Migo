@@ -61,7 +61,7 @@ export default class Pago extends Component {
 
     render() {
         return (
-            <ScrollView style={{backgroundColor:"white"}}>
+            <ScrollView contentContainerStyle={styles.contentContainer}>
                 <View style={styles.container}>
                     <View style={styles.area}>
                         <View>
@@ -115,15 +115,14 @@ export default class Pago extends Component {
                     </View>
 
 
-                    <View style={{paddingTop:220}}>
 
-                        <Button
-                            title="Iniciar pago con tarjeta"
-                            type="clear"
-                            
-                        />
+                    
+                
+                    <Button style={styles.finalButton}
+                        title="Iniciar pago con tarjeta"
+                        type="clear"
                         
-                    </View>
+                    />
 
 
                    
@@ -140,7 +139,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",
         marginTop: 10,
-        flexDirection:"column"
+        height: 
     },
     row: {
         height: 10,
@@ -196,6 +195,10 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
 
     },
-
+    finalButton: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+    }
 
 });
