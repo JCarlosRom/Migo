@@ -10,15 +10,16 @@ import BottomNavigation, {
 
 
 
-export default class Pago extends Component {
+export default class viajeFinalizado extends Component {
 
 
     constructor(props) {
         super(props);
         this.state = {
             id_usuario: "2",
-            Tarifa:0,
-            Peaje:0
+            Tarifa: 0,
+            nombreUsuario:"Leonel Guardado"
+     
 
         };
 
@@ -35,14 +36,14 @@ export default class Pago extends Component {
             const Tarifa = navigation.getParam("Tarifa");
             const id_usuario = navigation.getParam("idUsuarior");
             if (flag) {
-                
+
                 this.setState({
-                    Tarifa:Tarifa,
-                    id_usuario:id_usuario
+                    Tarifa: Tarifa,
+                    id_usuario: id_usuario
                 })
             }
 
-            
+
         } catch (error) {
             console.log(error)
         }
@@ -61,7 +62,7 @@ export default class Pago extends Component {
 
     render() {
         return (
-            <ScrollView style={{backgroundColor:"white"}}>
+            <ScrollView style={{ backgroundColor: "white" }}>
                 <View style={styles.container}>
                     <View style={styles.area}>
                         <View>
@@ -96,39 +97,79 @@ export default class Pago extends Component {
                                 size={30}></Icon>
                         </View>
                     </View>
-                   
+
                     <View style={styles.area}>
                         <Text>Pago con tarjeta</Text>
                     </View>
-                   
+
                     <View style={styles.area}>
-                        
-                        <Text style={{ flex: 1 }}>Costo del viaje</Text>
-                        <View style={{ flex: 4 }}></View>
-                        <Text style={{ flex: 1 }}>${this.state.Tarifa}</Text>
+                        <View>
+                            <Text style={{fontWeight:"bold"}}>{this.state.Tarifa}MN$</Text> 
+                            <Text>La tarifa del servicio ha sido aplicada</Text>
+                        </View>
                     </View>
-                   
+
                     <View style={styles.area}>
-                        <Text style={{flex:1}}>Peaje</Text>
-                        <View style={{flex:4}}></View>
-                        <Text style={{ flex:1 }}>${this.state.Peaje}</Text>
+                        <View style={{flex:3}}>
+                            <View style={{flexDirection:"row"}}>
+                                <View>
+                                    <Icon name="user-circle" size={30}></Icon>  
+                                </View>
+                                <View style={{ paddingLeft: 10 }}>
+                                    <Text style={{ marginTop: 3, fontWeight: "bold"}}>{this.state.nombreUsuario}</Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={{flex:2}}></View>
+                        <View style={{flex:3}}>
+                            <View style={{flexDirection:"row"}}>
+                                <View>
+                                    <Text>Calificar</Text>
+                                </View>
+                                <View style={{paddingLeft:10}}>
+                                    <Icon name="chevron-right" size={15} style={{ marginTop: 3 }}></Icon>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={{paddingTop:220, backgroundColor:"white"}}>
+
+                        <View style={{ alignSelf: "center", width:280 }}>
+
+                            <Button title="Empezar el próximo viaje"></Button>
+
+                        </View>
+
+                        <View style={{ alignSelf: "center", paddingTop: 10, width: 280}}>
+
+                            <Button title="No disponible"></Button>
+
+                        </View>
+
                     </View>
 
 
-                    <View style={{paddingTop:220}}>
+                    <View style={{ paddingTop: 70, backgroundColor: "white" }}>
 
-                        <Button
-                            title="Iniciar pago con tarjeta"
-                            type="clear"
-                            
-                        />
-                        
+                        <View style={{ alignSelf: "center", width: 280 }}>
+
+                            <Button title="Finalizar el viaje" onPress={() => this.props.navigation.navigate("Home")}></Button>
+
+                        </View>
+
+
                     </View>
 
 
                    
-                
-        
+
+
+
+
+
+
+
                 </View>
 
             </ScrollView>
@@ -140,62 +181,21 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",
         marginTop: 10,
-        flexDirection:"column"
+        flexDirection: "column"
     },
     row: {
         height: 10,
         backgroundColor: "#f0f4f7"
     },
-    line: {
-        height: 2,
-        backgroundColor: "#f0f4f7"
-    },
-    block: {
-        backgroundColor: "#f0f4f7",
-        height: 190
-    },
-    title: {
-        fontSize: 20,
-        paddingBottom: 10
-    },
-    subtitle: {
-        fontSize: 15,
-        paddingLeft: 15
-    },
-    land: {
-        flex: 1,
-        paddingBottom: 30,
-        flexDirection: "row"
-    },
-    icon_close: {
-        paddingBottom: 10,
-        paddingTop: 10
-    },
+
+
     area: {
         flexDirection: "row",
         paddingLeft: 10,
         backgroundColor: "#fff",
         paddingTop: 10
     },
-    text: {
-        paddingLeft: 15,
-        fontSize: 16
-    },
-    rightArrow: {
-        paddingLeft: 190
-    },
-    containerMap: {
-        // ...StyleSheet.absoluteFillObject,
-        height: 300,
-        width: 400,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        marginTop: 10
-    },
-    map: {
-        ...StyleSheet.absoluteFillObject,
 
-    },
 
 
 });
