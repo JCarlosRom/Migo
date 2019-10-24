@@ -125,7 +125,7 @@ export default class Home extends Component {
         }
     }
 
-
+    // Asignar el orden de las paradas a los inputs
     setplaceArrival(place) {
 
 
@@ -134,30 +134,52 @@ export default class Home extends Component {
 
             if (place == "Place 1") {
 
+                if(this.state.place1==""){
 
-                this.setState({
-                    place1: varplaceArrival.toString()
-                })
-                varplaceArrival++;
+                    this.setState({
+                        place1: varplaceArrival.toString()
+                    })
+                    varplaceArrival++;
+    
+                    console.log(this.state.place1)
+                }else{
+                    alert("Número de parada ya asignada");
+                }
 
-                console.log(this.state.place1)
+
 
             } else {
                 if (place == "Place 2") {
 
-                    this.setState({
-                        place2: varplaceArrival.toString()
-                    })
-                    varplaceArrival++;
-                    console.log(this.state.place2)
+                    if(this.state.place2==""){
 
-                } else {
-                    if (place == "Place 3") {
                         this.setState({
-                            place3: varplaceArrival.toString()
+                            place2: varplaceArrival.toString()
                         })
                         varplaceArrival++;
-                        console.log(this.state.place3)
+                        console.log(this.state.place2)
+
+                    }else{
+                        alert("Número de parada ya asignada");
+                    }
+
+
+                } else {
+
+                
+                    if (place == "Place 3") {
+
+                        if(this.state.place3==""){
+
+                            this.setState({
+                                place3: varplaceArrival.toString()
+                            })
+                            varplaceArrival++;
+                            console.log(this.state.place3)
+
+                        }else{
+                            alert("Número de parada ya asignada");
+                        }
 
                     }
                 }
