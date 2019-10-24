@@ -15,6 +15,7 @@ import Travel_Integrado from "./componentes/Travel_Integrado";
 import Pago from "./componentes/Pago";
 import viajeFinalizado from "./componentes/viajeFinalizado";
 import Travel_Waze from './componentes/Travel_Waze'
+import Notificaciones from  './componentes/Notificaciones';
 
 
 const MainStack = createStackNavigator({
@@ -37,6 +38,9 @@ const MainStack = createStackNavigator({
   },
   Travel_Waze:{
     screen:Travel_Waze
+  },
+  Notificaciones:{
+    screen:Notificaciones
   }
 },
   {

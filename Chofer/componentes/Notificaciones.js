@@ -10,16 +10,14 @@ import BottomNavigation, {
 
 
 
-export default class Pago extends Component {
+export default class Notificaciones extends Component {
 
 
     constructor(props) {
         super(props);
         this.state = {
             id_usuario: null,
-            Tarifa:0,
-            Peaje:0,
-            nombreUsuario:""
+            Notificaciones:null
 
         };
 
@@ -32,16 +30,14 @@ export default class Pago extends Component {
 
         try {
             const { navigation } = this.props;
-            const flag = navigation.getParam("flag");
-            const Tarifa = navigation.getParam("Tarifa");
-            const id_usuario = navigation.getParam("id_usuario");
-            const nombreUsuario = navigation.getParam("nombreUsuario");
+            const id_chofer = navigation.getParam("id_chofer");
+            const stateConductor = navigation.getParam("stateConductor");
+       
             if (flag) {
                 
                 this.setState({
-                    Tarifa:Tarifa,
-                    id_usuario:id_usuario,
-                    nombreUsuario:nombreUsuario
+                    id_chofer:id_chofer,
+                    stateConductor:stateConductor
                 })
             }
 
@@ -58,7 +54,7 @@ export default class Pago extends Component {
 
 
     static navigationOptions = {
-        title: "Viaje finalizado"
+        title: "Notificaciones"
     };
 
      realizaPago(){
@@ -71,6 +67,12 @@ export default class Pago extends Component {
         });
     }
 
+    conectarConductor(){
+        this.setState({
+        stateConductor:!this.state.stateConductor
+        })
+    }
+
 
 
     render() {
@@ -80,10 +82,12 @@ export default class Pago extends Component {
                     <View style={styles.area}>
                         <View>
                             <Switch
+                             value={this.state.stateConductor}
+                                onChange={()=>this.conectarConductor()}
                             />
                         </View>
                         <View>
-                            <Text >Conectado</Text>
+                            <Text >{this.state.stateConductor?"Conectado":"Desconectado"}</Text>
                         </View>
                         <View style={
                             {

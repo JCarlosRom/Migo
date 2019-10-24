@@ -194,7 +194,7 @@ export default class TravelMP extends Component {
 
                      this.setState({
 
-                        Tarifa: element["out_costo_viaje"],
+                        Tarifa: parseInt(element["out_costo_viaje"], 10),
 
 
                      })
@@ -219,7 +219,19 @@ export default class TravelMP extends Component {
     }
 
    
+    terminarViaje(){
 
+           this.props.navigation.navigate("Pago",{
+            Tarifa: this.state.Tarifa,
+            id_usuario: this.state.id_usuario,
+            nombreUsuario: this.state.nombreUsuario,
+            flag:true
+        });
+    }
+
+    alert(){
+        console.log("alert");
+    }
 
   
 
@@ -546,6 +558,19 @@ export default class TravelMP extends Component {
                      
 
                     </MapView>
+                        <View>
+
+                        <View style={{paddingLeft:210, paddingBottom:20}}>
+
+                                    <Icon name="exclamation-circle"
+                                        size={30}
+                                        onPress={()=>this.alert()}    
+                                    ></Icon>
+
+                                </View>
+
+                        </View>
+
                     </View>
                     {/* Barra inferior de punto de encuentro */}
                     {this.state.aceptViaje?

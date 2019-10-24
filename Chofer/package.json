@@ -38,5 +38,11 @@
   "devDependencies": {
     "babel-preset-expo": "^6.0.0"
   },
-  "private": true
+  "private": true,
+  "name": "Chofer",
+  "version": "1.0.0",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

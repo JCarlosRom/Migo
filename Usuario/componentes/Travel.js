@@ -17,7 +17,7 @@ export default class Travel extends Component {
         super(props);
         this.state = {
             id_usuario:"2",
-            slideDistance:0,
+            slideDistance:1,
             standarSelected:false,
             luxeSelected:false,
             VanSelected:false,
@@ -51,26 +51,20 @@ export default class Travel extends Component {
   
 
     async componentDidMount() {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
 
-    
-                this.setState({
-                    myPosition:{
-                    
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    
-                    },
-                    error: null,
-                });
+        const myLocation = await Location.getCurrentPositionAsync({});
+        latitude = myLocation.coords.latitude;
+        longitude = myLocation.coords.longitude;
 
-                
-              
-            },
-            (error) => this.setState({ error: error.message }),
-            { enableHighAccuracy: true, timeout: 200000, maximumAge: 1000 },
-        );
+  
+        this.setState({
+            myPosition: {
+
+                latitude:latitude,
+                longitude:longitude
+
+            }
+        });
 
           try {
        
@@ -94,9 +88,13 @@ export default class Travel extends Component {
         try {
 
             const res = await axios.post('http://34.95.33.177:3001/get_conductores');
-            this.state.Vehicles = res.data
-            console.log(this.state.Vehicles);
 
+            this.setState({
+                Vehicles:res.data
+            })
+
+            console.log(this.state.Vehicles);
+          
         } catch (e) {
             console.log(e);
             alert("No hay conexión al web service", "Error");
@@ -505,10 +503,33 @@ export default class Travel extends Component {
                             value={this.state.slideDistance}
                             minimumValue={1}
                             maximumValue={10}
-                            step={4}
-                            onValueChange={value => this.setState({ slideDistance:value })}
+                            step={5}
+                            onValueChange={value => this.setState({ slideDistance:parseInt((value==6)? 5: value) })}
                         />
-                        <Text>Distancia: {parseInt(this.state.slideDistance)}</Text>
+                        <View style={styles.area}>
+
+                            <View style={{flex:3}}>
+
+                                <Text>1 Km</Text>
+                            
+                            </View>
+
+
+                            <View style={{ flex: 3 }}>
+
+                                <Text>5 Km</Text>
+
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+
+                                <Text>10 Km</Text>
+
+                            </View>
+                        
+
+                        </View>
+                        <Text>Distancia: {this.state.slideDistance}</Text>
         
                 </View>
                     

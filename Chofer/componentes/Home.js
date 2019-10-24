@@ -13,6 +13,7 @@ import * as Permissions from 'expo-permissions';
 
 
 
+
 export default class Home extends Component {
 
 
@@ -22,7 +23,9 @@ export default class Home extends Component {
             id_chofer: "2",
             id_usuario:"1",
             nombreUsuario:"Leonel Ortega",
-            numeroUsuario:"3121942513"
+            numeroUsuario:"3121942513",
+            myPosition:null,
+            stateConductor:false
         
         };
     
@@ -32,6 +35,8 @@ export default class Home extends Component {
 
 
     async componentDidMount() {
+
+
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
             if (status !== 'granted') {
             this.setState({
@@ -41,12 +46,11 @@ export default class Home extends Component {
 
             let location = await Location.getCurrentPositionAsync({});
 
-            console.log(location);
-
+        
             this.setState({ 
                 myPosition:{
-                    latitude: location.latitude,
-                    longitude: location.longitude
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
                 }
 
              });
@@ -100,6 +104,8 @@ export default class Home extends Component {
     static navigationOptions = {
         title: "Inicio"
     };
+
+   
     
     
   
@@ -111,15 +117,20 @@ export default class Home extends Component {
               <View style={styles.area}>
                   <View>
                     <Switch 
+                    value={this.state.stateConductor}
+                    onChange={()=>this.setState({
+                        stateConductor:!this.state.stateConductor
+                    })}
                     />
                   </View>
                   <View>
-                    <Text >Conectado</Text>
+                    <Text style={{width:100}} >{this.state.stateConductor?"Conectado":"Desconectado"}</Text>
                   </View>
                 
                     <View style={
                         {
-                            paddingLeft: 130
+                            paddingLeft: 130,
+                            paddingBottom:5
                         }
                     }>
                         <Icon name="question-circle"
@@ -127,7 +138,8 @@ export default class Home extends Component {
                     </View>
                     <View style={
                         {
-                            paddingLeft: 10
+                            paddingLeft: 10,
+                            paddingBottom:5
                         }
                     }>
                         <Icon name="cog"
@@ -136,15 +148,33 @@ export default class Home extends Component {
               </View>
               
                     <View style={styles.containerMap}>
+
+                        
+
                         <MapView
 
                             style={styles.map}
-                            region={{
-                                latitude: this.state.myPosition.latitude,
-                                longitude: this.state.myPosition.longitude,
-                                latitudeDelta: 0.0105,
-                                longitudeDelta: 0.0105,
-                            }}
+
+                              region={
+                                  this.state.myPosition!=null?
+                                    {
+                            
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                        latitudeDelta: 0.0105,
+                                        longitudeDelta: 0.0105,
+                                    }
+                                  :
+                                     {
+                            
+                                        latitude: 19.14391,
+                                        longitude: -103.3297,
+                                        latitudeDelta: 0.0105,
+                                        longitudeDelta: 0.0105,
+                                    }
+                                  
+                              }
+                        
                         >
                            
                         
@@ -154,7 +184,7 @@ export default class Home extends Component {
 
                         <View >
 
-                            <View style={{paddingLeft:180}}>
+                            <View style={{paddingLeft:210, paddingBottom:20}}>
 
                                 <Icon name="exclamation-circle"
                                     size={30}></Icon>
@@ -204,21 +234,55 @@ export default class Home extends Component {
 
 
                     </View>
-                   
-                    <View style={
-                        styles.area
-                    }>
-                        <Text style={
-                            {
-                                textAlign: 'center'
-                            }
-                        }>Solicitud de coolaboración</Text>
+                    {this.state.stateConductor?
 
-                    </View>
-                    <View style={styles.area}>
+                        <View>
                         
-                        <Icon name="user-circle"></Icon>
-                    </View>
+                            <View style={
+                                styles.area
+                            }>
+                                <Text style={
+                                    {
+                                        textAlign: 'center'
+                                    }
+                                }>Solicitud de coolaboración</Text>
+
+                            </View>
+                            <View style={styles.area}>
+                                
+                                <View style={{paddingTop:3}}>
+                                    <Icon name="user-circle" size={25}></Icon>
+                                </View>
+
+                                <View style={{paddingLeft:5}}>
+                                    <Text>{this.state.nombreUsuario}</Text>
+                                    <Text>{this.state.numeroUsuario}</Text>
+                                </View>
+
+                                <View style={{paddingLeft:20}}> 
+                                    <Button title="Aceptar"></Button>
+                                </View>
+
+                                
+                                <View style={{paddingLeft:10}}>
+                                    <Button title="Rechazar"></Button>
+                                </View>
+                            </View>
+
+
+
+
+                        </View>
+                    
+                
+                
+                    :
+                        <View style={{backgroundColor:"white"}}>
+                            <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
+
+                        </View>
+                    }
+                    
                     <View style={
                         styles.area
                     }>
@@ -242,6 +306,11 @@ export default class Home extends Component {
                         }>
                             <Text>Ver todas</Text>
                             <Icon name="chevron-right"
+                            onPress={() => this.props.navigation.navigate("Notificaciones",
+                            {
+                                id_chofer:this.state.id_chofer,
+                                stateConductor:this.state.stateConductor
+                            })} 
                             size={15}
                             style={
                                 {

@@ -16,9 +16,9 @@ export default class viajeFinalizado extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            id_usuario: "2",
+            id_usuario: null,
             Tarifa: 0,
-            nombreUsuario:"Leonel Guardado"
+            nombreUsuario:""
      
 
         };
@@ -34,12 +34,15 @@ export default class viajeFinalizado extends Component {
             const { navigation } = this.props;
             const flag = navigation.getParam("flag");
             const Tarifa = navigation.getParam("Tarifa");
-            const id_usuario = navigation.getParam("idUsuarior");
+            const id_usuario = navigation.getParam("idUsuario");
+            const nombreUsuario = navigation.getParam("nombreUsuario");
+
             if (flag) {
 
                 this.setState({
                     Tarifa: Tarifa,
-                    id_usuario: id_usuario
+                    id_usuario: id_usuario,
+                    nombreUsuario:nombreUsuario
                 })
             }
 

@@ -6,6 +6,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 import { NavigationEvents } from 'react-navigation';
+
 // import keys from "../../config/Keys";
 
 export default class Home extends Component {
@@ -192,9 +193,6 @@ export default class Home extends Component {
 
             this.state.Destinos = res.data.datos
          
-
-        
-
             //console.log(res);
 
 
@@ -508,20 +506,47 @@ export default class Home extends Component {
     };
 
 
-    DestinosFavoritosTravel(Destino){
+    async DestinosFavoritosTravel(Destino){
         
-        console.log(this.state.myPosition);
+   
 
         if(this.state.myPosition.addressInput!=""){
 
-            this.state.travelInfo.puntoPartida = this.state.myPosition;
-            this.state.travelInfo.Parada1 = Destino;
+            try {
+                
+                console.log(this.state.myPosition.addressInput)
+                console.log(Destino);
     
-            this.props.navigation.navigate("Travel2", {
-                travelInfo: this.state.travelInfo,
-                flag: true,
-                type: "Unico"
-            });
+                let puntoPartida = await Location.geocodeAsync(this.state.myPosition.addressInput);  
+                
+                let DestinoCords = await Location.geocodeAsync(Destino);
+    
+                console.log(puntoPartida);
+    
+                console.log(DestinoCords);
+                
+                if(puntoPartida.length==0 ){
+                    alert("Favor de agregar un punto de partida correcto");
+                }else{
+                    if (DestinoCords[0]["latitude"] == null || DestinoCords[0]["longitude"] == null) {
+                        alert("Favor de agregar un destino correcto");
+                    }else{
+    
+                        this.state.travelInfo.puntoPartida = this.state.myPosition;
+                        this.state.travelInfo.Parada1 = Destino;
+                
+                        this.props.navigation.navigate("Travel2", {
+                            travelInfo: this.state.travelInfo,
+                            flag: true,
+                            type: "Unico"
+                        });
+                    }
+                }
+
+            } catch (error) {
+                
+            }
+
 
         }else{
 
@@ -530,45 +555,125 @@ export default class Home extends Component {
         }
     }
 
- 
+    // Función para iniciar el viaje 
     Travel = () =>{
 
         if(this.state.showNewArrival==false){
 
-            this.state.travelInfo.puntoPartida = this.state.myPosition;
-            this.state.travelInfo.Parada1 = this.state.destination4;
+            if(this.state.destination4==""){
+                alert("Favor de agregar un destino");
+            }else{
 
-            this.props.navigation.navigate("Travel2", {
-                travelInfo: this.state.travelInfo,
-                flag: true,
-                type: "Unico"
-            });
+                this.state.travelInfo.puntoPartida = this.state.myPosition;
+                this.state.travelInfo.Parada1 = this.state.destination4;
+    
+                this.props.navigation.navigate("Travel2", {
+                    travelInfo: this.state.travelInfo,
+                    flag: true,
+                    type: "Unico"
+                });
+            }
+
 
             
 
         }else{
 
+                if(this.state.myPosition.addressInput=="" ){
+                    alert("Favor de agregar un punto de partida");
+                }else{
+                    if(this.state.destination2==""){
+                  
+                        alert("favor de agregar la parada 1")
+                    }else{
+                        if(this.state.showNewArrival2){
+
+                            if(this.state.destination3==""){
+                                    alert("Favor de agregar la parada 2");
+                            }else{
+                                if(this.state.destination4==""){
+                                    alert("Favor de agregar un destino")
+                                }else{
+
+                                    if(this.state.place1==""){
+                                        alert("Favor de asignar número de parada a la parada 1")
+                                    }else{
+                                        if(this.state.place2==""){
+                                            alert("Favor de asignar número de parada a la parada 2")
+                                        }else{
+                                            if(this.state.place3==""){
+                                                alert("Favor de asignar número de parada a la parada 3")
+                                            }else{
+                                                this.state.travelInfo.puntoPartida = this.state.myPosition;
+                                                this.state.travelInfo.Parada1 = this.state.destination2;
+                                                this.state.travelInfo.Parada2 = this.state.destination3;
+                                                this.state.travelInfo.Parada3 = this.state.destination4;
+
+                                                var Paradas = {
+                                                    Parada1: this.state.place1,
+                                                    Parada2: this.state.place2,
+                                                    Parada3: this.state.place3
+                                                }
+
+
+
+                                                this.props.navigation.navigate("Travel2", {
+                                                    travelInfo: this.state.travelInfo,
+                                                    Paradas: Paradas,
+                                                    flag: true,
+                                                    type: "Multiple"
+                                                });
+                                            }
+                                        }
+                                    }
+    
+                            
+
+                                }
+
+                            }
+                        }else{
+
+                            if(this.state.place1==""){
+                                alert("Favor de asignar número de parada a la parada 1")
+                            }else{
+                                if(this.state.place2==""){
+                                    alert("Favor de asignar número de parada a la parada 2")
+                                }else{
+                                    
+                                    if(this.state.destination4==""){
+        
+                                        this.state.travelInfo.puntoPartida = this.state.myPosition;
+                                        this.state.travelInfo.Parada1 = this.state.destination2;
+                                        this.state.travelInfo.Parada3 = this.state.destination4;
             
-            this.state.travelInfo.puntoPartida=this.state.myPosition;
-            this.state.travelInfo.Parada1 = this.state.destination2;
-            this.state.travelInfo.Parada2 = this.state.destination3;
-            this.state.travelInfo.Parada3 = this.state.destination4;
-    
-            var Paradas={
-                Parada1:this.state.place1,
-                Parada2: this.state.place2,
-                Parada3: this.state.place3
+                                        var Paradas = {
+                                            Parada1: this.state.place1,
+                                            Parada3: this.state.place3
+                                        }
+            
+            
+            
+                                        this.props.navigation.navigate("Travel2", {
+                                            travelInfo: this.state.travelInfo,
+                                            Paradas: Paradas,
+                                            flag: true,
+                                            type: "Multiple"
+                                        });
+        
+                                    }
+                                }
+                            }
+
+
+                        }
+                    }
+                }
+              
             }
-          
-    
-    
-            this.props.navigation.navigate("Travel2", {
-                travelInfo: this.state.travelInfo,
-                Paradas:Paradas,
-                flag: true,
-                type:"Multiple"
-            });
-        }
+
+
+     
         
     }
     

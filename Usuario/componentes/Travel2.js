@@ -224,9 +224,8 @@ export default class Travel2 extends Component {
             estrellas, geocoder_destino, geocoder_origen
         });
 
-        console.log(this.state.id_recorrido);
+        console.log("Web socket");
 
-        console.log(this.state.id_servicio);
 
 
         //this.setState({startDisable : true})
