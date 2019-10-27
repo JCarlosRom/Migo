@@ -1,11 +1,8 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, TextInput, Switch, ScrollView } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import BottomNavigation, {
-    FullTab
-} from 'react-native-material-bottom-navigation'
+import keys from './global';
+
 
 
 
@@ -16,11 +13,7 @@ export default class Pago extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            id_usuario: null,
-            Tarifa:0,
-            Peaje:0,
-            nombreUsuario:""
-
+          
         };
 
 
@@ -30,27 +23,7 @@ export default class Pago extends Component {
 
     async componentDidMount() {
 
-        try {
-            const { navigation } = this.props;
-            const flag = navigation.getParam("flag");
-            const Tarifa = navigation.getParam("Tarifa");
-            const id_usuario = navigation.getParam("id_usuario");
-            const nombreUsuario = navigation.getParam("nombreUsuario");
-            if (flag) {
-                
-                this.setState({
-                    Tarifa:Tarifa,
-                    id_usuario:id_usuario,
-                    nombreUsuario:nombreUsuario
-                })
-            }
-
-            console.log(this.state.id_usuario);
-
-            
-        } catch (error) {
-            console.log(error)
-        }
+    
 
     }
 
@@ -63,12 +36,7 @@ export default class Pago extends Component {
 
      realizaPago(){
 
-           this.props.navigation.navigate("viajeFinalizado",{
-            Tarifa: this.state.Tarifa,
-            id_usuario: this.state.id_usuario,
-            nombreUsuario: this.state.nombreUsuario,
-            flag:true
-        });
+        this.props.navigation.navigate("viajeFinalizado");
     }
 
 
@@ -80,22 +48,18 @@ export default class Pago extends Component {
                     <View style={styles.area}>
                         <View>
                             <Switch
+                                value={keys.stateConductor}
+                                onChange={() => this.conectChofer()}
                             />
                         </View>
                         <View>
-                            <Text >Conectado</Text>
+                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
                         </View>
+
                         <View style={
                             {
-                                paddingLeft: 120
-                            }
-                        }>
-                            <Icon name="exclamation-circle"
-                                size={30}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                paddingLeft: 10
+                                paddingLeft: 130,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="question-circle"
@@ -103,7 +67,8 @@ export default class Pago extends Component {
                         </View>
                         <View style={
                             {
-                                paddingLeft: 10
+                                paddingLeft: 10,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="cog"
@@ -119,13 +84,13 @@ export default class Pago extends Component {
                         
                         <Text style={{ flex: 2 }}>Costo del viaje</Text>
                         <View style={{ flex: 4 }}></View>
-                        <Text style={{ flex: 1 }}>${this.state.Tarifa}</Text>
+                        <Text style={{ flex: 1 }}>${keys.Tarifa}</Text>
                     </View>
                    
                     <View style={styles.area}>
                         <Text style={{flex:2}}>Peaje</Text>
                         <View style={{flex:4}}></View>
-                        <Text style={{ flex:1 }}>${this.state.Peaje}</Text>
+                        <Text style={{ flex:1 }}>${keys.Peaje}</Text>
                     </View>
 
 

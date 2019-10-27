@@ -385,11 +385,14 @@ export default class Travel_Integrado extends Component {
                                 strokeWidth={1}
                                 strokeColor="blue"
                                 onReady={result => {
-                                    this.setState({
-                                        distance: parseInt(result.distance),
-                                        duration: parseInt(result.duration)
+                                    if(result!=null){
 
-                                    })
+                                        this.setState({
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
+                                        })
+                                    }
+
 
 
                                 }}

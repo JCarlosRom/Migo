@@ -2,15 +2,10 @@ import React, { Component } from "react";
 import { View, Text, StyleSheet, TextInput, Switch, ScrollView, Slider } from "react-native";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import MapViewDirections from 'react-native-maps-directions';
-import getDirections from 'react-native-google-maps-directions';
+import { showLocation } from 'react-native-map-link'
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_Integrado extends Component {
     constructor(props) {
@@ -109,42 +104,23 @@ export default class Travel_Integrado extends Component {
     }
 
     Go = () => {
-        const data = {
-            source: {
-                latitude: this.state.myPosition.latitude,
-                longitude: this.state.myPosition.longitude
-            },
-            destination: {
-                latitude: this.state.positionUser.latitude,
-                longitude: this.state.positionUser.longitude
-            },
-            params: [
-                {
-                    key: "travelmode",
-                    value: "driving"        // may be "walking", "bicycling" or "transit" as well
-                },
-                {
-                    key: "dir_action",
-                    value: "navigate"       // this instantly initializes navigation using the given travel mode
-                }
-            ],
 
-
-        }
-
-        if (this.state.Travel == true) {
-            data.waypoints = [
-                {
-                    latitude: this.state.parada1.latitude,
-                    longitude: this.state.parada1.longitude,
-                },
-
-
-
-            ]
-        }
-
-        getDirections(data)
+        console.log("Go");
+        
+        showLocation({
+        latitude: this.state.positionUser.latitude,
+        longitude: this.state.positionUser.longitude,
+        sourceLatitude: this.state.myPosition.latitude,  // optionally specify starting location for directions
+        sourceLongitude:this.state.myPosition.longitude,  // not optional if sourceLatitude is specified
+        title: 'The White House',  // optional
+        googleForceLatLon: false,  // optionally force GoogleMaps to use the latlon for the query instead of the title
+        alwaysIncludeGoogle: true, // optional, true will always add Google Maps to iOS and open in Safari, even if app is not installed (default: false)
+        dialogTitle: 'This is the dialog Title', // optional (default: 'Open in Maps')
+        dialogMessage: 'This is the amazing dialog Message', // optional (default: 'What app would you like to use?')
+        cancelText: 'This is the cancel button text', // optional (default: 'Cancel')
+        appsWhiteList: ['waze'] // optionally you can set which apps to show (default: will show all supported apps installed on device)
+        // app: 'uber'  // optionally specify specific app to use
+    })
     }
 
     static navigationOptions = {

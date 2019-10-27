@@ -6,6 +6,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 import { NavigationEvents } from 'react-navigation';
+import keys from "./global";
 
 // import keys from "../../config/Keys";
 
@@ -15,7 +16,6 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            id_usuario: "2",
             // Arrivals
             showNewArrival: false,
             showNewArrival2: false,
@@ -186,6 +186,8 @@ export default class Home extends Component {
             }
 
         }
+
+    
 
     }
 
@@ -588,6 +590,10 @@ export default class Home extends Component {
 
                 this.state.travelInfo.puntoPartida = this.state.myPosition;
                 this.state.travelInfo.Parada1 = this.state.destination4;
+
+                keys.flag = true;
+                keys.travelInfo = this.state.travelInfo;
+                keys.type = "Unico"
     
                 this.props.navigation.navigate("Travel2", {
                     travelInfo: this.state.travelInfo,
@@ -620,6 +626,7 @@ export default class Home extends Component {
                                     if(this.state.place1==""){
                                         alert("Favor de asignar número de parada a la parada 1")
                                     }else{
+                                        
                                         if(this.state.place2==""){
                                             alert("Favor de asignar número de parada a la parada 2")
                                         }else{
@@ -637,14 +644,12 @@ export default class Home extends Component {
                                                     Parada3: this.state.place3
                                                 }
 
+                                                keys.Paradas= Paradas;
+                                                keys.flag= true;
+                                                keys.travelInfo= this.state.travelInfo;
+                                                keys.type="Multiple"
 
-
-                                                this.props.navigation.navigate("Travel2", {
-                                                    travelInfo: this.state.travelInfo,
-                                                    Paradas: Paradas,
-                                                    flag: true,
-                                                    type: "Multiple"
-                                                });
+                                                this.props.navigation.navigate("Travel2");
                                             }
                                         }
                                     }

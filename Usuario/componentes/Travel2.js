@@ -1,25 +1,33 @@
 import React, { Component } from "react";
-import { Modal, View, Text, StyleSheet, TextInput, TouchableHighlight } from "react-native";
-import { Divider, CheckBox, Button } from "react-native-elements";
+import {View, Text, StyleSheet, TextInput } from "react-native";
+import Modal from "react-native-modal";
+import { Button, ThemeConsumer } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { ScrollView } from "react-native-gesture-handler";
-import RadioForm, { RadioButton, RadioButtonInput, RadioButtonLabel } from 'react-native-simple-radio-button';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from "expo-location";
 import axios from 'axios';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js'
+import keys from "./global";
+import * as Permissions from 'expo-permissions';
 
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel2 extends Component {
     state = {
+        // Usuario
         id_usuario: "2",
         datos_usuario: 'Juan Hernandez',
         coordenadas_destino_latitud: '19.238363',
         coordenadas_destino_longitud: '-103.733399',
         datos_usuario: 'Juan Hernandez',
-        estrellas: '4.1',
+        // Chofer
+        nombreChofer:"Leonel Guardado",
+        ModeloChofer:"Dodge Attitude",
+        matriculaChofer:"FRS408A",
+        estrellasChofer: '4.1',
+        cualidadesChofer:"Habla inglés y español",
         geocoder_destino: 'soriana',
         geocoder_origen: 'rancho blanco',
         data_driver_response: null,
@@ -32,6 +40,7 @@ export default class Travel2 extends Component {
         Onway:false,
         showModalCancel:false,
         showModalCancelAcept:false,
+        location:null,
         myPosition: {
             latitude: 0,
             longitude: 0,
@@ -70,7 +79,10 @@ export default class Travel2 extends Component {
         creditPay:false,
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
-        infoVehicleTarifa:0
+        infoVehicleTarifa:0,
+        socketChofer:'',
+        socketUsuario:'', 
+        dataChofer:null
 
         
 
@@ -80,15 +92,56 @@ export default class Travel2 extends Component {
         super(props);
         this.socket = SocketIOClient('http://34.95.33.177:3001/');
         //this.sendDataDriver();
+        // Aqui se acepta el recorrido
         this.socket.on('recorrido_id_usuario', num => {
             console.log('Llego respuesta: ', num);
             this.state.id_recorrido = num;
             //this.state.datos_solicitud=num;
             console.log(this.state.id_recorrido);
-        // 
+            this.setState({
+
+            });
+            alert('EL conductor acepto tu solicitud, espera a tu chofer ');
+            // Desactivar animación 
+            this.fleet_usuario_chofer();
+        });
+
+        this.socket.on('usuario_request', num => {
+            console.log(num);
+            this.state.data_driver_response = JSON.stringify(num);
+            this.setState({
+
+            });
+            this.state.id_socket_chofer = num.id_socket;
+            alert(this.state.id_socket_chofer);
+        });
+
+        this.socket.on('seguimiento_chofer', num => {
+            console.log(num);
+            this.state.dataChofer = JSON.stringify(num);
+            
+            console.log(this.state.dataChofer);
+            
+            
         });
 
     }
+
+    fleet_usuario_chofer = () => {
+        let timer_2 = setInterval(() => {
+            this.findCurrentLocationAsync();
+            if(this.state.location!=null){
+
+                console.log('Envia datos xd');
+                console.log(this.socket.id);
+                this.socket.emit('room_usuario_chofer', { id_socket_usuario: this.socket.id, id_socket_chofer: this.state.id_socket_chofer, coordenadas_chofer: this.state.location.coords });
+            }
+
+        }, 10000);
+        this.setState({ timer_2 });
+    }
+
+  
 
     showPay(){
         if(this.state.showEstimations==true){
@@ -197,8 +250,7 @@ export default class Travel2 extends Component {
                
             });
         
-       
-            console.log(this.state.Express_Estandar);
+    
 
 
         } catch (e) {
@@ -219,206 +271,211 @@ export default class Travel2 extends Component {
         estrellas = this.state.estrellas;
         geocoder_destino = this.state.geocoder_destino;
         geocoder_origen = this.state.geocoder_origen;
+
         this.socket.emit('usuario_solicitud', {
             usuario_latitud, usuario_longitud, usuario_solicitante, usuario_destino_latitud, usuario_destino_longitud, datos_usuario,
             estrellas, geocoder_destino, geocoder_origen
         });
 
-        console.log("Web socket");
+        // this.setState({
+        //     Onway:true, 
+        //     showEstimations:false, 
+        //     Home:false
+        // })
+
+        
 
 
 
         //this.setState({startDisable : true})
     }
+    
+
+    
+    findCurrentLocationAsync = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permisos denegados por el usuario'
+            });
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        this.setState({ location });
+    };
 
     async componentDidMount() {
       
-      
-          
-        try {
-            const { navigation } = this.props;
-            const flag = navigation.getParam("flag");
-            const type = navigation.getParam("type");
-            if (flag) {
-                if(type=="Multiple"){
+    
+        if (keys.type == "Multiple") {
 
-                    const result = navigation.getParam("travelInfo");
-                    const paradas = navigation.getParam("Paradas");
-                    let primeraParada = await Location.geocodeAsync(result.puntoPartida.addressInput);
-                    let Parada1 = await Location.geocodeAsync(result.Parada1);
-                    let Parada2 = await Location.geocodeAsync(result.Parada2);
-                    let Parada3 = await Location.geocodeAsync(result.Parada3);
-    
-                    this.setState({
-                        myPosition: {
-    
-                            latitude: primeraParada[0]["latitude"],
-                            longitude: primeraParada[0]["longitude"]
-    
-                        }
-    
-                    });
-    
-                    Paradas =[]
-                    
-                    if(paradas.Parada1 == "1") { 
-    
-                        Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: paradas.Parada1 }
-                        Paradas.push(Parada1Info)
-    
-                        this.setState({
-                            routeParada1:true
-                        })
-    
-                    }else{
-    
-                        if(paradas.Parada1 == "2"){
-    
-                            Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: paradas.Parada1 } 
-                            Paradas.push(Parada2Info)
-                            this.setState({
-                                routeParada2: true
-                            })
-    
-                        }else{
-                            if (paradas.Parada1 == "3"){
-    
-                                Parada3Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: paradas.Parada1 }
-                                Paradas.push(Parada3Info)
-    
-                                this.setState({
-                                    routeParada3: true
-                                })
-                            }
-                        }
-                    }
-    
-                    if (paradas.Parada2 == "1") {
-    
-                        Parada1Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: paradas.Parada2 }
-                        Paradas.push(Parada1Info)
-                        this.setState({
-                            routeParada1: true
-                        })
-                    } else {
-    
-                        if (paradas.Parada2 == "2") {
-    
-                            Parada2Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: paradas.Parada2 }
-                            Paradas.push(Parada2Info);
-    
-                            this.setState({
-                                routeParada2: true
-                            });
-    
-                        } else {
-                            if (paradas.Parada2 == "3") {
-    
-                                Parada3Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: paradas.Parada2 }
-                                Paradas.push(Parada3Info)
-                                this.setState({
-                                    routeParada3: true
-                                })
-                            }
-                        }
-                    }
-    
-    
-                    if (paradas.Parada3 == "1") {
-    
-                        Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: paradas.Parada3 }
-                        Paradas.push(Parada1Info)
-                        this.setState({
-                            routeParada1: true
-                        })
-                    } else {
-    
-                        if (paradas.Parada3 == "2") {
-    
-                            Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: paradas.Parada3 }
-                            Paradas.push(Parada2Info)
-                            this.setState({
-                                routeParada2: true
-                            })
-                        } else {
-                            if (paradas.Parada3 == "3") {
-    
-                                Parada3Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: paradas.Parada3 }
-                                Paradas.push(Parada3Info);
-                                this.setState({
-                                    routeParada3: true
-                                })
-                            }
-                        }
-                    }
-                     
-                  
-    
+         
         
+            let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+            let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
+            let Parada2 = await Location.geocodeAsync(keys.travelInfo.Parada2);
+            let Parada3 = await Location.geocodeAsync(keys.travelInfo.Parada3);
+
+            this.setState({
+                myPosition: {
+
+                    latitude: primeraParada[0]["latitude"],
+                    longitude: primeraParada[0]["longitude"]
+
+                }
+
+            });
+
+            Paradas = []
+
+            if (keys.Paradas.Parada1 == "1") {
+
+                Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                Paradas.push(Parada1Info)
+
+                this.setState({
+                    routeParada1: true
+                })
+
+            } else {
+
+                if (keys.Paradas.Parada1 == "2") {
+
+                    Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                    Paradas.push(Parada2Info)
                     this.setState({
-                        
-                        Paradas
-                       
+                        routeParada2: true
                     })
-    
-                    console.log(this.state.Paradas);
-                }else{
 
-                    if(type=="Unico"){
+                } else {
+                    if (keys.Paradas.Parada1 == "3") {
 
-                        const result = navigation.getParam("travelInfo");
-                        let primeraParada = await Location.geocodeAsync(result.puntoPartida.addressInput);
-                        let Parada1 = await Location.geocodeAsync(result.Parada1);
-
-                        console.log(Parada1);
+                        Parada3Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                        Paradas.push(Parada3Info)
 
                         this.setState({
-                            myPosition: {
-
-                                latitude: primeraParada[0]["latitude"],
-                                longitude: primeraParada[0]["longitude"]
-
-                            }
-
-                        });
-
-                        Paradas = []
-                        
-                        Parada1Info = {
-                            latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"]
-                        }
-
-                        Paradas.push(Parada1Info)
-
-                        this.setState({
-                            routeParada1: true
+                            routeParada3: true
                         })
-
-                        this.setState({
-
-                            Paradas
-
-                        })
-
-                        console.log(this.state.Paradas);
-
-
                     }
                 }
-        
             }
 
-     
-             
+            if (keys.Paradas.Parada2 == "1") {
 
-        } catch (error) {
-            console.log(error)
+                Parada1Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                Paradas.push(Parada1Info)
+                this.setState({
+                    routeParada1: true
+                })
+            } else {
+
+                if (keys.Paradas.Parada2 == "2") {
+
+                    Parada2Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                    Paradas.push(Parada2Info);
+
+                    this.setState({
+                        routeParada2: true
+                    });
+
+                } else {
+                    if (keys.Paradas.Parada2 == "3") {
+
+                        Parada3Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                        Paradas.push(Parada3Info)
+                        this.setState({
+                            routeParada3: true
+                        })
+                    }
+                }
+            }
+
+
+            if (keys.Paradas.Parada3 == "1") {
+
+                Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                Paradas.push(Parada1Info)
+                this.setState({
+                    routeParada1: true
+                })
+            } else {
+
+                if (keys.Paradas.Parada3 == "2") {
+
+                    Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                    Paradas.push(Parada2Info)
+                    this.setState({
+                        routeParada2: true
+                    })
+                } else {
+                    if (keys.Paradas.Parada3 == "3") {
+
+                        Parada3Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                        Paradas.push(Parada3Info);
+                        this.setState({
+                            routeParada3: true
+                        })
+                    }
+                }
+            }
+
+
+
+
+            this.setState({
+
+                Paradas
+
+            })
+
+            console.log(this.state.Paradas);
+        
+        }else{
+
+            if(keys.type=="Unico"){
+
+               
+                let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+                let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
+
+                console.log(Parada1);
+
+                this.setState({
+                    myPosition: {
+
+                        latitude: primeraParada[0]["latitude"],
+                        longitude: primeraParada[0]["longitude"]
+
+                    }
+
+                });
+
+                Paradas = []
+                
+                Parada1Info = {
+                    latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"]
+                }
+
+                Paradas.push(Parada1Info)
+
+                this.setState({
+                    routeParada1: true
+                })
+
+                this.setState({
+
+                    Paradas
+
+                })
+
+                console.log(this.state.Paradas);
+
+
+            }
         }
 
-
-   
-
-    
+        
     
     }
 
@@ -483,12 +540,115 @@ export default class Travel2 extends Component {
         })
     }
 
+   
+
  
     render() {
         return (
 
             <ScrollView>
                 <View style={styles.container}>
+
+                    {/* Modal para la cancelación del servicio */}
+
+                   
+                    <View > 
+
+                        <Modal
+                            isVisible={this.state.showModalCancel}
+
+                        >   
+                            <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
+                                <View>
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
+                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop:5,
+                                    marginBottom:5
+                                
+                                }}>
+                                    <View style={{ flex:2 }}></View>
+                                    <View style={{ flex:1, paddingRight:5 }}>
+
+                                        <Button
+                                            title="Si"
+                                            onPress={() => this.setState({
+                                                showModalCancel: false,
+                                                showModalCancelAcept: true
+                                            })}
+                                        ></Button>
+                                    </View>
+
+                                    <View style={{ flex:1, paddingLeft:5 }}>
+
+                                        <Button
+                                            title="No"
+                                            onPress={() => this.setState({
+                                                showModalCancel: false
+                                            })}
+
+
+                                        ></Button>
+                                    </View>
+                                    <View style={{ flex: 2 }}></View>
+                                </View>
+                            </View>
+
+        
+                        </Modal>
+
+                    </View>
+
+                    {/* Modal para aceptar la cancelación del servicio  */}
+
+                    <View>
+
+                        <Modal
+                            isVisible={this.state.showModalCancelAcept}
+                     
+                        >
+                            <View style={{ marginTop: 22, backgroundColor:"#fff"}}>
+                                <View>
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop: 10,
+                                    paddingBottom: 10,
+                                    paddingLeft: 20,
+                                    backgroundColor: "#fff",
+                                    alignSelf: "center"
+                                }}>
+
+                                    <View style={{ marginRight: 10, width: 120 }}>
+
+                                        <Button
+                                            title="Ok"
+                                            onPress={() => this.setState({
+                                                showModalCancel: false,
+                                                showModalCancelAcept: false
+                                            })}
+                                        ></Button>
+                                    </View>
+
+
+                                </View>
+                            </View>
+                        </Modal>
+
+                    </View>
+
+
+                  
                
                      
                     
@@ -895,14 +1055,30 @@ export default class Travel2 extends Component {
 
                             <View style={styles.area}>
 
-                                <Icon color="#ff8834" name="money-bill-alt" size={25} style={{paddingLeft:10}}></Icon>
+                                <View style={{flex:1}}>
 
-                                <Text style={{paddingLeft:10}}>Efectivo</Text>
+                                    <Icon color="#ff8834" name="money-bill-alt" size={25} ></Icon>
 
-                                <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 155 }} onPress={() => this.setState({
-                                    cashPay: true,
-                                    creditPay: false
-                                })}></Icon>
+                                </View>
+
+                                <View style={{flex:4}}>
+
+                                    <Text>Efectivo</Text>
+
+                                </View>
+
+                                
+                                <View style={{flex:1}}>
+
+                                    <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
+                                        cashPay: true,
+                                        creditPay: false
+                                    })}></Icon>
+
+
+                                </View>
+
+
 
                             </View>
 
@@ -910,22 +1086,38 @@ export default class Travel2 extends Component {
 
                             <View style={styles.area}>
 
-                                <Icon color="#ff8834" name="credit-card" size={25} style={{ paddingLeft: 10 }}></Icon>
+                                <View style={{flex:1}}>
 
-                                <Text color="#ff8834" style={{paddingLeft:10}}>Tarjeta de crédito / débito </Text>
+                                    <Icon color="#ff8834" name="credit-card" size={25} ></Icon>
+
+                                </View>
+
+                                <View style={{flex:4}}>
+                                
+                                <Text color="#ff8834">Tarjeta de crédito / débito </Text>
+
+                                </View>
+
+                                <View style={{flex:1}}>
+                                    <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
+                                        cashPay: false,
+                                        creditPay: true
+                                    })}></Icon>
+
+                                </View>
+
+                            
+                            </View>
+
+                            <View style={styles.area}>
+                                <Icon color="#ff8834" name="cc-visa" size={25} ></Icon>
+
+                                <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
 
                                 <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 45 }} onPress={() => this.setState({
                                     cashPay: false,
                                     creditPay: true
                                 })}></Icon>
-
-
-                            </View>
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name="cc-visa" size={25} style={{ paddingLeft: 30 }}></Icon>
-
-                                <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
 
 
                             </View>
@@ -966,8 +1158,8 @@ export default class Travel2 extends Component {
                                 <Icon color="#ff8834" name="user-circle" size={60}></Icon>
                                 <Icon color="#ff8834" name="car" size={45}  style={{paddingLeft:10}}></Icon>
                                 <View style={{paddingLeft:120}}>
-                                    <Text>Dodge Attitude</Text>
-                                    <Text style={{fontWeight:"bold", fontSize:16}}>FRS408A</Text>
+                                    <Text>{this.state.ModeloChofer}</Text>
+                                    <Text style={{fontWeight:"bold", fontSize:16}}>{this.state.matriculaChofer}</Text>
                                     <Button color="red" title="Cancelar"
                                         onPress={() => this.setState({
                                             showModalCancel:true
@@ -978,7 +1170,7 @@ export default class Travel2 extends Component {
                             </View>
                         
                             <View style={{ alignSelf: "center", backgroundColor:"white" }}>
-                                <Text >Oscar Dario<Text>*4.8</Text> <Icon name="star"></Icon> <Text>* Habla inglés y español</Text></Text>
+                                <Text >{this.state.nombreChofer}<Text>*{this.state.estrellasChofer}</Text> <Icon name="star"></Icon> <Text>* {this.state.cualidadesChofer}</Text></Text>
                             </View>
 
                             <View style={styles.area}>
@@ -1000,101 +1192,11 @@ export default class Travel2 extends Component {
                     :
                         null
                     }
-                    {/* Modal para la cancelación del servicio */}
-                    {this.state.showModalCancel?
-                        <Modal
-                            animationType="slide"
-                            transparent={false}
-                            visible={this.state.showModalCancel}
-                            >
-                            <View style={{ marginTop: 22 }}>
-                                <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16}}>Cancelación de servicio</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft:10, marginRight:10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Recuerde que si supera x minutos después de haber solicitado</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
-                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop:15}}></Icon>
-                                
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 10,
-                                    paddingBottom: 10,
-                                    paddingLeft: 20,
-                                    backgroundColor: "#fff",
-                                    alignSelf:"center"}}>
-                                    
-                                    <View style={{ marginRight: 10, width:35 }}>
-
-                                        <Button 
-                                        title="Si"
-                                        onPress={() => this.setState({
-                                            showModalCancel: false,
-                                            showModalCancelAcept: true
-                                        })}
-                                        ></Button>
-                                    </View>
-
-                                    <View style={{ marginLeft: 5 }}>
-
-                                        <Button 
-                                        title="No"
-                                        onPress={() => this.setState({
-                                            showModalCancel: false
-                                        })}
-                                    
-                                    
-                                        ></Button>
-                                    </View>
-                                </View>
-                            </View>
-                        </Modal>
+                 
                     
-                    :
-                        null
-                    }
+                 
 
-                    {/* Modal para aceptar la cancelación del servicio */}
-                    {this.state.showModalCancelAcept?
-                    
-                    <Modal
-                        animationType="slide"
-                        transparent={false}
-                        visible={this.state.showModalCancelAcept}
-                       >
-                        <View style={{ marginTop: 22 }}>
-                            <View>
-                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
-                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
-
-                            </View>
-                            <View style={{
-                                flexDirection: "row",
-                                paddingTop: 10,
-                                paddingBottom: 10,
-                                paddingLeft: 20,
-                                backgroundColor: "#fff",
-                                alignSelf: "center"
-                            }}>
-
-                                <View style={{ marginRight: 10, width: 120 }}>
-
-                                    <Button
-                                        title="Ok"
-                                        onPress={() => this.setState({
-                                            showModalCancel: false,
-                                            showModalCancelAcept: false
-                                        })}
-                                    ></Button>
-                                </View>
-
-                             
-                            </View>
-                        </View>
-                    </Modal>
-                    :
-                        null
-                    }
+                
 
                 </View>
             
@@ -1111,35 +1213,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#f0f4f7",
         paddingBottom: 50
     },
-    row: {
-        height: 10,
-        backgroundColor: "#f0f4f7"
-    },
-    line: {
-        height: 2,
-        backgroundColor: "#f0f4f7"
-    },
-    block: {
-        backgroundColor: "#f0f4f7",
-        height: 190
-    },
-    title: {
-        fontSize: 20,
-        paddingBottom: 10
-    },
-    subtitle: {
-        fontSize: 15,
-        paddingLeft: 15
-    },
-    land: {
-        flex: 1,
-        paddingBottom: 30,
-        flexDirection: "row"
-    },
-    icon_close: {
-        paddingBottom: 10,
-        paddingTop: 10
-    },
+ 
+
+
     area: {
         flexDirection: "row",
         paddingTop: 10,
@@ -1153,14 +1229,8 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         backgroundColor: "#fff"
     },
-    text: {
-        paddingLeft: 15,
-        fontSize: 16
-    },
-    rightArrow: {
-        paddingLeft: 190
-    },
-       containerMap: {
+  
+    containerMap: {
         // ...StyleSheet.absoluteFillObject,
         height: 425,
         width: 400,
@@ -1170,4 +1240,9 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
     },
+
+    // bottonModal:{
+    //     justifyContent:"flex-end",
+    //     margin:0
+    // }
 });

@@ -29,6 +29,13 @@ export default class Travel extends Component {
                 longitude: 0,
             
             },
+            region: {
+                latitude: 0,
+                longitude: 0,
+                longitudeDelta:0,
+                latitudeDelta:0
+
+            },
             Vehicles:null,
             location:null, 
             leftVehicles:0
@@ -63,7 +70,15 @@ export default class Travel extends Component {
                 latitude:latitude,
                 longitude:longitude
 
-            }
+            },
+            region: {
+                latitude: latitude,
+                longitude: longitude,
+                longitudeDelta: 0.0105,
+                latitudeDelta: 0.0105
+
+            },
+        
         });
 
           try {
@@ -83,33 +98,37 @@ export default class Travel extends Component {
         }
         console.log("Error: " + this.state.errorMessage);
 
+        this.initGetVehicles();
+
+        this._intervalConductor = setInterval(() => {
+            
+            this.initGetVehicles();
+
+        }, 2000);
 
 
+        
+    }
+
+   
+
+    async initGetVehicles(){
         try {
 
             const res = await axios.post('http://34.95.33.177:3001/get_conductores');
 
             this.setState({
-                Vehicles:res.data
+                Vehicles: res.data
             })
 
-            console.log(this.state.Vehicles);
-          
+
+       
+
         } catch (e) {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
 
-
-      
-        // this.props.navigation.navigate("Save", {
-        //     result: this.state.location,
-        //     error: this.state.errorMessage,
-        //     flag: true
-        // });
-
-
-        
     }
 
     functionShowFavoritePlaces(){
@@ -197,8 +216,18 @@ export default class Travel extends Component {
     }
 
     
-    
     async getVehicles(typeVehicle) {
+
+        clearInterval(this._intervalConductor);
+        setInterval(() => {
+            this.getVehicles(typeVehicle)
+        }, 3000);
+        
+        
+    }
+    
+    async getVehiclesAsync(typeVehicle){
+
         try {
             //console.log(this.props.switchValue);
             const res = await axios.post('http://34.95.33.177:3001/get_conductores');
@@ -209,19 +238,19 @@ export default class Travel extends Component {
 
             })
 
-            VehiclesArray =[];
-            cont=0;
+            VehiclesArray = [];
+            cont = 0;
 
             this.state.Vehicles.forEach(Vehicles => {
-                if (Vehicles.id == typeVehicle){
+                if (Vehicles.id == typeVehicle) {
                     VehiclesArray.push(Vehicles)
                     cont++;
                 }
             });
 
             this.setState({
-                Vehicles:VehiclesArray,
-                leftVehicles:cont
+                Vehicles: VehiclesArray,
+                leftVehicles: cont
             })
 
 
@@ -231,8 +260,6 @@ export default class Travel extends Component {
             console.log(e);
             alert("No hay conexión al web service", "Error");
         }
-
-
     }
 
 
@@ -270,7 +297,19 @@ export default class Travel extends Component {
       
     };
 
-    _onMapReady = () => this.setState({ marginBottom: 0 })
+
+    onRegionChange =  async region =>{
+        latitude= region.latitude;
+        longitude = region.longitude;
+        latitudeDelta = region.latitudeDelta;
+        longitudeDelta = region.longitudeDelta;
+
+       this.setState({
+           region
+       });
+
+
+    } 
 
 
 
@@ -336,11 +375,13 @@ export default class Travel extends Component {
 
                         style={styles.map}
                         region={{
-                            latitude: this.state.myPosition.latitude,
-                            longitude: this.state.myPosition.longitude,
-                            latitudeDelta: 0.0105,
-                            longitudeDelta: 0.0105,
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta
                         }}
+
+                        onRegionChangeComplete={this.onRegionChange}
                         
                         showsUserLocation={true}
                         followsUserLocation={true}
@@ -424,60 +465,91 @@ export default class Travel extends Component {
 
                         flexDirection: "row",
                         paddingBottom: 20,
-                        paddingLeft: 80,
                         backgroundColor: "#fff"
                     }
-                    }
-             
-          >
-                    <Icon
-                        color="#ff8834"
-                        name="car-side"
-                        size={40}
-                        color={this.state.standarSelected ? "green" : "#ff8834"}
-                        onPress={()=>this.setSelectedVehicle("Car standar")}
-                        style={
-                            {
-                                marginRight:15
+                    }>
+                    
+                    <View style={{flex:1}}></View>
+
+                    <View style={{flex:1}}>
+                            <Icon
+                                color="#ff8834"
+                                name="car-side"
+                                size={35}
+                                color={this.state.standarSelected ? "green" : "#ff8834"}
+                                onPress={() => this.setSelectedVehicle("Car standar")}
+                                style={
+                                    {
+                                        marginRight: 15
+                                    }
+                                }
+                            ></Icon>
+
+                            <Text style={{ fontSize: 9 }}> Estandar</Text>
+
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+
+                        <Icon
+                            color="#ff8834"
+                            name="car"
+                            size={35}
+                            color={this.state.luxeSelected ? "green" : "#ff8834"}
+                            onPress={() => this.setSelectedVehicle("Car luxe")}
+                            style={
+                                {
+                                    marginRight: 15
+                                }
                             }
-                        }
-                    ></Icon>
-                    <Icon
-                        color="#ff8834"
-                        name="car"
-                        size={35}
-                        color={this.state.luxeSelected ? "green" : "#ff8834"}
-                        onPress={() => this.setSelectedVehicle("Car luxe")}
-                        style={
-                            {
-                                marginRight: 15
+                        ></Icon>
+                        
+                        <Text style={{ fontSize: 9 }}>De Lujo</Text>
+                    </View>
+
+
+                    <View style={{ flex: 1 }}>
+
+                        <Icon
+                            color="#ff8834"
+                            name="shuttle-van"
+                            size={35}
+                            color={this.state.VanSelected ? "green" : "#ff8834"}
+                            onPress={() => this.setSelectedVehicle("Van car")}
+                            style={
+                                {
+                                    marginRight: 15
+                                }
                             }
-                        }
-                    ></Icon>
-                    <Icon
-                        color="#ff8834"
-                        name="shuttle-van"
-                        size={35}
-                        color={this.state.VanSelected ? "green" : "#ff8834"}
-                        onPress={() => this.setSelectedVehicle("Van car")}
-                        style={
-                            {
-                                marginRight: 15
+                        ></Icon>
+
+                        <Text style={{ fontSize: 9 }}>Van</Text>
+
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                        <Icon
+            
+                            name="truck-pickup"
+                            color={this.state.TruckSelected ? "green" : "#ff8834"}
+                            size={35}
+                            onPress={() => this.setSelectedVehicle("Pick up Car")}
+                            style={
+                                {
+                                    marginRight: 15
+                                }
                             }
-                        }
-                    ></Icon>
-                    <Icon
-        
-                        name="truck-pickup"
-                        color={this.state.TruckSelected ? "green" : "#ff8834"}
-                        size={35}
-                        onPress={() => this.setSelectedVehicle("Pick up Car")}
-                        style={
-                            {
-                                marginRight: 15
-                            }
-                        }
-                    ></Icon>
+                        ></Icon>
+
+                        <Text style={{fontSize:9}}>Camioneta</Text>
+                        
+                    </View>
+
+                    <View style={{ flex: 1 }}></View>
+
+              
+                    
+                
 
                 </View>
 

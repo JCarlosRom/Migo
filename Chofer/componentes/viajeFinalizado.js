@@ -30,26 +30,8 @@ export default class viajeFinalizado extends Component {
 
     async componentDidMount() {
 
-        try {
-            const { navigation } = this.props;
-            const flag = navigation.getParam("flag");
-            const Tarifa = navigation.getParam("Tarifa");
-            const id_usuario = navigation.getParam("idUsuario");
-            const nombreUsuario = navigation.getParam("nombreUsuario");
-
-            if (flag) {
-
-                this.setState({
-                    Tarifa: Tarifa,
-                    id_usuario: id_usuario,
-                    nombreUsuario:nombreUsuario
-                })
-            }
-
-
-        } catch (error) {
-            console.log(error)
-        }
+    
+           
 
     }
 
@@ -70,22 +52,18 @@ export default class viajeFinalizado extends Component {
                     <View style={styles.area}>
                         <View>
                             <Switch
+                                value={keys.stateConductor}
+                                onChange={() => this.conectChofer()}
                             />
                         </View>
                         <View>
-                            <Text >Conectado</Text>
+                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
                         </View>
+
                         <View style={
                             {
-                                paddingLeft: 120
-                            }
-                        }>
-                            <Icon name="exclamation-circle"
-                                size={30}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                paddingLeft: 10
+                                paddingLeft: 130,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="question-circle"
@@ -93,21 +71,21 @@ export default class viajeFinalizado extends Component {
                         </View>
                         <View style={
                             {
-                                paddingLeft: 10
+                                paddingLeft: 10,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="cog"
                                 size={30}></Icon>
                         </View>
                     </View>
-
                     <View style={styles.area}>
                         <Text>Pago con tarjeta</Text>
                     </View>
 
                     <View style={styles.area}>
                         <View>
-                            <Text style={{fontWeight:"bold"}}>{this.state.Tarifa}MN$</Text> 
+                            <Text style={{fontWeight:"bold"}}>{keys.Tarifa}MN$</Text> 
                             <Text>La tarifa del servicio ha sido aplicada</Text>
                         </View>
                     </View>
@@ -119,7 +97,7 @@ export default class viajeFinalizado extends Component {
                                     <Icon name="user-circle" size={30}></Icon>  
                                 </View>
                                 <View style={{ paddingLeft: 10 }}>
-                                    <Text style={{ marginTop: 3, fontWeight: "bold"}}>{this.state.nombreUsuario}</Text>
+                                    <Text style={{ marginTop: 3, fontWeight: "bold"}}>{keys.nombreUsuario}</Text>
                                 </View>
                             </View>
                         </View>

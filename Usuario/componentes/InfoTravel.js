@@ -1,18 +1,6 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, TextInput, ScrollView, Slider } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
-import { createStackNavigator } from "react-navigation-stack";
-import { stringify } from "qs";
-import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import axios from 'axios';
-import MapViewDirections from 'react-native-maps-directions';
-
 
 
 
@@ -21,6 +9,12 @@ export default class InfoTravel extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            // Chofer info
+            nombreChofer: "Leonel Guardado",
+            ModeloChofer: "Dodge Attitude",
+            matriculaChofer: "FRS408A",
+            estrellasChofer: '4.1',
+            cualidadesChofer: "Habla inglés y español",
          
 
 
@@ -61,10 +55,14 @@ export default class InfoTravel extends Component {
     render() {
         return (
             <ScrollView contentContainerStyle={styles.contentContainer}>
-                <View styles={styles.area}>
-                    <View>
+                <View style={styles.area}>
+                    <View style={{flex:3}}>
                         <Text style={{ fontWeight: "bold", fontSize: 14 }}>A 15 min.</Text>
                         <Text style={{ fontWeight: "bold", fontSize: 14 }}>Llegada: 9:28 p.m.</Text>
+                    </View>
+                    <View style={{flex:1}}></View>
+                    <View style={{flex:2, marginRight:5}}>
+                        <Button title="Ayuda" color="red"></Button>
                     </View>
                 </View>
                 <View
@@ -80,15 +78,15 @@ export default class InfoTravel extends Component {
                     <Icon name="user-circle" size={60}></Icon>
                     <Icon name="car" size={45} style={{ paddingLeft: 10 }}></Icon>
                     <View style={{ paddingLeft: 120 }}>
-                        <Text>Dodge Attitude</Text>
-                        <Text style={{ fontWeight: "bold", fontSize: 16 }}>FRS408A</Text>
+                        <Text>{this.state.ModeloChofer}</Text>
+                        <Text style={{ fontWeight: "bold", fontSize: 16 }}>{this.state.matriculaChofer}</Text>
                    
 
                     </View>
                 </View>
 
                 <View style={{ alignSelf: "center", backgroundColor: "white" }}>
-                    <Text >Oscar Dario<Text>*4.8</Text> <Icon name="star"></Icon> <Text>* Habla inglés y español</Text></Text>
+                    <Text >{this.state.nombreChofer}<Text>*{this.state.estrellasChofer}</Text> <Icon name="star"></Icon> <Text>* {this.state.cualidadesChofer}</Text></Text>
                 </View>
 
                 <View style={styles.area}>

@@ -11,7 +11,8 @@ import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove P
 import axios from 'axios';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
-const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
+import keys from './global';
+
 export default class TravelMP extends Component {
     constructor(props) {
         super(props);
@@ -49,16 +50,7 @@ export default class TravelMP extends Component {
             },
             distance:0,
             duration:0,
-            categoriaVehiculo:1,
-            Tarifa:0,
-            nombreUsuario: "Leonel Ortega",
-            ubicacionUsuario: "Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col",
-            usuarioTelefono: "3121942513"
-         
-            
-            
-
-       
+    
 
         };
 
@@ -89,23 +81,18 @@ export default class TravelMP extends Component {
 
 
         try {
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
-                id_usuario: this.state.id_usuario
-            });
+           
 
-
+          
             this.setState({
                 positionUser: {
-                    latitude: parseFloat(res.data.datos[0]["coordenadas"].substring(0, 9)),
-                    longitude: parseFloat(res.data.datos[0]["coordenadas"].substring(10, 22)),
+                    latitude: 19.270954,
+                    longitude: -103.732714
                 }
-
-
             })
 
 
-            //console.log(res);
+        
 
 
         } catch (e) {
@@ -190,15 +177,12 @@ export default class TravelMP extends Component {
 
 
 
-                 if (element["categoria_servicio"] == this.state.categoriaVehiculo) {
+                if (element["categoria_servicio"] == keys.categoriaVehiculo) {
 
-                     this.setState({
+                    keys.Tarifa= parseInt(element["out_costo_viaje"], 10);
 
-                        Tarifa: parseInt(element["out_costo_viaje"], 10),
-
-
-                     })
-                 }
+                
+                }
        
 
 
@@ -221,12 +205,7 @@ export default class TravelMP extends Component {
    
     terminarViaje(){
 
-           this.props.navigation.navigate("Pago",{
-            Tarifa: this.state.Tarifa,
-            id_usuario: this.state.id_usuario,
-            nombreUsuario: this.state.nombreUsuario,
-            flag:true
-        });
+        this.props.navigation.navigate("Pago");
     }
 
     alert(){
@@ -242,22 +221,18 @@ export default class TravelMP extends Component {
                     <View style={styles.area}>
                         <View>
                             <Switch
+                                value={keys.stateConductor}
+                                onChange={() => this.conectChofer()}
                             />
                         </View>
                         <View>
-                            <Text >Conectado</Text>
+                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
                         </View>
+
                         <View style={
                             {
-                                paddingLeft: 120
-                            }
-                        }>
-                            <Icon name="exclamation-circle"
-                                size={30}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                paddingLeft: 10
+                                paddingLeft: 130,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="question-circle"
@@ -265,7 +240,8 @@ export default class TravelMP extends Component {
                         </View>
                         <View style={
                             {
-                                paddingLeft: 10
+                                paddingLeft: 10,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="cog"
@@ -292,7 +268,7 @@ export default class TravelMP extends Component {
                                         marginLeft: 10
                                     }
                                 }>
-                                    <Text>{this.state.nombreUsuario}</Text>
+                                    <Text>{keys.nombreUsuario}</Text>
                                 </View>
                                 <View >
                                     <Text style={{ fontWeight: "bold", marginLeft: 100 }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
@@ -306,7 +282,7 @@ export default class TravelMP extends Component {
 
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <Text style={{ marginLeft: 10 }}>{this.state.ubicacionUsuario}</Text>
+                                <Text style={{ marginLeft: 10 }}>{keys.ubicacionUsuario}</Text>
                             </View>
                         </View>
                     :
@@ -324,7 +300,7 @@ export default class TravelMP extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}>{this.state.ubicacionUsuario}</Text>
+                                    <Text style={{ marginLeft: 10 }}>{keys.ubicacionUsuario}</Text>
                                     <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -420,15 +396,20 @@ export default class TravelMP extends Component {
                                     latitude: this.state.myPosition.latitude,
                                     longitude: this.state.myPosition.longitude,
                                 }}
-                                apikey={GOOGLE_MAPS_APIKEY}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
                                 strokeColor="blue"
                                 onReady={result => {
-                                    this.setState({
-                                        distance: parseInt(result.distance),
-                                        duration: parseInt(result.duration)
+                                    if(result!=null){
 
-                                    })
+                          
+                                        this.setState({
+                                    
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
+    
+                                        })
+                                    }
 
 
                                 }}
@@ -452,7 +433,7 @@ export default class TravelMP extends Component {
                                         latitude: this.state.positionUser.latitude,
                                         longitude: this.state.positionUser.longitude,
                                     }}
-                                    apikey={GOOGLE_MAPS_APIKEY}
+                                    apikey={keys.GOOGLE_MAPS_APIKEY}
                                     strokeWidth={1}
                                     strokeColor="red"
                                     onReady={result => {
@@ -479,7 +460,7 @@ export default class TravelMP extends Component {
                                     latitude: this.state.parada1.latitude,
                                     longitude: this.state.parada1.longitude,
                                 }}
-                                apikey={GOOGLE_MAPS_APIKEY}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
                                 strokeColor="orange"
                                 onReady={result => {
@@ -506,7 +487,7 @@ export default class TravelMP extends Component {
                                     latitude: this.state.parada2.latitude,
                                     longitude: this.state.parada2.longitude,
                                 }}
-                                apikey={GOOGLE_MAPS_APIKEY}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
                                 strokeColor="green"
                                 onReady={result => {
@@ -534,7 +515,7 @@ export default class TravelMP extends Component {
                                     latitude: this.state.parada3.latitude,
                                     longitude: this.state.parada3.longitude,
                                 }}
-                                apikey={GOOGLE_MAPS_APIKEY}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
                                 strokeColor="blue"
                                 onReady={result => {
@@ -596,7 +577,7 @@ export default class TravelMP extends Component {
                                             paddingLeft: 10,
                                             paddingTop:5
                                         }
-                                    }>{this.state.nombreUsuario}</Text>
+                                    }>{keys.nombreUsuario}</Text>
 
                                 <Icon name="times"
                                 style={{ paddingLeft:10}}
@@ -622,7 +603,7 @@ export default class TravelMP extends Component {
                             <View style={styles.area}>
                                 
                                 <View style={{paddingLeft:120}}>
-                                    <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
+                                    <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
                                     <Text>soporte@migo.com</Text>
                                 </View>
 
@@ -716,7 +697,7 @@ export default class TravelMP extends Component {
                                     paddingLeft: 10,
                                     paddingTop: 5
                                 }
-                            }>{this.state.nombreUsuario}</Text>
+                            }>{keys.nombreUsuario}</Text>
 
                             <Icon name="times"
                                 style={{ paddingLeft: 10 }}
@@ -742,7 +723,7 @@ export default class TravelMP extends Component {
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
+                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
                                 <Text>soporte@migo.com</Text>
                             </View>
 
@@ -800,7 +781,7 @@ export default class TravelMP extends Component {
                                     paddingLeft: 10,
                                     paddingTop: 5
                                 }
-                            }>{this.state.nombreUsuario}</Text>
+                            }>{keys.nombreUsuario}</Text>
 
                             <Icon name="times"
                                 style={{ paddingLeft: 10 }}
@@ -826,7 +807,7 @@ export default class TravelMP extends Component {
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{this.state.usuarioTelefono}</Text>
+                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
                                 <Text>soporte@migo.com</Text>
                             </View>
 
@@ -850,7 +831,7 @@ export default class TravelMP extends Component {
                                         this.terminarViaje()
                                     }}
                                 />
-                                <Text style={{paddingLeft:25}}>${this.state.Tarifa} MXN</Text>
+                                <Text style={{paddingLeft:25}}>${keys.Tarifa} MXN</Text>
 
                             </View>
 
