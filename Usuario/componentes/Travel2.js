@@ -13,26 +13,22 @@ import keys from "./global";
 import * as Permissions from 'expo-permissions';
 
 
+
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel2 extends Component {
     state = {
-        // Usuario
-        id_usuario: "2",
-        datos_usuario: 'Juan Hernandez',
-        coordenadas_destino_latitud: '19.238363',
-        coordenadas_destino_longitud: '-103.733399',
-        datos_usuario: 'Juan Hernandez',
-        // Chofer
-        nombreChofer:"Leonel Guardado",
-        ModeloChofer:"Dodge Attitude",
-        matriculaChofer:"FRS408A",
-        estrellasChofer: '4.1',
-        cualidadesChofer:"Habla inglés y español",
-        geocoder_destino: 'soriana',
-        geocoder_origen: 'rancho blanco',
-        data_driver_response: null,
-        id_servicio: '',
-        id_recorrido: '',
+
+        myPosition: {
+            latitude: 0,
+            longitude: 0,
+
+        },
+
+        positionChofer:{
+            latitude:0,
+            longitude:0
+        },
+
         Home:true,
         showEstimations:false,
         helperPay:false,
@@ -41,12 +37,6 @@ export default class Travel2 extends Component {
         showModalCancel:false,
         showModalCancelAcept:false,
         location:null,
-        myPosition: {
-            latitude: 0,
-            longitude: 0,
-
-        },
-        Paradas:null,
     
         distance:0,
         duration:0,
@@ -80,9 +70,8 @@ export default class Travel2 extends Component {
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
         infoVehicleTarifa:0,
-        socketChofer:'',
-        socketUsuario:'', 
-        dataChofer:null
+
+ 
 
         
 
@@ -90,10 +79,11 @@ export default class Travel2 extends Component {
 
     constructor(props) {
         super(props);
-        this.socket = SocketIOClient('http://34.95.33.177:3001/');
+        keys.socket = SocketIOClient('http://192.168.0.31:3001/');
+        // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
         //this.sendDataDriver();
         // Aqui se acepta el recorrido
-        this.socket.on('recorrido_id_usuario', num => {
+        keys.socket.on('recorrido_id_usuario', num => {
             console.log('Llego respuesta: ', num);
             this.state.id_recorrido = num;
             //this.state.datos_solicitud=num;
@@ -105,24 +95,51 @@ export default class Travel2 extends Component {
             // Desactivar animación 
             this.fleet_usuario_chofer();
         });
-
-        this.socket.on('usuario_request', num => {
+        // Recepción de la información del chofer cuando se acepta la solicitud
+        keys.socket.on('conductor_sendInfo', num => {
             console.log(num);
-            this.state.data_driver_response = JSON.stringify(num);
-            this.setState({
 
-            });
-            this.state.id_socket_chofer = num.id_socket;
-            alert(this.state.id_socket_chofer);
+            keys.datos_chofer={
+                idChofer: num.datos_chofer.idChofer,
+                nombreChofer: num.datos_chofer.nombreChofer,
+                Estrellas: num.datos_chofer.Estrellas,
+                Reconocimientos: num.datos_chofer.Reconocimientos
+            }
+
+            keys.datos_vehiculo={
+                id_unidad: num.datos_vehiculo.id_unidad ,
+                modelo: num.datos_vehiculo.modelo,
+                Matricula: num.datos_vehiculo.Matricula,
+                tipoVehiculo: num.datos_vehiculo.tipoVehiculo,
+                categoriaVehiculo: num.datos_vehiculo.categoriaVehiculo,
+            }
+
+            this.setState({
+                positionChofer:{
+                    latitude:num.chofer_latitud,
+                    longitude: num.chofer_longitud
+                }
+            })
+
+            keys.id_chofer_socket = num.id_chofer_socket;
+
+    
+
+            this.setState({
+                Onway: true,
+                showEstimations: false,
+                Home: false
+            })
+
+            this.fleet_usuario_chofer();
+          
         });
 
-        this.socket.on('seguimiento_chofer', num => {
-            console.log(num);
-            this.state.dataChofer = JSON.stringify(num);
+        keys.socket.on('seguimiento_chofer', num => {
+            console.log("Coordenadas de chofer", num);
+            alert("seguimiento chofer")
             
-            console.log(this.state.dataChofer);
-            
-            
+        
         });
 
     }
@@ -132,9 +149,11 @@ export default class Travel2 extends Component {
             this.findCurrentLocationAsync();
             if(this.state.location!=null){
 
-                console.log('Envia datos xd');
-                console.log(this.socket.id);
-                this.socket.emit('room_usuario_chofer', { id_socket_usuario: this.socket.id, id_socket_chofer: this.state.id_socket_chofer, coordenadas_chofer: this.state.location.coords });
+                console.log('Envia datos de usuario a chofer');
+                console.log(keys.id_chofer_socket);
+                keys.socket.emit('room_usuario_chofer', 
+                    {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
+                coordenadas_usuario: this.state.location.coords });
             }
 
         }, 10000);
@@ -264,30 +283,19 @@ export default class Travel2 extends Component {
      
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
-        usuario_solicitante = this.state.username;
-        usuario_destino_latitud = this.state.coordenadas_destino_latitud;
-        usuario_destino_longitud = this.state.coordenadas_destino_longitud;
-        datos_usuario = this.state.datos_usuario;
-        estrellas = this.state.estrellas;
-        geocoder_destino = this.state.geocoder_destino;
-        geocoder_origen = this.state.geocoder_origen;
+        datos_usuario = keys.datos_usuario;
+        infoTravel= keys.travelInfo;
+        type= keys.type;
+        keys.id_usuario_socket= keys.socket.id;
 
-        this.socket.emit('usuario_solicitud', {
-            usuario_latitud, usuario_longitud, usuario_solicitante, usuario_destino_latitud, usuario_destino_longitud, datos_usuario,
-            estrellas, geocoder_destino, geocoder_origen
+        keys.socket.emit('usuario_solicitud', {
+            usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
+            datos_usuario: datos_usuario, infoTravel: infoTravel, type: type, 
+            id_usuario_socket: keys.id_usuario_socket
+       
         });
 
-        // this.setState({
-        //     Onway:true, 
-        //     showEstimations:false, 
-        //     Home:false
-        // })
 
-        
-
-
-
-        //this.setState({startDisable : true})
     }
     
 
@@ -307,16 +315,18 @@ export default class Travel2 extends Component {
 
     async componentDidMount() {
       
-    
+        // Validación del tipo de viaje *Viaje Múltiple*
         if (keys.type == "Multiple") {
 
          
-        
+            // Generar las coordenadas por medio del nombre de la ubicación recibida
             let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
             let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
             let Parada2 = await Location.geocodeAsync(keys.travelInfo.Parada2);
             let Parada3 = await Location.geocodeAsync(keys.travelInfo.Parada3);
 
+
+            // Asignar la posición del usuario en cuanto a su punto de partida
             this.setState({
                 myPosition: {
 
@@ -329,11 +339,12 @@ export default class Travel2 extends Component {
 
             Paradas = []
 
+
+            // Ordenamiento de las paradas con su correspondiente número de parada
             if (keys.Paradas.Parada1 == "1") {
 
                 Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
-                Paradas.push(Parada1Info)
-
+        
                 this.setState({
                     routeParada1: true
                 })
@@ -343,7 +354,7 @@ export default class Travel2 extends Component {
                 if (keys.Paradas.Parada1 == "2") {
 
                     Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
-                    Paradas.push(Parada2Info)
+                  
                     this.setState({
                         routeParada2: true
                     })
@@ -352,7 +363,6 @@ export default class Travel2 extends Component {
                     if (keys.Paradas.Parada1 == "3") {
 
                         Parada3Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
-                        Paradas.push(Parada3Info)
 
                         this.setState({
                             routeParada3: true
@@ -364,7 +374,7 @@ export default class Travel2 extends Component {
             if (keys.Paradas.Parada2 == "1") {
 
                 Parada1Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
-                Paradas.push(Parada1Info)
+
                 this.setState({
                     routeParada1: true
                 })
@@ -373,7 +383,6 @@ export default class Travel2 extends Component {
                 if (keys.Paradas.Parada2 == "2") {
 
                     Parada2Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
-                    Paradas.push(Parada2Info);
 
                     this.setState({
                         routeParada2: true
@@ -383,7 +392,7 @@ export default class Travel2 extends Component {
                     if (keys.Paradas.Parada2 == "3") {
 
                         Parada3Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
-                        Paradas.push(Parada3Info)
+
                         this.setState({
                             routeParada3: true
                         })
@@ -395,7 +404,7 @@ export default class Travel2 extends Component {
             if (keys.Paradas.Parada3 == "1") {
 
                 Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
-                Paradas.push(Parada1Info)
+
                 this.setState({
                     routeParada1: true
                 })
@@ -404,7 +413,7 @@ export default class Travel2 extends Component {
                 if (keys.Paradas.Parada3 == "2") {
 
                     Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
-                    Paradas.push(Parada2Info)
+
                     this.setState({
                         routeParada2: true
                     })
@@ -412,13 +421,19 @@ export default class Travel2 extends Component {
                     if (keys.Paradas.Parada3 == "3") {
 
                         Parada3Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
-                        Paradas.push(Parada3Info);
+
                         this.setState({
                             routeParada3: true
                         })
                     }
                 }
             }
+
+            // Anexo de las paradas al array de Paradas, ya ordenadas
+            Paradas.push(Parada1Info);
+            Paradas.push(Parada2Info);
+            Paradas.push(Parada3Info);
+
 
 
 
@@ -430,17 +445,20 @@ export default class Travel2 extends Component {
             })
 
             console.log(this.state.Paradas);
+
         
         }else{
 
-            if(keys.type=="Unico"){
+            if (keys.type =="Multiple 2 paradas"){
 
-               
+
+                // Generar las coordenadas por medio del nombre de la ubicación recibida
                 let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
                 let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
+                let Parada3 = await Location.geocodeAsync(keys.travelInfo.Parada3);
 
-                console.log(Parada1);
 
+                // Asignar la posición del usuario en cuanto a su punto de partida
                 this.setState({
                     myPosition: {
 
@@ -452,16 +470,60 @@ export default class Travel2 extends Component {
                 });
 
                 Paradas = []
-                
-                Parada1Info = {
-                    latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"]
+
+
+                // Ordenamiento de las paradas con su correspondiente número de parada
+                if (keys.Paradas.Parada1 == "1") {
+
+                    Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+
+                    this.setState({
+                        routeParada1: true
+                    })
+
+                } else {
+
+                    if (keys.Paradas.Parada1 == "2") {
+
+                        Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+
+                        this.setState({
+                            routeParada2: true
+                        })
+
+                    } 
                 }
 
-                Paradas.push(Parada1Info)
+        
 
-                this.setState({
-                    routeParada1: true
-                })
+
+                if (keys.Paradas.Parada3 == "1") {
+
+                    Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+
+                    this.setState({
+                        routeParada1: true
+                    })
+                } else {
+
+                    if (keys.Paradas.Parada3 == "2") {
+
+                        Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+
+                        this.setState({
+                            routeParada2: true
+                        })
+                    } 
+                }
+
+                // Anexo de las paradas al array de Paradas, ya ordenadas
+                Paradas.push(Parada1Info);
+                Paradas.push(Parada2Info);
+
+
+
+
+
 
                 this.setState({
 
@@ -472,7 +534,51 @@ export default class Travel2 extends Component {
                 console.log(this.state.Paradas);
 
 
+
+            }else{
+
+                if(keys.type=="Unico"){
+    
+                   
+                    let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+                    let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
+    
+                    console.log(Parada1);
+    
+                    this.setState({
+                        myPosition: {
+    
+                            latitude: primeraParada[0]["latitude"],
+                            longitude: primeraParada[0]["longitude"]
+    
+                        }
+    
+                    });
+    
+                    Paradas = []
+                    
+                    Parada1Info = {
+                        latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"]
+                    }
+    
+                    Paradas.push(Parada1Info)
+    
+                    this.setState({
+                        routeParada1: true
+                    })
+    
+                    this.setState({
+    
+                        Paradas
+    
+                    })
+    
+                    console.log(this.state.Paradas);
+    
+    
+                }
             }
+
         }
 
         
@@ -675,6 +781,21 @@ export default class Travel2 extends Component {
                             >
                                 <Icon name="map-pin" size={20} color="green"></Icon>
                             </Marker>
+
+                            {this.state.Onway?
+                                <Marker
+                                    coordinate={{
+                                        latitude: this.state.positionChofer.latitude,
+                                        longitude: this.state.positionChofer.longitude,
+                                    }}
+
+                                >
+                                    <Icon color="#ff8834" name="car" size={20} ></Icon> 
+                                </Marker>
+
+                            :
+                                null
+                            }
                           
 
                             {this.state.Paradas != null ?
@@ -1158,8 +1279,8 @@ export default class Travel2 extends Component {
                                 <Icon color="#ff8834" name="user-circle" size={60}></Icon>
                                 <Icon color="#ff8834" name="car" size={45}  style={{paddingLeft:10}}></Icon>
                                 <View style={{paddingLeft:120}}>
-                                    <Text>{this.state.ModeloChofer}</Text>
-                                    <Text style={{fontWeight:"bold", fontSize:16}}>{this.state.matriculaChofer}</Text>
+                                    <Text>{keys.datos_vehiculo.modelo}</Text>
+                                    <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
                                     <Button color="red" title="Cancelar"
                                         onPress={() => this.setState({
                                             showModalCancel:true
@@ -1170,7 +1291,7 @@ export default class Travel2 extends Component {
                             </View>
                         
                             <View style={{ alignSelf: "center", backgroundColor:"white" }}>
-                                <Text >{this.state.nombreChofer}<Text>*{this.state.estrellasChofer}</Text> <Icon name="star"></Icon> <Text>* {this.state.cualidadesChofer}</Text></Text>
+                                <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
                             </View>
 
                             <View style={styles.area}>

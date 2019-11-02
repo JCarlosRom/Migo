@@ -7,6 +7,7 @@ import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 import { NavigationEvents } from 'react-navigation';
 import keys from "./global";
+import * as Permissions from 'expo-permissions';
 
 // import keys from "../../config/Keys";
 
@@ -16,6 +17,14 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
+
+
+            myPosition:{
+                address: null,
+                addressInput: null,
+                latitude: null,
+                longitude: null
+            },
             // Arrivals
             showNewArrival: false,
             showNewArrival2: false,
@@ -48,19 +57,8 @@ export default class Home extends Component {
             flagDestino:"",
             direccion:null,
             coordinatesPuntoPartida:null,
-            myPosition: {
-                latitude: 0,
-                longitude: 0,
-                address:"",
-                addressInput:"",
-
-            },
-            travelInfo:{
-                puntoPartida:null,
-                Parada1:null,
-                Parada2:null,
-                Parada3:null
-            },
+        
+           
             checked: false
 
 
@@ -225,18 +223,22 @@ export default class Home extends Component {
             alert("No hay conexión al web service", "Error");
         }
 
-        const location = await Location.getCurrentPositionAsync({});
-        latitude = location.coords.latitude;
-        longitude = location.coords.longitude;
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permission to access location was denied',
+            });
+        }
 
-  
+        let location = await Location.getCurrentPositionAsync({});
+
+
         this.setState({
             myPosition: {
-
-                latitude:latitude,
-                longitude:longitude
-
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
             }
+
         });
 
         try {
@@ -556,14 +558,11 @@ export default class Home extends Component {
                         alert("Favor de agregar un destino correcto");
                     }else{
     
-                        this.state.travelInfo.puntoPartida = this.state.myPosition;
-                        this.state.travelInfo.Parada1 = Destino;
+                        keys.travelInfo.puntoPartida = this.state.myPosition;
+                        keys.travelInfo.Parada1 = Destino;
+                        keys.type="Unico"
                 
-                        this.props.navigation.navigate("Travel2", {
-                            travelInfo: this.state.travelInfo,
-                            flag: true,
-                            type: "Unico"
-                        });
+                        this.props.navigation.navigate("Travel2");
                     }
                 }
 
@@ -588,18 +587,14 @@ export default class Home extends Component {
                 alert("Favor de agregar un destino");
             }else{
 
-                this.state.travelInfo.puntoPartida = this.state.myPosition;
-                this.state.travelInfo.Parada1 = this.state.destination4;
+            
+                keys.travelInfo.puntoPartida = this.state.myPosition;
+                keys.travelInfo.Parada1 = this.state.destination4;
 
-                keys.flag = true;
-                keys.travelInfo = this.state.travelInfo;
+              
                 keys.type = "Unico"
     
-                this.props.navigation.navigate("Travel2", {
-                    travelInfo: this.state.travelInfo,
-                    flag: true,
-                    type: "Unico"
-                });
+                this.props.navigation.navigate("Travel2");
             }
 
 
@@ -626,17 +621,19 @@ export default class Home extends Component {
                                     if(this.state.place1==""){
                                         alert("Favor de asignar número de parada a la parada 1")
                                     }else{
-                                        
+
+                            
                                         if(this.state.place2==""){
                                             alert("Favor de asignar número de parada a la parada 2")
                                         }else{
                                             if(this.state.place3==""){
                                                 alert("Favor de asignar número de parada a la parada 3")
                                             }else{
-                                                this.state.travelInfo.puntoPartida = this.state.myPosition;
-                                                this.state.travelInfo.Parada1 = this.state.destination2;
-                                                this.state.travelInfo.Parada2 = this.state.destination3;
-                                                this.state.travelInfo.Parada3 = this.state.destination4;
+
+                                                keys.travelInfo.puntoPartida = this.state.myPosition;
+                                                keys.travelInfo.Parada1 = this.state.destination2;
+                                                keys.travelInfo.Parada2 = this.state.destination3;
+                                                keys.travelInfo.Parada3 = this.state.destination4;
 
                                                 var Paradas = {
                                                     Parada1: this.state.place1,
@@ -646,12 +643,14 @@ export default class Home extends Component {
 
                                                 keys.Paradas= Paradas;
                                                 keys.flag= true;
-                                                keys.travelInfo= this.state.travelInfo;
                                                 keys.type="Multiple"
 
                                                 this.props.navigation.navigate("Travel2");
                                             }
                                         }
+
+                                       
+                                        
                                     }
     
                             
@@ -664,30 +663,33 @@ export default class Home extends Component {
                             if(this.state.place1==""){
                                 alert("Favor de asignar número de parada a la parada 1")
                             }else{
-                                if(this.state.place2==""){
-                                    alert("Favor de asignar número de parada a la parada 2")
+                                if(this.state.place3==""){
+                                    alert("Favor de asignar número de parada a la parada 2 ")
                                 }else{
                                     
-                                    if(this.state.destination4==""){
-        
-                                        this.state.travelInfo.puntoPartida = this.state.myPosition;
-                                        this.state.travelInfo.Parada1 = this.state.destination2;
-                                        this.state.travelInfo.Parada3 = this.state.destination4;
-            
+                                    if(this.state.destination4!=""){
+
+
+                                        keys.travelInfo.puntoPartida = this.state.myPosition;
+                                        keys.travelInfo.Parada1 = this.state.destination2;
+                                        keys.travelInfo.Parada3 = this.state.destination4;
+
                                         var Paradas = {
                                             Parada1: this.state.place1,
                                             Parada3: this.state.place3
                                         }
+
+                                        keys.Paradas = Paradas;
+                                        keys.flag = true;
+                                        keys.type = "Multiple 2 paradas"
+
             
             
             
-                                        this.props.navigation.navigate("Travel2", {
-                                            travelInfo: this.state.travelInfo,
-                                            Paradas: Paradas,
-                                            flag: true,
-                                            type: "Multiple"
-                                        });
+                                        this.props.navigation.navigate("Travel2");
         
+                                    }else{
+                                        alert("¡Favor de agregar un destino!")
                                     }
                                 }
                             }
@@ -915,7 +917,7 @@ export default class Home extends Component {
                                     ref={input => this.parada1Focus = input}
                                     placeholder={this.state.hit}
                                     value={this.state.destination2}
-                                    placeholder="Agregar parada"
+                                    placeholder="Agregar parada 1"
 
                                     rightIcon={
                                         this.state.showButtonsDelete ?
@@ -982,7 +984,7 @@ export default class Home extends Component {
                                 ref={input => this.parada2Focus = input}
                                 placeholder={this.state.hit}
                                 value={this.state.destination3}
-                                placeholder="Agregar parada"
+                                placeholder="Agregar parada 2"
 
                                 rightIcon={
                                     this.state.showButtonsDelete ?

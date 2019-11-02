@@ -9,9 +9,12 @@ import {
 } from "react-navigation"; // Version can be specified in package.json
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
+import * as Location from "expo-location";
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
+import SocketIOClient from 'socket.io-client/dist/socket.io.js'
+import * as Permissions from 'expo-permissions';
 export default class Travel_Integrado extends Component {
     constructor(props) {
         super(props);
@@ -43,9 +46,7 @@ export default class Travel_Integrado extends Component {
             duration: 0,
             categoriaVehiculo: 1,
             Tarifa: 0,
-            nombreUsuario:"Leonel Ortega",
-            ubicacionUsuario:"Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col",
-            usuarioTelefono:"3121942513"
+       
 
 
 
@@ -53,57 +54,129 @@ export default class Travel_Integrado extends Component {
 
 
         };
+     
 
+        keys.socket.on('seguimiento_usuario', num => {
+            console.log('Coordenadas del usuario: ', num);
+            alert("seguimiento usuario");
+            
+            this.fleet_chofer_usuario();
+        });
 
 
     }
 
+    fleet_chofer_usuario = () => {
+        let timer_2 = setInterval(() => {
+            this.findCurrentLocationAsync();
+            if (this.state.location != null) {
+
+                console.log('Envia datos chofer a usuario');
+                console.log(keys.id_usuario_socket);
+                keys.socket.emit('room_chofer_usuario',
+                    {
+                        id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
+                        coordenadas_chofer: this.state.location.coords
+                    });
+            }
+
+        }, 10000);
+        this.setState({ timer_2 });
+    }
+
+    
+    findCurrentLocationAsync = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permisos denegados por el usuario'
+            });
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        this.setState({ location });
+    };
+
+
+    // Iniciar funciones de chófer, envio de coordenadas del chofer al ws
+    conectChofer() {
+
+
+        keys.stateConductor = !keys.stateConductor
+
+
+        if (keys.stateConductor == true) {
+
+            if (keys.id_chofer != null) {
+
+                let timer = setInterval(() => {
+
+                    this.findCurrentLocationAsync();
+
+                    if (this.state.location != null) {
+
+                        this.findCurrentLocationAsync();
+                        keys.socket.emit('coordenadas', {
+                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo, estrellas: keys.estrellas, reconocimientos: keys.reconocimientos
+                        });
+
+
+
+                    }
+
+                }, 10000);
+                this.setState({ timer });
+
+                this.setState({ startDisable: true })
+
+            } else {
+                alert("Ingrese un id para poder acceder a buscar pasajeros")
+            }
+
+        } else {
+            clearInterval(this.state.timer);
+            this.setState({ startDisable: false })
+            this.state.text = '';
+            keys.socket.emit('Exit', 'exit0');
+        }
+    }
 
 
     async componentDidMount() {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
 
-                this.setState({
-                    myPosition: {
+        let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+        let Destino = await Location.geocodeAsync(keys.travelInfo.Parada1);
 
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
+        this.setState({
+            positionUser:{
+                latitude: usuarioPosition[0]["latitude"],
+                longitude: usuarioPosition[0]["longitude"]
+            }
+        })
 
-                    },
-                    error: null,
-                });
-
-            },
-            (error) => this.setState({ error: error.message }),
-            { enableHighAccuracy: true },
-        );
-
-
-        try {
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
-                id_usuario: this.state.id_usuario
-            });
+        this.setState({
+            parada1:{
+                latitude: Destino[0]["latitude"],
+                longitude: Destino[0]["longitude"]
+            }
+        })
 
 
-            this.setState({
-                positionUser: {
-                    latitude: parseFloat(res.data.datos[0]["coordenadas"].substring(0, 9)),
-                    longitude: parseFloat(res.data.datos[0]["coordenadas"].substring(10, 22)),
-                }
+        const location = await Location.getCurrentPositionAsync({});
+        latitude = location.coords.latitude;
+        longitude = location.coords.longitude;
 
 
-            })
+        this.setState({
+            myPosition: {
 
+                latitude: latitude,
+                longitude: longitude
 
-            //console.log(res);
-
-
-        } catch (e) {
-            console.log(e);
-            alert("No hay conexión al web service", "Error");
-        }
+            }
+        });
 
 
     }
@@ -209,6 +282,7 @@ export default class Travel_Integrado extends Component {
 
 
 
+
     render() {
         return (
             <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -216,22 +290,18 @@ export default class Travel_Integrado extends Component {
                     <View style={styles.area}>
                         <View>
                             <Switch
+                                value={keys.stateConductor}
+                                onChange={() => this.conectChofer()}
                             />
                         </View>
                         <View>
-                            <Text >Conectado</Text>
+                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
                         </View>
+
                         <View style={
                             {
-                                paddingLeft: 120
-                            }
-                        }>
-                            <Icon name="exclamation-circle"
-                                size={30}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                paddingLeft: 10
+                                paddingLeft: 130,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="question-circle"
@@ -239,7 +309,8 @@ export default class Travel_Integrado extends Component {
                         </View>
                         <View style={
                             {
-                                paddingLeft: 10
+                                paddingLeft: 10,
+                                paddingBottom: 5
                             }
                         }>
                             <Icon name="cog"
@@ -266,7 +337,7 @@ export default class Travel_Integrado extends Component {
                                         marginLeft: 10
                                     }
                                 }>
-                                    <Text>{this.state.nombreUsuario}</Text>
+                                    <Text>{keys.datos_usuario.nombreUsuario}</Text>
                                 </View>
                                 <View >
                                     <Text style={{ fontWeight: "bold", marginLeft: 100 }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
@@ -280,7 +351,7 @@ export default class Travel_Integrado extends Component {
 
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <Text style={{ marginLeft: 10 }}>{this.state.ubicacionUsuario}</Text>
+                                <Text style={{ marginLeft: 10 }}>{keys.travelInfo.puntoPartida.addressInput}</Text>
                             </View>
                         </View>
                         :
@@ -298,7 +369,7 @@ export default class Travel_Integrado extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View style={{ width: 280 }}>
-                                    <Text style={{ marginLeft: 10 }}>Plaza Zentralia, Paseo de la Madrid Hurtado, 301, Residencial Valle Dorado, 28018 Colima, Col.</Text>
+                                    <Text style={{ marginLeft: 10 }}>{keys.travelInfo.Parada1}</Text>
                                     <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -369,7 +440,10 @@ export default class Travel_Integrado extends Component {
                             null
                     
                         :
-                        
+                            this.state.Travel?
+                                null
+                            :
+
                             <MapViewDirections
 
 

@@ -20,24 +20,68 @@ export default class Home extends Component {
     timer: null,
     errorMessage: null,
     location: null,
-    datos_solicitud: null,
+    nuevaSolicitud: false
+   
 
     };
 
     constructor(props) {
         super(props);
 
-        this.socket = SocketIOClient('http://34.95.33.177:3001/');
+        keys.socket = SocketIOClient('http://192.168.0.31:3001/');
+        // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
+
+
+  
         console.log('APP CONDUCTOR');
 
-        this.socket.on('conductor_request', num => {
+        // Socket para escuchar nueva solicitud de usuario a conductor y guardado de información 
+        keys.socket.on('conductor_request', num => {
             console.log('Datos emitidos por el cliente', num);
-            this.state.datos_solicitud = num;
-            console.log(this.state.datos_solicitud);
-            alert('Te llego una solicitud');
+            // this.state.datos_solicitud = num;
+
+            if(num!=null){
+    
+                keys.datos_usuario={
+                    id_usuario: num.datos_usuario.id_usuario,
+                    nombreUsuario: num.datos_usuario.nombreUsuario,
+                    CURP: num.datos_usuario.CURP,
+                    numeroTelefono: num.datos_usuario.numeroTelefono,
+                    correoElectronico: num.datos_usuario.correoElectronico
+                }
+    
+                keys.travelInfo={
+                    puntoPartida: num.infoTravel.puntoPartida,
+                    Parada1: num.infoTravel.Parada1,
+                    Parada2: num.infoTravel.Parada2,
+                    Parada3: num.infoTravel.Parada3
+                }
+    
+                keys.type= num.type;
+    
+                keys.positionUser={
+                    latitude:num.usuario_latitud,
+                    longitude: num.usuario_longitud
+                }
+
+                keys.id_usuario_socket = num.id_usuario_socket
+
+          
+
+                this.setState({
+                    nuevaSolicitud:true
+                })
+
+                console.log("Socket del usuario", keys.id_usuario_socket )
+            
+                console.log("Te llegó solicitud");
+                alert('Te llego una solicitud');
+
+            }
+            
         });
 
-        this.socket.on('recorrido_id_conductor', num => {
+        keys.socket.on('recorrido_id_conductor', num => {
             console.log('Llego respuesta: ', num);
             keys.id_recorrido = num;
             this.state.datos_solicitud=num;
@@ -45,33 +89,24 @@ export default class Home extends Component {
             this.fleet_chofer_usuario();
         });
 
-        this.socket.on('seguimiento_usuario', num => {
-            console.log('Coordenadas_usuario: ', num);
-            this.state.id_recorrido = num;
-            //this.state.datos_solicitud=num;
-            //console.log(this.state.datos_solicitud);
-        });
 
-    
-    
 
     }
 
+    // Función para transmitir las coordenadas de chofer a usuario
     fleet_chofer_usuario = () => {
         let timer_2 = setInterval(() => {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
 
-                console.log('Envia datos xd');
-                console.log(this.socket.id);
-                this.socket.emit('room_chofer_usuario', { id_socket_usuario: this.socket.id, id_socket_chofer: this.state.id_socket_chofer, coordenadas_chofer: this.state.location.coords });
+                console.log('Envia datos de chofer a usuario');
+                console.log();
+                keys.socket.emit('room_chofer_usuario', { id_usuario_socket: keys.id_usuario_socket  , id_chofer_socket: keys.id_chofer_socket, coordenadas_chofer: this.state.location.coords });
             }
 
         }, 10000);
         this.setState({ timer_2 });
     }
-
-
 
     async componentDidMount() {
 
@@ -144,7 +179,7 @@ export default class Home extends Component {
         title: "Inicio"
     };
 
-    // Iniciar funciones de chófer
+    // Iniciar funciones de chófer, envio de coordenadas del chofer al ws
     conectChofer (){
 
        
@@ -162,13 +197,13 @@ export default class Home extends Component {
                     if(this.state.location!=null){
     
                         this.findCurrentLocationAsync();
-                        this.socket.emit('coordenadas', {
+                        keys.socket.emit('coordenadas', {
                             coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
                             datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo, estrellas: keys.estrellas, reconocimientos: keys.reconocimientos
                         });
 
                         
-                        console.log(this.state.location)
+                   
                     }
     
                 }, 10000);
@@ -184,7 +219,7 @@ export default class Home extends Component {
             clearInterval(this.state.timer);
             this.setState({ startDisable: false })
             this.state.text = '';
-            this.socket.emit('Exit', 'exit0');
+            keys.socket.emit('Exit', 'exit0');
         }
     }
 
@@ -201,42 +236,45 @@ export default class Home extends Component {
         this.setState({ location });
     };
 
+    // Socket para aceptar el viaje
+
     aceptarViaje = () => {
-        console.log(this.state.datos_solicitud);
-        if (this.state.datos_solicitud.length <= 0) {
+        keys.id_chofer_socket = keys.socket.id;
+
+        console.log("Socket del chofer", keys.id_chofer_socket)
+
+        if (this.state.nuevaSolicitud==false) {
             console.log('ERROR- NO HAZ RECIBIDO SOLICITUDES PAPU XD');
             alert('No tienes solicitudes, no puedes aceptar. :c');
         } else {
-            var latitud_usuario = this.state.datos_solicitud.latitud;
-            var longitud_usuario = this.state.datos_solicitud.longitud;
-            var id_usuario = this.state.datos_solicitud.usuario;
-            var id_socket_usuario = this.state.datos_solicitud.id_socket;
-            var latitud_conductor = this.state.location.coords.latitude;
-            var longitud_conductor = this.state.location.coords.longitude;
-            var id_conductor = this.state.username;
-            var id_socket_conductor = this.socket.id;
-            var latitud_usuario_destino = this.state.datos_solicitud.longitud_usuario_destino;
-            var longitud_usuario_destino = this.state.datos_solicitud.latitud_usuario_destino;
-            var distancia_destino_usuario = this.state.datos_solicitud.distancia_destino_usuario;
-            var tiempo_viaje_destino = (distancia_destino_usuario / 30) * 60;
-            var datos_vehiculo = this.state.datos_vehiculo;
-            var datos_chofer = this.state.datos_chofer;
-            var estrellas = this.state.estrellas;
-            var reconocimientos = this.state.reconocimientos;
-            var datos_usuario = this.state.datos_solicitud.datos_usuario;
-            var estrellas_usuario = this.state.datos_solicitud.estrellas;
-            var geocoder_destino = this.state.datos_solicitud.origen_geocoder;
-            var geocoder_origen = this.state.datos_solicitud.destino_geocoder;
-            var id_unidad = this.state.id_unidad;
-            //var distancia_destino_usuario
 
-            this.socket.emit('generar_servicio', {
-                id_usuario, id_socket_usuario, latitud_usuario, longitud_usuario, id_conductor, id_socket_conductor, latitud_conductor,
-                longitud_conductor, latitud_usuario_destino, longitud_usuario_destino, distancia_destino_usuario, tiempo_viaje_destino,
-                datos_vehiculo, datos_chofer, estrellas, reconocimientos, datos_usuario, estrellas_usuario, geocoder_origen, geocoder_destino, id_unidad
+    
+
+            keys.socket.emit('chofer_accept_request', {
+                id_usuario_socket: keys.id_usuario_socket,
+                id_chofer_socket: keys.id_chofer_socket,
+                datos_vehiculo:keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
+                positionChofer: this.state.myPosition
+
             });
 
-            this.fleet_chofer_usuario();
+           if(keys.type=="Unico"){
+
+               this.props.navigation.navigate("Travel_Integrado");
+           }else{
+
+                if(keys.type=="Multiple"){
+
+                    this.props.navigation.navigate("TravelMP");
+
+                }else{
+                    if(keys.type=="Waze"){
+                        this.props.navigation.navigate("Travel_Waze");
+                    }
+                }
+
+           }
+            
         }
 
     }
@@ -318,54 +356,17 @@ export default class Home extends Component {
                             <View style={{paddingLeft:210, paddingBottom:20}}>
 
                                 <Icon name="exclamation-circle"
-                                    size={30}></Icon>
+                                    size={50}></Icon>
 
                             </View>
 
-                            <View style={{paddingLeft:90}}>
-
-                                <View style={{width:160}}>
-
-                                  <Button title="Múltiples paradas" 
-                                    onPress={() => this.props.navigation.navigate("TravelMP")} 
-                                    ></Button>
-                                
-                                </View>
-
-                            </View>
-
-
-                            <View style={{
-                                flexDirection: "row",
-                                paddingLeft: 10,
-                                paddingTop: 10}}>
-                                    
-                                <View>
-
-                                    <Button title="Viaje integrado"
-                                        onPress={() => this.props.navigation.navigate("Travel_Integrado")}
-                                    ></Button>
-
-                                </View>
-
-                                <View style={{ paddingLeft: 5 }}>
-
-                                    <Button title="Viaje Waze"
-                                        onPress={() => this.props.navigation.navigate("Travel_Waze")}
-                                    ></Button>
-
-                                </View>
-
-
-
-                            </View>
-
+                           
                         </View>
 
 
 
                     </View>
-                    {this.state.datos_solicitud!=null?
+                    {this.state.nuevaSolicitud?
 
                         <View>
                         
@@ -381,24 +382,26 @@ export default class Home extends Component {
                             </View>
                             <View style={styles.area}>
                                 
-                                <View style={{paddingTop:3}}>
+                                <View style={{flex:1}}>
                                     <Icon name="user-circle" size={25}></Icon>
                                 </View>
 
-                                <View style={{paddingLeft:5}}>
-                                    <Text>{this.state.datos_solicitud.datos_usuario}</Text>
-                                    <Text>{this.state.datos_solicitud.estrellas}</Text>
+                                <View style={{flex:3}}>
+                                    <Text>{keys.datos_usuario.nombreUsuario}</Text>
+                                    <Text>{keys.datos_usuario.numeroTelefono}</Text>
                                 </View>
 
-                                <View style={{paddingLeft:20}}> 
+                                <View style={{flex:1}}> 
                                     <Button title="Aceptar"
                                     onPress={()=>this.aceptarViaje()}
                                     ></Button>
                                 </View>
 
                                 
-                                <View style={{paddingLeft:10}}>
-                                    <Button title="Rechazar"></Button>
+                                <View style={{flex:1}}>
+                                    <Button title="Rechazar"
+                                    onPress={()=>this.rechazarViaje()}
+                                    ></Button>
                                 </View>
                             </View>
 
