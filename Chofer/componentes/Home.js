@@ -28,7 +28,7 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
 
-        keys.socket = SocketIOClient('http://192.168.0.31:3001/');
+        keys.socket = SocketIOClient('http://192.168.0.17:3001');
         // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
 
 
@@ -258,21 +258,20 @@ export default class Home extends Component {
 
             });
 
+            clearInterval(this.state.timer);
+
+            console.log(keys.type);
+
            if(keys.type=="Unico"){
 
                this.props.navigation.navigate("Travel_Integrado");
            }else{
 
-                if(keys.type=="Multiple"){
+               if (keys.type == "Multiple" || keys.type == "Multiple 2 paradas"){
 
                     this.props.navigation.navigate("TravelMP");
 
-                }else{
-                    if(keys.type=="Waze"){
-                        this.props.navigation.navigate("Travel_Waze");
-                    }
                 }
-
            }
             
         }

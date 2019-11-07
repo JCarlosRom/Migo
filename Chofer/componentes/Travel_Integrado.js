@@ -13,8 +13,8 @@ import * as Location from "expo-location";
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
-import SocketIOClient from 'socket.io-client/dist/socket.io.js'
 import * as Permissions from 'expo-permissions';
+
 export default class Travel_Integrado extends Component {
     constructor(props) {
         super(props);
@@ -46,22 +46,25 @@ export default class Travel_Integrado extends Component {
             duration: 0,
             categoriaVehiculo: 1,
             Tarifa: 0,
-       
-
-
-
-
-
-
         };
      
 
         keys.socket.on('seguimiento_usuario', num => {
-            console.log('Coordenadas del usuario: ', num);
-            alert("seguimiento usuario");
-            
-            this.fleet_chofer_usuario();
+          
+            this.setState({
+                positionUser:{
+                    latitude: num.coordenadas_usuario.latitude, 
+                    longitude:num.coordenadas_usuario.longitude
+                }
+            })
+
+         
+            console.log("Posición del usuario",this.state.positionUser);
+
+
         });
+
+        this.fleet_chofer_usuario();
 
 
     }
@@ -72,11 +75,10 @@ export default class Travel_Integrado extends Component {
             if (this.state.location != null) {
 
                 console.log('Envia datos chofer a usuario');
-                console.log(keys.id_usuario_socket);
                 keys.socket.emit('room_chofer_usuario',
                     {
                         id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
-                        coordenadas_chofer: this.state.location.coords
+                        coordenadas_chofer: {latitude:this.state.location.coords.latitude, longitude:this.state.location.coords.longitude}
                     });
             }
 

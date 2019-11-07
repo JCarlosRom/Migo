@@ -17,8 +17,6 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-
-
             myPosition:{
                 address: null,
                 addressInput: null,
@@ -73,6 +71,7 @@ export default class Home extends Component {
 
 
     }
+ 
 
     // Function to show the buttons of position of arrivals
     showPositionArrival() {
@@ -233,18 +232,10 @@ export default class Home extends Component {
         let location = await Location.getCurrentPositionAsync({});
 
 
-        this.setState({
-            myPosition: {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude
-            }
-
-        });
-
         try {
             var locationAddress = await Location.reverseGeocodeAsync({
-                latitude: this.state.myPosition.latitude,
-                longitude: this.state.myPosition.longitude
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
             });
 
 
@@ -255,15 +246,15 @@ export default class Home extends Component {
                 myPosition:{
                     address:locationAddress,
                     addressInput:locationStr,
-                    latitude: this.state.myPosition.latitude,
-                    longitude: this.state.myPosition.longitude
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
                 }
             })
 
         } catch (e) {
-            this.setState({ errorMessage: e });
+           console.log(e)
         }
-        console.log("Error: " + this.state.errorMessage);
+
          
     
     }

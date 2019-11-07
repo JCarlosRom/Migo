@@ -79,7 +79,7 @@ export default class Travel2 extends Component {
 
     constructor(props) {
         super(props);
-        keys.socket = SocketIOClient('http://192.168.0.31:3001/');
+        keys.socket = SocketIOClient('http://192.168.0.17:3001/');
         // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
         //this.sendDataDriver();
         // Aqui se acepta el recorrido
@@ -136,8 +136,19 @@ export default class Travel2 extends Component {
         });
 
         keys.socket.on('seguimiento_chofer', num => {
-            console.log("Coordenadas de chofer", num);
-            alert("seguimiento chofer")
+   
+
+            this.setState({
+                positionChofer:{
+                    latitude: num.coordenadas_chofer.latitude, 
+                    longitude: num.coordenadas_chofer.longitude
+                }
+            })
+
+
+
+            console.log("Posición del chófer",this.state.positionChofer);
+          
             
         
         });
@@ -149,11 +160,9 @@ export default class Travel2 extends Component {
             this.findCurrentLocationAsync();
             if(this.state.location!=null){
 
-                console.log('Envia datos de usuario a chofer');
-                console.log(keys.id_chofer_socket);
                 keys.socket.emit('room_usuario_chofer', 
                     {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
-                coordenadas_usuario: this.state.location.coords });
+                        coordenadas_usuario: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude } });
             }
 
         }, 10000);
