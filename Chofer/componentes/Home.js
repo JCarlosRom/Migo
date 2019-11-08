@@ -37,7 +37,7 @@ export default class Home extends Component {
 
         // Socket para escuchar nueva solicitud de usuario a conductor y guardado de información 
         keys.socket.on('conductor_request', num => {
-            console.log('Datos emitidos por el cliente', num);
+    
             // this.state.datos_solicitud = num;
 
             if(num!=null){
@@ -50,11 +50,13 @@ export default class Home extends Component {
                     correoElectronico: num.datos_usuario.correoElectronico
                 }
     
+
+
                 keys.travelInfo={
                     puntoPartida: num.infoTravel.puntoPartida,
-                    Parada1: num.infoTravel.Parada1,
-                    Parada2: num.infoTravel.Parada2,
-                    Parada3: num.infoTravel.Parada3
+                    Parada1: num.Paradas[0],
+                    Parada2: num.Paradas[1],
+                    Parada3: num.Paradas[2]
                 }
     
                 keys.type= num.type;
@@ -66,13 +68,14 @@ export default class Home extends Component {
 
                 keys.id_usuario_socket = num.id_usuario_socket
 
+     
+
           
 
                 this.setState({
                     nuevaSolicitud:true
                 })
 
-                console.log("Socket del usuario", keys.id_usuario_socket )
             
                 console.log("Te llegó solicitud");
                 alert('Te llego una solicitud');
@@ -100,7 +103,6 @@ export default class Home extends Component {
             if (this.state.location != null) {
 
                 console.log('Envia datos de chofer a usuario');
-                console.log();
                 keys.socket.emit('room_chofer_usuario', { id_usuario_socket: keys.id_usuario_socket  , id_chofer_socket: keys.id_chofer_socket, coordenadas_chofer: this.state.location.coords });
             }
 
@@ -255,24 +257,27 @@ export default class Home extends Component {
                 id_chofer_socket: keys.id_chofer_socket,
                 datos_vehiculo:keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
                 positionChofer: this.state.myPosition
-
             });
+
+       
 
             clearInterval(this.state.timer);
 
-            console.log(keys.type);
+            if(keys.type=="Unico"){
+            
+                this.props.navigation.navigate("Travel_Integrado");
+            
+            }else{
 
-           if(keys.type=="Unico"){
+                console.log("Paradas info Home");
 
-               this.props.navigation.navigate("Travel_Integrado");
-           }else{
+                console.log(keys.travelInfo);
 
-               if (keys.type == "Multiple" || keys.type == "Multiple 2 paradas"){
+                this.props.navigation.navigate("TravelMP");
+            }
 
-                    this.props.navigation.navigate("TravelMP");
-
-                }
-           }
+        
+         
             
         }
 

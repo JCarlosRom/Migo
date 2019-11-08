@@ -297,9 +297,10 @@ export default class Travel2 extends Component {
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
 
+
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
-            datos_usuario: datos_usuario, infoTravel: infoTravel, type: type, 
+            datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
             id_usuario_socket: keys.id_usuario_socket
        
         });
@@ -323,6 +324,7 @@ export default class Travel2 extends Component {
     };
 
     async componentDidMount() {
+
       
         // Validación del tipo de viaje *Viaje Múltiple*
         if (keys.type == "Multiple") {
@@ -333,6 +335,8 @@ export default class Travel2 extends Component {
             let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
             let Parada2 = await Location.geocodeAsync(keys.travelInfo.Parada2);
             let Parada3 = await Location.geocodeAsync(keys.travelInfo.Parada3);
+
+          
 
 
             // Asignar la posición del usuario en cuanto a su punto de partida
@@ -352,7 +356,7 @@ export default class Travel2 extends Component {
             // Ordenamiento de las paradas con su correspondiente número de parada
             if (keys.Paradas.Parada1 == "1") {
 
-                Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1, Direccion: keys.travelInfo.Parada1  }
         
                 this.setState({
                     routeParada1: true
@@ -362,7 +366,7 @@ export default class Travel2 extends Component {
 
                 if (keys.Paradas.Parada1 == "2") {
 
-                    Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                    Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1, Direccion: keys.travelInfo.Parada1 }
                   
                     this.setState({
                         routeParada2: true
@@ -371,7 +375,7 @@ export default class Travel2 extends Component {
                 } else {
                     if (keys.Paradas.Parada1 == "3") {
 
-                        Parada3Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                        Parada3Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1, Direccion: keys.travelInfo.Parada1 }
 
                         this.setState({
                             routeParada3: true
@@ -382,7 +386,7 @@ export default class Travel2 extends Component {
 
             if (keys.Paradas.Parada2 == "1") {
 
-                Parada1Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                Parada1Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2, Direccion: keys.travelInfo.Parada2 }
 
                 this.setState({
                     routeParada1: true
@@ -391,7 +395,7 @@ export default class Travel2 extends Component {
 
                 if (keys.Paradas.Parada2 == "2") {
 
-                    Parada2Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                    Parada2Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2, Direccion: keys.travelInfo.Parada2 }
 
                     this.setState({
                         routeParada2: true
@@ -400,7 +404,7 @@ export default class Travel2 extends Component {
                 } else {
                     if (keys.Paradas.Parada2 == "3") {
 
-                        Parada3Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2 }
+                        Parada3Info = { latitude: Parada2[0]["latitude"], longitude: Parada2[0]["longitude"], numParada: keys.Paradas.Parada2, Direccion: keys.travelInfo.Parada2 }
 
                         this.setState({
                             routeParada3: true
@@ -412,7 +416,7 @@ export default class Travel2 extends Component {
 
             if (keys.Paradas.Parada3 == "1") {
 
-                Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3, Direccion: keys.travelInfo.Parada3 }
 
                 this.setState({
                     routeParada1: true
@@ -421,7 +425,7 @@ export default class Travel2 extends Component {
 
                 if (keys.Paradas.Parada3 == "2") {
 
-                    Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                    Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3, Direccion: keys.travelInfo.Parada3 }
 
                     this.setState({
                         routeParada2: true
@@ -429,7 +433,7 @@ export default class Travel2 extends Component {
                 } else {
                     if (keys.Paradas.Parada3 == "3") {
 
-                        Parada3Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                        Parada3Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3, Direccion: keys.travelInfo.Parada3 }
 
                         this.setState({
                             routeParada3: true
@@ -444,16 +448,11 @@ export default class Travel2 extends Component {
             Paradas.push(Parada3Info);
 
 
-
-
-
             this.setState({
 
                 Paradas
 
             })
-
-            console.log(this.state.Paradas);
 
         
         }else{
@@ -484,7 +483,7 @@ export default class Travel2 extends Component {
                 // Ordenamiento de las paradas con su correspondiente número de parada
                 if (keys.Paradas.Parada1 == "1") {
 
-                    Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                    Parada1Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1, Direccion: keys.travelInfo.Parada1 }
 
                     this.setState({
                         routeParada1: true
@@ -494,7 +493,7 @@ export default class Travel2 extends Component {
 
                     if (keys.Paradas.Parada1 == "2") {
 
-                        Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1 }
+                        Parada2Info = { latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], numParada: keys.Paradas.Parada1, Direccion: keys.travelInfo.Parada1 }
 
                         this.setState({
                             routeParada2: true
@@ -508,7 +507,7 @@ export default class Travel2 extends Component {
 
                 if (keys.Paradas.Parada3 == "1") {
 
-                    Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                    Parada1Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3, Direccion: keys.travelInfo.Parada3 }
 
                     this.setState({
                         routeParada1: true
@@ -517,7 +516,7 @@ export default class Travel2 extends Component {
 
                     if (keys.Paradas.Parada3 == "2") {
 
-                        Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3 }
+                        Parada2Info = { latitude: Parada3[0]["latitude"], longitude: Parada3[0]["longitude"], numParada: keys.Paradas.Parada3, Direccion: keys.travelInfo.Parada1 }
 
                         this.setState({
                             routeParada2: true
@@ -530,19 +529,11 @@ export default class Travel2 extends Component {
                 Paradas.push(Parada2Info);
 
 
-
-
-
-
                 this.setState({
 
                     Paradas
 
                 })
-
-                console.log(this.state.Paradas);
-
-
 
             }else{
 
@@ -552,7 +543,7 @@ export default class Travel2 extends Component {
                     let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
                     let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
     
-                    console.log(Parada1);
+          
     
                     this.setState({
                         myPosition: {
@@ -567,7 +558,7 @@ export default class Travel2 extends Component {
                     Paradas = []
                     
                     Parada1Info = {
-                        latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"]
+                        latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"],  Direccion: keys.travelInfo.Parada1
                     }
     
                     Paradas.push(Parada1Info)
@@ -582,14 +573,17 @@ export default class Travel2 extends Component {
     
                     })
     
-                    console.log(this.state.Paradas);
     
     
                 }
             }
 
+            
         }
+        
+        keys.Paradas= this.state.Paradas;
 
+     
         
     
     }

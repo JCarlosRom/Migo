@@ -17,6 +17,7 @@ import * as Permissions from 'expo-permissions';
 
 export default class Travel_Integrado extends Component {
     constructor(props) {
+     
         super(props);
         this.state = {
             id_usuario: "2",
@@ -35,8 +36,8 @@ export default class Travel_Integrado extends Component {
             latitude: 19.273247,
             longitude: -103.715795,
             parada1: {
-                latitude: 19.264983,
-                longitude: -103.713446,
+                latitude: null,
+                longitude: null,
             },
             myPosition: {
                 latitude: 0,
@@ -46,6 +47,7 @@ export default class Travel_Integrado extends Component {
             duration: 0,
             categoriaVehiculo: 1,
             Tarifa: 0,
+            timer_2:null
         };
      
 
@@ -70,7 +72,7 @@ export default class Travel_Integrado extends Component {
     }
 
     fleet_chofer_usuario = () => {
-        let timer_2 = setInterval(() => {
+        let intervalBroadcastCoordinates = setInterval(() => {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
 
@@ -83,7 +85,7 @@ export default class Travel_Integrado extends Component {
             }
 
         }, 10000);
-        this.setState({ timer_2 });
+        keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
     }
 
     
@@ -148,37 +150,47 @@ export default class Travel_Integrado extends Component {
 
     async componentDidMount() {
 
-        let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
-        let Destino = await Location.geocodeAsync(keys.travelInfo.Parada1);
+        console.log("Travel integrado");
+        console.log(keys.travelInfo);
+        
 
-        this.setState({
-            positionUser:{
-                latitude: usuarioPosition[0]["latitude"],
-                longitude: usuarioPosition[0]["longitude"]
-            }
-        })
+        if (keys.type=="Unico"){
+    
+            let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+   
+    
+            this.setState({
+                positionUser:{
+                    latitude: usuarioPosition[0]["latitude"],
+                    longitude: usuarioPosition[0]["longitude"]
+                }
+            })
+    
+            this.setState({
+                parada1:{
+                    latitude: keys.travelInfo.Parada1.latitude,
+                    longitude: keys.travelInfo.Parada1.longitude
+                }
+            })
 
-        this.setState({
-            parada1:{
-                latitude: Destino[0]["latitude"],
-                longitude: Destino[0]["longitude"]
-            }
-        })
-
-
-        const location = await Location.getCurrentPositionAsync({});
-        latitude = location.coords.latitude;
-        longitude = location.coords.longitude;
-
-
-        this.setState({
-            myPosition: {
-
-                latitude: latitude,
-                longitude: longitude
-
-            }
-        });
+            console.log(this.state.parada1);
+    
+    
+            const location = await Location.getCurrentPositionAsync({});
+            latitude = location.coords.latitude;
+            longitude = location.coords.longitude;
+    
+    
+            this.setState({
+                myPosition: {
+    
+                    latitude: latitude,
+                    longitude: longitude
+    
+                }
+            });
+            
+        }
 
 
     }
@@ -371,7 +383,7 @@ export default class Travel_Integrado extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View style={{ width: 280 }}>
-                                    <Text style={{ marginLeft: 10 }}>{keys.travelInfo.Parada1}</Text>
+                                    <Text style={{ marginLeft: 10 }}>{keys.travelInfo.Parada1.Direccion}</Text>
                                     <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>

@@ -203,6 +203,8 @@ export default class Home extends Component {
 
 
     async componentDidMount() {
+
+        console.log(keys.travelInfo);
      
 
         // Método para consultar destinos

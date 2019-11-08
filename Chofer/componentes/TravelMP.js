@@ -50,6 +50,9 @@ export default class TravelMP extends Component {
             },
             distance:0,
             duration:0,
+            routeParada1: false,
+            routeParada2: false,
+            routeParada3: false,
     
 
         };
@@ -86,8 +89,8 @@ export default class TravelMP extends Component {
           
             this.setState({
                 positionUser: {
-                    latitude: 19.270954,
-                    longitude: -103.732714
+                    latitude: keys.travelInfo.puntoPartida.latitude,
+                    longitude: keys.travelInfo.puntoPartida.longitude
                 }
             })
 
@@ -100,6 +103,27 @@ export default class TravelMP extends Component {
             alert("No hay conexión al web service", "Error");
         }
 
+        Paradas =[];
+
+
+        Paradas.push(keys.travelInfo.Parada1)
+        Paradas.push(keys.travelInfo.Parada2)
+        Paradas.push(keys.travelInfo.Parada3)
+
+      
+
+        this.setState({
+            routeParada1:true,
+            routeParada2:true,
+            routeParada3:true
+        })
+
+        
+        this.setState({
+            Paradas
+        })
+        
+        console.log("Paradas Travel MP",this.state.Paradas);
         
     }
 
@@ -344,197 +368,151 @@ export default class TravelMP extends Component {
                             <Icon name="map-pin" size={20} color="green"></Icon>
                         </Marker>
 
-                        {this.state.showMapDirections?
-                            <View>
-                                {/* Ubicación del destino 1 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada1.latitude,
-                                        longitude: this.state.parada1.longitude,
-                                    }}
+                        {   
+                            this.state.Paradas!=null?
 
-                                >
-                                    <Icon name="map-pin" size={20} color="orange"></Icon>
-                                </Marker>
-                                {/* Ubicación del destino 2 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada2.latitude,
-                                        longitude: this.state.parada2.longitude,
-                                    }}
+                                this.state.Paradas.map(marker => (
 
-                                >
-                                    <Icon name="map-pin" size={20} color="orange"></Icon>
-                                </Marker>
-                                {/* Ubicación del destino 3 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada3.latitude,
-                                        longitude: this.state.parada3.longitude,
-                                    }}
+                                    <Marker
+                                        key={marker.numParada ? marker.numParada : "key"}
+                                        coordinate={{
+                                            latitude: marker.latitude,
+                                            longitude: marker.longitude
+                                        }}
 
-                                >
-                                    <Icon name="map-pin" size={20} color="red"></Icon>
-                                </Marker>
+                                    >
+                                        <Icon name="map-pin" size={20} color="orange"></Icon>
 
-                            </View>
-                    
-                        :
-                            null
-                        }
+                                    </Marker>
+                                ))
+                            :
+
+                                null
+                            
+                       
+                        } 
                         
                  
-
-                            <MapViewDirections
-
-
-                                destination={{
-                                    latitude: this.state.positionUser.latitude,
-                                    longitude: this.state.positionUser.longitude,
-                                }}
-                                origin={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="blue"
-                                onReady={result => {
-                                    if(result!=null){
-
-                          
-                                        this.setState({
-                                    
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
-    
-                                        })
-                                    }
+                        {/* Primer Parada */}
+                        <MapViewDirections
 
 
-                                }}
+                            origin={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+                            destination={{
+                                latitude: this.state.positionUser.latitude,
+                                longitude: this.state.positionUser.longitude,
+                            }}
+                            apikey={keys.GOOGLE_MAPS_APIKEY}
+                            strokeWidth={1}
+                            strokeColor="blue"
+                            onReady={result => {
+                                if(result!=null){
 
-                            />
-                             
-
-                            {this.state.showMapDirections ?
-                            <View>
-
-                                
-                                <MapViewDirections
-
-
-                                    origin={{
-                                        latitude: this.state.myPosition.latitude,
-                                        longitude: this.state.myPosition.longitude,
-                                    }}
-
-                                    destination={{
-                                        latitude: this.state.positionUser.latitude,
-                                        longitude: this.state.positionUser.longitude,
-                                    }}
-                                    apikey={keys.GOOGLE_MAPS_APIKEY}
-                                    strokeWidth={1}
-                                    strokeColor="red"
-                                    onReady={result => {
-                                        this.setState({
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
-
-                                        })
-
-
-                                    }}
-
-                                />
                         
-                            <MapViewDirections
-
-
-                                origin={{
-                                    latitude: this.state.positionUser.latitude,
-                                    longitude: this.state.positionUser.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada1.latitude,
-                                    longitude: this.state.parada1.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="orange"
-                                onReady={result => {
                                     this.setState({
-                                        distance: this.state.distance+parseInt(result.distance),
-                                        duration: this.state.duration+parseInt(result.duration)
+                                
+                                        distance: parseInt(result.distance),
+                                        duration: parseInt(result.duration)
 
                                     })
+                                }
 
 
-                                }}
+                            }}
 
-                            />
-
-                            <MapViewDirections
-
-
-                                origin={{
-                                    latitude: this.state.parada1.latitude,
-                                    longitude: this.state.parada1.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada2.latitude,
-                                    longitude: this.state.parada2.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="green"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: this.state.distance + parseInt(result.distance),
-                                        duration: this.state.duration + parseInt(result.duration)
-
-                                    })
-
-
-                                }}
-
-                            />
-
-
-                            <MapViewDirections
-
-
-                                origin={{
-                                    latitude: this.state.parada2.latitude,
-                                    longitude: this.state.parada2.longitude,
-                                }}
-
-                                destination={{
-                                    latitude: this.state.parada3.latitude,
-                                    longitude: this.state.parada3.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="blue"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: this.state.distance + parseInt(result.distance),
-                                        duration: this.state.duration + parseInt(result.duration)
-
-                                    })
-
-
-                                }}
-
-                            />
-                        </View>
-
-                            :
+                        />
                             
-                        null
-                        }
+
+                        {/* Segunda Parada */}
+                        <MapViewDirections
+
+
+                            origin={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+                            destination={{
+                                latitude: keys.travelInfo.Parada1.latitude,
+                                longitude: keys.travelInfo.Parada1.longitude,
+                            }}
+                            apikey={keys.GOOGLE_MAPS_APIKEY}
+                            strokeWidth={1}
+                            strokeColor="blue"
+                            onReady={result => {
+
+                                this.setState({
+                                    distance: parseInt(result.distance),
+                                    duration: parseInt(result.duration)
+
+                                });
+
+                           
+
+
+                            }}
+
+                        />
+
+                        {/* Tercera parada */}
+                        <MapViewDirections
+
+
+                            destination={{
+                                latitude: keys.travelInfo.Parada1.latitude,
+                                longitude: keys.travelInfo.Parada1.longitude,
+                            }}
+                            origin={{
+                                latitude: keys.travelInfo.Parada2.latitude,
+                                longitude: keys.travelInfo.Parada2.longitude,
+                            }}
+                            apikey={keys.GOOGLE_MAPS_APIKEY}
+                            strokeWidth={1}
+                            strokeColor="orange"
+                            onReady={result => {
+                                this.setState({
+                                    distance: this.state.distance + parseInt(result.distance),
+                                    duration: this.state.duration + parseInt(result.duration)
+
+                                })
+
+                           
+
+                            }}
+
+                        />
+
+                        
+                        {/* Cuarta parada */}
+                        <MapViewDirections
+
+
+                            destination={{
+                                latitude: keys.travelInfo.Parada2.latitude,
+                                longitude: keys.travelInfo.Parada2.longitude,
+                            }}
+                            origin={{
+                                latitude: keys.travelInfo.Parada3.latitude,
+                                longitude: keys.travelInfo.Parada3.latitude,
+                            }}
+                            apikey={keys.GOOGLE_MAPS_APIKEY}
+                            strokeWidth={1}
+                            strokeColor="green"
+                            onReady={result => {
+                                this.setState({
+                                    distance: this.state.distance + parseInt(result.distance),
+                                    duration: this.state.duration + parseInt(result.duration)
+
+                                })
+
+                         
+
+                            }}
+
+                        />
+
                       
                      
 
