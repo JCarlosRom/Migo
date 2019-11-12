@@ -28,7 +28,7 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
 
-        keys.socket = SocketIOClient('http://192.168.0.17:3001');
+        keys.socket = SocketIOClient('http://192.168.0.13:3001');
         // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
 
 
@@ -201,7 +201,7 @@ export default class Home extends Component {
                         this.findCurrentLocationAsync();
                         keys.socket.emit('coordenadas', {
                             coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
-                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo, estrellas: keys.estrellas, reconocimientos: keys.reconocimientos
+                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
                         });
 
                         
@@ -268,12 +268,9 @@ export default class Home extends Component {
                 this.props.navigation.navigate("Travel_Integrado");
             
             }else{
-
-                console.log("Paradas info Home");
-
-                console.log(keys.travelInfo);
-
+                
                 this.props.navigation.navigate("TravelMP");
+            
             }
 
         

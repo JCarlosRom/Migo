@@ -15,6 +15,7 @@ export default class Home extends Component {
 
 
     constructor(props) {
+        
         super(props);
         this.state = {
             myPosition:{
@@ -202,10 +203,7 @@ export default class Home extends Component {
   
 
 
-    async componentDidMount() {
-
-        console.log(keys.travelInfo);
-     
+    async componentDidMount() {     
 
         // Método para consultar destinos
         try {

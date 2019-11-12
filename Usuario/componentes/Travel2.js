@@ -82,6 +82,9 @@ export default class Travel2 extends Component {
         keys.socket = SocketIOClient('http://192.168.0.17:3001/');
         // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
         //this.sendDataDriver();
+     
+
+
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
             console.log('Llego respuesta: ', num);
@@ -153,7 +156,27 @@ export default class Travel2 extends Component {
         
         });
 
+        let timer_coordenadasUsuario = setInterval(() => {
+
+            this.findCurrentLocationAsync();
+
+            if (this.state.location != null) {
+
+                keys.socket.emit('coordenadas_usuario', {
+                    coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                    datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                });
+
+
+
+            }
+
+        }, 10000);
+        this.setState({ timer_coordenadasUsuario });
+
     }
+
+
 
     fleet_usuario_chofer = () => {
         let timer_2 = setInterval(() => {
@@ -756,10 +779,6 @@ export default class Travel2 extends Component {
 
                     </View>
 
-
-                  
-               
-                     
                     
                     <View style={styles.containerMap}>
                         <MapView

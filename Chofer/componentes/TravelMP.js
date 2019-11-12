@@ -12,11 +12,13 @@ import axios from 'axios';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 import keys from './global';
+import * as MultipleParada from './MapRoutes/MultipleParada';
+
 
 export default class TravelMP extends Component {
     constructor(props) {
         super(props);
-        this.state = {
+         this.state = {
             id_usuario: "2",
             puntoEncuentro:false,
             HomeTravel:true,
@@ -103,27 +105,45 @@ export default class TravelMP extends Component {
             alert("No hay conexión al web service", "Error");
         }
 
+        
+
+
         Paradas =[];
 
 
         Paradas.push(keys.travelInfo.Parada1)
-        Paradas.push(keys.travelInfo.Parada2)
+
+        if (keys.type =="Multiple"){
+
+            Paradas.push(keys.travelInfo.Parada2)
+
+            this.setState({
+                routeParada1: true,
+                routeParada2: true,
+                routeParada3: true
+            })
+
+        }else{
+
+            this.setState({
+                routeParada1: true,
+                routeParada2: true,
+            })
+        }
+
         Paradas.push(keys.travelInfo.Parada3)
 
       
 
-        this.setState({
-            routeParada1:true,
-            routeParada2:true,
-            routeParada3:true
-        })
 
         
         this.setState({
             Paradas
         })
         
-        console.log("Paradas Travel MP",this.state.Paradas);
+        console.log("Travel info", keys.travelInfo);
+
+        console.log("Paradas", this.state.Paradas);
         
     }
 
@@ -424,97 +444,24 @@ export default class TravelMP extends Component {
                             }}
 
                         />
-                            
-
-                        {/* Segunda Parada */}
-                        <MapViewDirections
-
-
-                            origin={{
-                                latitude: this.state.myPosition.latitude,
-                                longitude: this.state.myPosition.longitude,
-                            }}
-                            destination={{
-                                latitude: keys.travelInfo.Parada1.latitude,
-                                longitude: keys.travelInfo.Parada1.longitude,
-                            }}
-                            apikey={keys.GOOGLE_MAPS_APIKEY}
-                            strokeWidth={1}
-                            strokeColor="blue"
-                            onReady={result => {
-
-                                this.setState({
-                                    distance: parseInt(result.distance),
-                                    duration: parseInt(result.duration)
-
-                                });
-
-                           
-
-
-                            }}
-
-                        />
-
-                        {/* Tercera parada */}
-                        <MapViewDirections
-
-
-                            destination={{
-                                latitude: keys.travelInfo.Parada1.latitude,
-                                longitude: keys.travelInfo.Parada1.longitude,
-                            }}
-                            origin={{
-                                latitude: keys.travelInfo.Parada2.latitude,
-                                longitude: keys.travelInfo.Parada2.longitude,
-                            }}
-                            apikey={keys.GOOGLE_MAPS_APIKEY}
-                            strokeWidth={1}
-                            strokeColor="orange"
-                            onReady={result => {
-                                this.setState({
-                                    distance: this.state.distance + parseInt(result.distance),
-                                    duration: this.state.duration + parseInt(result.duration)
-
-                                })
-
-                           
-
-                            }}
-
-                        />
-
                         
-                        {/* Cuarta parada */}
-                        <MapViewDirections
+                        {
+                            keys.type =="Multiple"?
+                                
+                                MultipleParada.MapViewDirectionMP
+                            
+                                :
+
+                                    keys.type =="Multiple 2 paradas"?
+                                    
+                                        MultipleParada.MapViewDirectionDosParadas
+                                    
+                                    :
+
+                                    null
+                            }
 
 
-                            destination={{
-                                latitude: keys.travelInfo.Parada2.latitude,
-                                longitude: keys.travelInfo.Parada2.longitude,
-                            }}
-                            origin={{
-                                latitude: keys.travelInfo.Parada3.latitude,
-                                longitude: keys.travelInfo.Parada3.latitude,
-                            }}
-                            apikey={keys.GOOGLE_MAPS_APIKEY}
-                            strokeWidth={1}
-                            strokeColor="green"
-                            onReady={result => {
-                                this.setState({
-                                    distance: this.state.distance + parseInt(result.distance),
-                                    duration: this.state.duration + parseInt(result.duration)
-
-                                })
-
-                         
-
-                            }}
-
-                        />
-
-                      
-                     
 
                     </MapView>
                         <View>
