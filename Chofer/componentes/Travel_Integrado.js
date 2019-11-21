@@ -47,10 +47,14 @@ export default class Travel_Integrado extends Component {
             duration: 0,
             categoriaVehiculo: 1,
             Tarifa: 0,
-            timer_2:null
+            timer_2:null,
+            timerAceptViaje: 15,
+            intervaltimerAceptViaje: null
         };
-     
 
+    
+     
+        // Socket para hacer el tracking del usuario 
         keys.socket.on('seguimiento_usuario', num => {
           
             this.setState({
@@ -66,12 +70,23 @@ export default class Travel_Integrado extends Component {
 
         });
 
-        this.fleet_chofer_usuario();
+        
 
 
     }
 
-    fleet_chofer_usuario = () => {
+    // aceptViaje(){
+    //     keys.socket.emit('chofer_accept_request', {
+    //         id_usuario_socket: keys.id_usuario_socket,
+    //         id_chofer_socket: keys.id_chofer_socket,
+    //         datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
+    //         positionChofer: this.state.myPosition
+    //     });
+    // this.fleet_chofer_usuario();
+    // }
+
+    // Función para enviar la posición del chofer al usuario (Con socket) 
+    tracking_chofer_usuario = () => {
         let intervalBroadcastCoordinates = setInterval(() => {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
@@ -88,7 +103,7 @@ export default class Travel_Integrado extends Component {
         keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
     }
 
-    
+    // Función global para conseguir la posición del dispositivo 
     findCurrentLocationAsync = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
@@ -149,7 +164,7 @@ export default class Travel_Integrado extends Component {
 
 
     async componentDidMount() {
-
+        // Bloque para asignar markers y trazos de rutas
         console.log("Travel integrado");
         console.log(keys.travelInfo);
         
@@ -191,6 +206,57 @@ export default class Travel_Integrado extends Component {
             });
             
         }
+
+        // Bloque para la cuenta regresiva, ya sea para cancelación o aceptar el viaje 
+
+        let intervaltimerAceptViaje = setInterval(() => {
+            
+            this.setState({ intervaltimerAceptViaje });
+
+            console.log(this.state.intervaltimerAceptViaje);
+
+            if (this.state.timerAceptViaje == 0) {
+
+                clearInterval(this.state.intervaltimerAceptViaje);
+                // Socket para quitar al chófer de la cola
+                keys.socket.emit('popChofer', { id_chofer_socket: keys.id_chofer_socket, });
+
+                let timerCoordenadas = setInterval(() => {
+
+                    this.findCurrentLocationAsync();
+
+                    if (this.state.location != null) {
+
+
+                        this.findCurrentLocationAsync();
+                        keys.socket.emit('coordenadas', {
+                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                        });
+
+                        console.log("timerCoordenadas", keys.timerCoordenadas)
+
+
+
+                    }
+
+                }, 10000);
+                keys.timerCoordenadas = timerCoordenadas;
+
+                this.props.navigation.navigate("Home",{flag:1});
+                alert("Viaje cancelado");
+
+
+            } else {
+
+                this.setState({
+                    timerAceptViaje: this.state.timerAceptViaje - 1
+                })
+            }
+
+
+        }, 1000);
+
 
 
     }
@@ -644,7 +710,7 @@ export default class Travel_Integrado extends Component {
                                 {
                                     paddingLeft: 45
                                 }
-                            }>15 s</Text>
+                            }>{this.state.timerAceptViaje}</Text>
                         </View>
 
 

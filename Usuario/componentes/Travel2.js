@@ -8,7 +8,6 @@ import { ScrollView } from "react-native-gesture-handler";
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from "expo-location";
 import axios from 'axios';
-import SocketIOClient from 'socket.io-client/dist/socket.io.js'
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
 
@@ -79,18 +78,13 @@ export default class Travel2 extends Component {
 
     constructor(props) {
         super(props);
-        keys.socket = SocketIOClient('http://192.168.0.17:3001/');
-        // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
-        //this.sendDataDriver();
-     
-
-
+    
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
-            console.log('Llego respuesta: ', num);
+            // console.log('Llego respuesta: ', num);
             this.state.id_recorrido = num;
             //this.state.datos_solicitud=num;
-            console.log(this.state.id_recorrido);
+            // console.log(this.state.id_recorrido);
             this.setState({
 
             });
@@ -100,7 +94,7 @@ export default class Travel2 extends Component {
         });
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
-            console.log(num);
+            // console.log(num);
 
             keys.datos_chofer={
                 idChofer: num.datos_chofer.idChofer,
@@ -138,6 +132,7 @@ export default class Travel2 extends Component {
           
         });
 
+        // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
    
 
@@ -150,7 +145,7 @@ export default class Travel2 extends Component {
 
 
 
-            console.log("Posición del chófer",this.state.positionChofer);
+            // console.log("Posición del chófer en usuario",this.state.positionChofer);
           
             
         
@@ -173,6 +168,11 @@ export default class Travel2 extends Component {
 
         }, 10000);
         this.setState({ timer_coordenadasUsuario });
+
+        // Socket para hacer el tracking del chofer
+        keys.socket.on('ConductorDisponible', num => {
+            alert(num.Msg);
+        });
 
     }
 
@@ -324,7 +324,7 @@ export default class Travel2 extends Component {
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
             datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
-            id_usuario_socket: keys.id_usuario_socket
+            id_usuario_socket: keys.id_usuario_socket, tipoVehiculo:keys.tipoVehiculo
        
         });
 
@@ -708,18 +708,6 @@ export default class Travel2 extends Component {
                                 }}>
                                     <View style={{ flex:2 }}></View>
                                     <View style={{ flex:1, paddingRight:5 }}>
-
-                                        <Button
-                                            title="Si"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: true
-                                            })}
-                                        ></Button>
-                                    </View>
-
-                                    <View style={{ flex:1, paddingLeft:5 }}>
-
                                         <Button
                                             title="No"
                                             onPress={() => this.setState({
@@ -728,6 +716,20 @@ export default class Travel2 extends Component {
 
 
                                         ></Button>
+                                      
+                                    </View>
+
+                                    <View style={{ flex:1, paddingLeft:5 }}>
+
+                                        <Button
+                                            title="Si"
+                                            onPress={() => this.setState({
+                                                showModalCancel: false,
+                                                showModalCancelAcept: true
+                                            })}
+                                        ></Button>
+
+                                   
                                     </View>
                                     <View style={{ flex: 2 }}></View>
                                 </View>
@@ -820,7 +822,7 @@ export default class Travel2 extends Component {
                             }
                           
 
-                            {this.state.Paradas != null ?
+                            {/* {this.state.Paradas != null ?
 
                                 
 
@@ -841,7 +843,7 @@ export default class Travel2 extends Component {
                                     :
                                     null
 
-                            }
+                            } */}
                             {
                                 this.state.Paradas!=null?
 
@@ -1323,6 +1325,7 @@ export default class Travel2 extends Component {
                                     style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC'}}
                                     placeholder=" Nota para iniciar el viaje"
                                     placeholderTextColor="black"
+                                    // Onpress={this.props.navigation.navigate("Chat")}
                                 ></TextInput>
                             </View>
 

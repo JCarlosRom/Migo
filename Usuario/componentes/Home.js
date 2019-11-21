@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Text, View, StyleSheet, FlatList, TextInput, TouchableHighlight } from "react-native";
+import { Text, View, StyleSheet, FlatList, TouchableHighlight } from "react-native";
 import { Divider, CheckBox, Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
@@ -8,6 +8,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { NavigationEvents } from 'react-navigation';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 
 // import keys from "../../config/Keys";
 
@@ -15,6 +16,9 @@ export default class Home extends Component {
 
 
     constructor(props) {
+
+        keys.socket = SocketIOClient('http://192.168.0.13:3001');
+        // keys.socket = SocketIOClient('http://34.95.33.177:3001/');
         
         super(props);
         this.state = {
@@ -139,7 +143,7 @@ export default class Home extends Component {
                     })
                     varplaceArrival++;
     
-                    console.log(this.state.place1)
+                    // console.log(this.state.place1)
                 }else{
                     alert("Número de parada ya asignada");
                 }
@@ -155,7 +159,7 @@ export default class Home extends Component {
                             place2: varplaceArrival.toString()
                         })
                         varplaceArrival++;
-                        console.log(this.state.place2)
+                        // console.log(this.state.place2)
 
                     }else{
                         alert("Número de parada ya asignada");
@@ -173,7 +177,7 @@ export default class Home extends Component {
                                 place3: varplaceArrival.toString()
                             })
                             varplaceArrival++;
-                            console.log(this.state.place3)
+                            // console.log(this.state.place3)
 
                         }else{
                             alert("Número de parada ya asignada");
@@ -531,16 +535,16 @@ export default class Home extends Component {
 
             try {
                 
-                console.log(this.state.myPosition.addressInput)
-                console.log(Destino);
+                // console.log(this.state.myPosition.addressInput)
+                // console.log(Destino);
     
                 let puntoPartida = await Location.geocodeAsync(this.state.myPosition.addressInput);  
                 
                 let DestinoCords = await Location.geocodeAsync(Destino);
     
-                console.log(puntoPartida);
+                // console.log(puntoPartida);
     
-                console.log(DestinoCords);
+                // console.log(DestinoCords);
                 
                 if(puntoPartida.length==0 ){
                     alert("Favor de agregar un punto de partida correcto");
@@ -1187,50 +1191,63 @@ export default class Home extends Component {
                         </View>
                         <View style={{
                             flexDirection: "row",
-                            backgroundColor: "#fff", paddingLeft: 20,
+                            backgroundColor: "#fff",
                             paddingTop: 10
                         }}>
+                        
+                        <View style={{flex:1}}>
+
+
                             <Icon
                                 color="#ff8834"
                                 name="star"
                                 size={25}
                                 style={
                                     {
-                                        paddingTop: 5
+                                        paddingTop: 5,
+                                        paddingLeft: 25,
                                     }
-                                }></Icon>
+                                }></Icon> 
+
+                        </View>
 
                             <View style={
                                 {
-                                    flexDirection: "column"
+                                    flexDirection: "column",
+                                    flex:4
                                 }
                             }>
 
                                 <Text style={
                                     {
                                         fontWeight: "bold",
-                                        paddingLeft: 20
                                     }
                                 }>Destinos Favoritos
-                        </Text>
+                                </Text>
                                 <Text style={
                                     {
                                         fontWeight: "normal",
-                                        paddingLeft: 20
                                     }
                                 }>Elige tus lugares favoritos</Text>
                             </View>
-                            <Icon name="chevron-right" size={20}
-                                color="#ff8834"
-                                onPress={() => this.setState({
-                                    showFavoritePlaces: !this.state.showFavoritePlaces
-                                })}
-                                style={
-                                    {
-                                        paddingLeft: 85,
-                                        paddingTop: 7
-                                    }
-                                }></Icon>
+
+
+                            <View style={{flex:1}}>
+
+                                <Icon name="chevron-right" size={20}
+                                    color="#ff8834"
+                                    onPress={() => this.setState({
+                                        showFavoritePlaces: !this.state.showFavoritePlaces
+                                    })}
+                                    style={
+                                        {
+                                            paddingTop: 7
+                                        }
+                                    }></Icon>
+
+                            </View>
+
+
 
 
                         </View>
@@ -1314,49 +1331,58 @@ export default class Home extends Component {
 
                         <View style={{
                             flexDirection: "row",
-                            backgroundColor: "#fff", paddingLeft: 25,
+                            backgroundColor: "#fff",
                             paddingTop: 10
                         }}>
-                            <Icon
-                                color="#ff8834"
-                                name="map-pin"
-                                size={25}
-                                style={
-                                    {
+                            <View style={{flex:1}}>
+                                <Icon
+                                    color="#ff8834"
+                                    name="map-pin"
+                                    size={25}
+                                    style={{   
+                                        paddingLeft: 25,
                                         paddingTop: 5
                                     }
-                                }></Icon>
+                                    }></Icon>
+
+                            </View>
 
                             <View style={
                                 {
-                                    flexDirection: "column"
+                                    flexDirection: "column",
+                                    flex:4
                                 }
                             }>
 
                                 <Text style={
                                     {
                                         fontWeight: "bold",
-                                        paddingLeft: 25
+                                  
                                     }
                                 }>Configurar lugar en el mapa
-                        </Text>
+                                </Text>
                                 <Text style={
                                     {
                                         fontWeight: "normal",
-                                        paddingLeft: 25
+                                  
                                     }
                                 }>Visualizar vehículos por radio</Text>
                             </View>
-                            <Icon name="chevron-right"
-                                color="#ff8834"
-                                onPress={() => this.props.navigation.navigate("Travel")}
-                                size={20}
-                                style={
-                                    {
-                                        paddingLeft: 70,
-                                        paddingTop: 7
-                                    }
-                                }></Icon>
+                            <View style={{ flex: 1 }}>
+
+                                <Icon name="chevron-right"
+                                    color="#ff8834"
+                                    onPress={() => this.props.navigation.navigate("Travel")}
+                                    size={20}
+                                    // style={
+                                    //     {
+                                    //         paddingLeft: 70,
+                                    //         paddingTop: 7
+                                    //     }
+                                    // }
+                                    ></Icon>
+
+                            </View>
 
 
                         </View>

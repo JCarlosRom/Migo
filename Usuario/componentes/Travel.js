@@ -4,12 +4,6 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
-import Home from "./Home";
-
-
-
-
-
 
 
 export default class Travel extends Component {
@@ -27,7 +21,6 @@ export default class Travel extends Component {
             myPosition: {
                 latitude: 0,
                 longitude: 0,
-            
             },
             region: {
                 latitude: 0,
@@ -38,7 +31,8 @@ export default class Travel extends Component {
             },
             Vehicles:null,
             location:null, 
-            leftVehicles:0
+            leftVehicles:0,
+
      
             
         
@@ -46,14 +40,42 @@ export default class Travel extends Component {
 
 
         };
+        keys.id_usuario_socket = keys.socket.id;
+
+        keys.socket.emit('vehiclesInit', {
+            id_usuario_socket: keys.id_usuario_socket
+        });
+
+
+        // Intervalo para consultar todos los conductores conectados
+        this.timer_Vehicles = setInterval(() => {
+
+            keys.socket.emit('vehiclesInit', {
+                id_usuario_socket: keys.id_usuario_socket
+            });
+
+
+        }, 10000);
+
+
+
+        // Socket para escuchar el socket de vehículo
+        keys.socket.on('vehiclesGet', (num) => {
+
+            this.setState({
+                Vehicles:num
+            })
+    
+            console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
+          
+
+        })
 
     
         
     }
 
-    //  origin = { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude };
-    //  destination = { latitude: this.state.Destino.latitude, longitude: this.state.Destino.longitude };
-    //  GOOGLE_MAPS_APIKEY = '…';
+ 
 
   
 
@@ -98,38 +120,13 @@ export default class Travel extends Component {
         }
         console.log("Error: " + this.state.errorMessage);
 
-        this.initGetVehicles();
-
-        this._intervalConductor = setInterval(() => {
-            
-            this.initGetVehicles();
-
-        }, 2000);
-
+    
 
         
     }
 
    
 
-    async initGetVehicles(){
-        try {
-
-            const res = await axios.post('http://34.95.33.177:3001/get_conductores');
-
-            this.setState({
-                Vehicles: res.data
-            })
-
-
-       
-
-        } catch (e) {
-            console.log(e);
-            alert("No hay conexión al web service", "Error");
-        }
-
-    }
 
     functionShowFavoritePlaces(){
         this.setState({
@@ -144,12 +141,12 @@ export default class Travel extends Component {
         
     }
 
-    setSelectedVehicle(name){
+    setSelectedVehicle(type){
 
-        
-        if (name == "Car standar"){
+   
+        if (type == 1){
             
-            
+            console.log(type);
             this.setState({
                 standarSelected: true,
                 luxeSelected: false,
@@ -158,11 +155,11 @@ export default class Travel extends Component {
                 showLeftCars:true
                 
             })
-            this.getVehicles("1");
+            this.getVehicles(type);
 
          
         }else{
-            if (name =="Car luxe"){
+            if (type == 2){
 
                 this.setState({
 
@@ -174,10 +171,10 @@ export default class Travel extends Component {
 
                 });
 
-                this.getVehicles("2");
+                this.getVehicles(type);
 
             }else{
-                if (name =="Van car"){
+                if (type == 3){
 
                     this.setState({
 
@@ -188,11 +185,11 @@ export default class Travel extends Component {
                         showLeftCars: true
                     });
 
-                    this.getVehicles("1");
+                    this.getVehicles(type);
 
                 
                 }else{
-                    if (name =="Pick up Car"){
+                    if (type == 4){
 
                         this.setState({
 
@@ -204,7 +201,7 @@ export default class Travel extends Component {
 
                         });
 
-                        this.getVehicles("2");
+                        this.getVehicles(type);
 
                     }
                 }
@@ -217,50 +214,37 @@ export default class Travel extends Component {
 
     
     async getVehicles(typeVehicle) {
+        
+        console.log("getVehicles",typeVehicle);
 
-        clearInterval(this._intervalConductor);
-        setInterval(() => {
-            this.getVehicles(typeVehicle)
-        }, 3000);
+        clearInterval(this.timer_Vehicles);
+
+        clearInterval(this.timer_VehiclesConsult);
+
+        keys.socket.emit('vehiclesConsult', {
+            state: typeVehicle, id_usuario_socket: keys.id_usuario_socket
+        });
+        
+        this.timer_VehiclesConsult = setInterval(() => {
+
+            keys.socket.emit('vehiclesConsult', {
+                state:typeVehicle,id_usuario_socket: keys.id_usuario_socket
+            });
+
+
+        }, 10000);
+
+        keys.tipoVehiculo= typeVehicle;
+
+    
+
+     
+
+        
         
         
     }
     
-    async getVehiclesAsync(typeVehicle){
-
-        try {
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3001/get_conductores');
-
-            this.setState({
-
-                Vehicles: res.data
-
-            })
-
-            VehiclesArray = [];
-            cont = 0;
-
-            this.state.Vehicles.forEach(Vehicles => {
-                if (Vehicles.id == typeVehicle) {
-                    VehiclesArray.push(Vehicles)
-                    cont++;
-                }
-            });
-
-            this.setState({
-                Vehicles: VehiclesArray,
-                leftVehicles: cont
-            })
-
-
-            console.log(this.state.Vehicles);
-
-        } catch (e) {
-            console.log(e);
-            alert("No hay conexión al web service", "Error");
-        }
-    }
 
 
 
@@ -398,29 +382,32 @@ export default class Travel extends Component {
                     
                             >
                                 <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
-                            </Marker>
+                        </Marker> 
 
-                            {
-                                this.state.Vehicles!=null?
+                            {this.state.Vehicles != null ?
+
+                              
                                 this.state.Vehicles.map(marker => (
-                            
+
                                     <Marker
-                                        key={marker.id}
+                                        key={"key"}
                                         coordinate={{
                                             latitude: marker.latitud,
                                             longitude: marker.longitud
                                         }}
-                                        // title={marker.title}
-                                        // description={marker.description}
-                                    >
-                                        <Icon color="#ff8834" name="car" size={20} color="black"></Icon> 
 
+                                    >
+                                        <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" :"car-side"} size={20} color="orange"></Icon>
+                                        
                                     </Marker>
                                 ))
+
+                          
                                 :
-                                null
+                                    null
 
                             }
+
                   
                           
                     </MapView>
@@ -477,7 +464,7 @@ export default class Travel extends Component {
                                 name="car-side"
                                 size={35}
                                 color={this.state.standarSelected ? "green" : "#ff8834"}
-                                onPress={() => this.setSelectedVehicle("Car standar")}
+                                onPress={() => this.setSelectedVehicle(1)}
                                 style={
                                     {
                                         marginRight: 15
@@ -496,7 +483,7 @@ export default class Travel extends Component {
                             name="car"
                             size={35}
                             color={this.state.luxeSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle("Car luxe")}
+                            onPress={() => this.setSelectedVehicle(2)}
                             style={
                                 {
                                     marginRight: 15
@@ -515,7 +502,7 @@ export default class Travel extends Component {
                             name="shuttle-van"
                             size={35}
                             color={this.state.VanSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle("Van car")}
+                            onPress={() => this.setSelectedVehicle(3)}
                             style={
                                 {
                                     marginRight: 15
@@ -533,7 +520,7 @@ export default class Travel extends Component {
                             name="truck-pickup"
                             color={this.state.TruckSelected ? "green" : "#ff8834"}
                             size={35}
-                            onPress={() => this.setSelectedVehicle("Pick up Car")}
+                            onPress={() => this.setSelectedVehicle(4)}
                             style={
                                 {
                                     marginRight: 15

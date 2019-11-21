@@ -17,10 +17,10 @@ import keys from './global';
 export default class Home extends Component {
 
     state = {
-    timer: null,
     errorMessage: null,
     location: null,
-    nuevaSolicitud: false
+    nuevaSolicitud: false,
+    
    
 
     };
@@ -28,8 +28,8 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
 
+        // keys.socket = SocketIOClient('http://34.95.33.177:3001/');
         keys.socket = SocketIOClient('http://192.168.0.13:3001');
-        // keys.socket = SocketIOClient('http://187.234.19.119:3000/');
 
 
   
@@ -67,17 +67,33 @@ export default class Home extends Component {
                 }
 
                 keys.id_usuario_socket = num.id_usuario_socket
-
      
+                keys.id_chofer_socket = keys.socket.id;
 
-          
+                // console.log("Socket del chofer", keys.id_chofer_socket)
 
-                this.setState({
-                    nuevaSolicitud:true
-                })
+
+
+                clearInterval(this.state.timer);
+
+                if (keys.type == "Unico") {
+
+                    this.props.navigation.navigate("Travel_Integrado");
+
+                } else {
+
+                    this.props.navigation.navigate("TravelMP");
+
+                }
+
+
+
+
+             
+
 
             
-                console.log("Te llegó solicitud");
+                // console.log("Te llegó solicitud");
                 alert('Te llego una solicitud');
 
             }
@@ -85,10 +101,10 @@ export default class Home extends Component {
         });
 
         keys.socket.on('recorrido_id_conductor', num => {
-            console.log('Llego respuesta: ', num);
+            // console.log('Llego respuesta: ', num);
             keys.id_recorrido = num;
             this.state.datos_solicitud=num;
-            console.log(this.state.datos_solicitud);
+            // console.log(this.state.datos_solicitud);
             this.fleet_chofer_usuario();
         });
 
@@ -102,7 +118,7 @@ export default class Home extends Component {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
 
-                console.log('Envia datos de chofer a usuario');
+                // console.log('Envia datos de chofer a usuario');
                 keys.socket.emit('room_chofer_usuario', { id_usuario_socket: keys.id_usuario_socket  , id_chofer_socket: keys.id_chofer_socket, coordenadas_chofer: this.state.location.coords });
             }
 
@@ -184,19 +200,24 @@ export default class Home extends Component {
     // Iniciar funciones de chófer, envio de coordenadas del chofer al ws
     conectChofer (){
 
-       
+   
         keys.stateConductor=!keys.stateConductor
+
+        this.setState({
+            stateConductor: keys.stateConductor
+        })
       
 
         if(keys.stateConductor==true){
 
             if(keys.id_chofer!=null){
     
-                let timer = setInterval(() => {
+                let timerCoordenadas = setInterval(() => {
                     
                     this.findCurrentLocationAsync();
                     
                     if(this.state.location!=null){
+
     
                         this.findCurrentLocationAsync();
                         keys.socket.emit('coordenadas', {
@@ -209,18 +230,16 @@ export default class Home extends Component {
                     }
     
                 }, 10000);
-                this.setState({ timer });
-    
-                this.setState({ startDisable: true })
+                keys.timerCoordenadas = timerCoordenadas;
 
             }else{
                 alert("Ingrese un id para poder acceder a buscar pasajeros")
             }
 
         }else{
-            clearInterval(this.state.timer);
-            this.setState({ startDisable: false })
-            this.state.text = '';
+            clearInterval(keys.timerCoordenadas);
+
+            console.log("timerCoordenadasHome", keys.timerCoordenadas)
             keys.socket.emit('Exit', 'exit0');
         }
     }
@@ -238,47 +257,9 @@ export default class Home extends Component {
         this.setState({ location });
     };
 
-    // Socket para aceptar el viaje
+ 
 
-    aceptarViaje = () => {
-        keys.id_chofer_socket = keys.socket.id;
-
-        console.log("Socket del chofer", keys.id_chofer_socket)
-
-        if (this.state.nuevaSolicitud==false) {
-            console.log('ERROR- NO HAZ RECIBIDO SOLICITUDES PAPU XD');
-            alert('No tienes solicitudes, no puedes aceptar. :c');
-        } else {
-
-    
-
-            keys.socket.emit('chofer_accept_request', {
-                id_usuario_socket: keys.id_usuario_socket,
-                id_chofer_socket: keys.id_chofer_socket,
-                datos_vehiculo:keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
-                positionChofer: this.state.myPosition
-            });
-
-       
-
-            clearInterval(this.state.timer);
-
-            if(keys.type=="Unico"){
-            
-                this.props.navigation.navigate("Travel_Integrado");
-            
-            }else{
-                
-                this.props.navigation.navigate("TravelMP");
-            
-            }
-
-        
-         
-            
-        }
-
-    }
+ 
    
     
 
@@ -289,12 +270,12 @@ export default class Home extends Component {
               <View style={styles.area}>
                   <View>
                     <Switch 
-                    value={keys.stateConductor}
+                    value={this.state.stateConductor}
                     onChange={()=>this.conectChofer()}
                     />
                   </View>
                   <View>
-                    <Text style={{width:100}} >{keys.stateConductor?"Conectado":"Desconectado"}</Text>
+                    <Text style={{width:100}} >{this.state.stateConductor?"Conectado":"Desconectado"}</Text>
                   </View>
                 
                     <View style={
@@ -367,58 +348,12 @@ export default class Home extends Component {
 
 
                     </View>
-                    {this.state.nuevaSolicitud?
+                
+                    <View style={{backgroundColor:"white"}}>
+                        <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
 
-                        <View>
-                        
-                            <View style={
-                                styles.area
-                            }>
-                                <Text style={
-                                    {
-                                        textAlign: 'center'
-                                    }
-                                }>Solicitud de coolaboración</Text>
-
-                            </View>
-                            <View style={styles.area}>
-                                
-                                <View style={{flex:1}}>
-                                    <Icon name="user-circle" size={25}></Icon>
-                                </View>
-
-                                <View style={{flex:3}}>
-                                    <Text>{keys.datos_usuario.nombreUsuario}</Text>
-                                    <Text>{keys.datos_usuario.numeroTelefono}</Text>
-                                </View>
-
-                                <View style={{flex:1}}> 
-                                    <Button title="Aceptar"
-                                    onPress={()=>this.aceptarViaje()}
-                                    ></Button>
-                                </View>
-
-                                
-                                <View style={{flex:1}}>
-                                    <Button title="Rechazar"
-                                    onPress={()=>this.rechazarViaje()}
-                                    ></Button>
-                                </View>
-                            </View>
-
-
-
-
-                        </View>
+                    </View>
                     
-                
-                
-                    :
-                        <View style={{backgroundColor:"white"}}>
-                            <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
-
-                        </View>
-                    }
                     
                     <View style={
                         styles.area

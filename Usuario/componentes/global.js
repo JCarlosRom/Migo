@@ -13,6 +13,7 @@ export default keys={
         correoElectronico: "15460810@itcolima.edu.mx"
 
     },
+    tipoVehiculo:1,
     // Chofer
     datos_vehiculo: {
         id_unidad: null,

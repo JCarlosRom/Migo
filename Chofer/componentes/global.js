@@ -1,11 +1,9 @@
 export default keys={
     socket:null,
+    timerCoordenadas:null,
     id_chofer_socket:'',
     id_usuario_socket:'',
-    id_chofer: "2",
-    id_usuario: "1",
-    nombreUsuario: "Leonel Ortega",
-    numeroUsuario: "3121942513",
+    id_chofer: "1",
     myPosition: null,
     stateConductor: false,
     id_servicio: '',
@@ -39,7 +37,7 @@ export default keys={
     },
     datos_chofer:{
         idChofer:'1',
-        nombreChofer:'Oscar Dario',
+        nombreChofer:'Oscar Dario Leyva',
         Estrellas:'4.5',
         Reconocimientos:'Habla inglés y español'
 

@@ -1,19 +1,14 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, TextInput, Switch, ScrollView, Slider } from "react-native";
+import { View, Text, StyleSheet, Switch, ScrollView } from "react-native";
 import { Button  } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 import keys from './global';
-import * as MultipleParada from './MapRoutes/MultipleParada';
-
+import * as Location from "expo-location";
+import * as Permissions from 'expo-permissions';
 
 export default class TravelMP extends Component {
     constructor(props) {
@@ -26,35 +21,25 @@ export default class TravelMP extends Component {
             initravel:false,
             Travel: false,
             showMapDirections:false,
-            positionUser: {
-                latitude: 0,
-                longitude: 0,
-
-            },
+            positionUser: null,
         
             latitude: 19.273247,
             longitude: -103.715795,
-            parada1:{
-                latitude: 19.264983,
-                longitude: -103.713446,
-            },
-            parada2:{
-                latitude: 19.269277,
-                longitude: -103.716364,
-            },
-            parada3:{
-                latitude: 19.273247,
-                longitude: -103.715795,
-            },
-            myPosition:{
-                latitude:0,
-                longitude:0
-            },
+            myPosition:null,
             distance:0,
             duration:0,
+            routeInitial: true,
             routeParada1: false,
             routeParada2: false,
             routeParada3: false,
+            location:null,
+             region: {
+                 latitude: 0,
+                 longitude: 0,
+                 longitudeDelta: 0,
+                 latitudeDelta: 0
+
+             },
     
 
         };
@@ -64,26 +49,42 @@ export default class TravelMP extends Component {
     }
 
   
-
     async componentDidMount() {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
 
-                this.setState({
-                    myPosition: {
+        // Check my current position
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permisos denegados por el usuario'
+            });
+        }
 
-                    },
-                    error: null,
-                });
+        let location = await Location.getCurrentPositionAsync({});
 
-            },
-            (error) => this.setState({ error: error.message }),
-            { enableHighAccuracy: true },
-        );
+        this.setState({ location });
 
+        if (this.state.location != null) {
+
+            this.setState({
+                myPosition: {
+
+                    latitude: this.state.location.coords.latitude,
+                    longitude: this.state.location.coords.longitude
+
+                },
+                region: {
+                    latitude: this.state.location.coords.latitude,
+                    longitude: this.state.location.coords.longitude,
+                    longitudeDelta: 0.0105,
+                    latitudeDelta: 0.0105
+
+                },
+            })
+
+
+
+        }
 
         try {
            
@@ -113,39 +114,52 @@ export default class TravelMP extends Component {
 
         Paradas.push(keys.travelInfo.Parada1)
 
-        if (keys.type =="Multiple"){
-
-            Paradas.push(keys.travelInfo.Parada2)
-
-            this.setState({
-                routeParada1: true,
-                routeParada2: true,
-                routeParada3: true
-            })
-
-        }else{
-
-            this.setState({
-                routeParada1: true,
-                routeParada2: true,
-            })
-        }
-
-        Paradas.push(keys.travelInfo.Parada3)
-
-      
-
-
-        
         this.setState({
             Paradas
         })
-        
-        console.log("Travel info", keys.travelInfo);
 
-        console.log("Paradas", this.state.Paradas);
+        this.chofer_setPosition();
+
+        console.log('Paradas',Paradas);
+        
         
     }
+
+    chofer_setPosition(){
+        let timer_chofer = setInterval(() => {
+            this.findCurrentLocationAsync();
+            if (this.state.location != null) {
+
+                this.setState({
+                    myPosition:{
+        
+                        latitude: this.state.location.coords.latitude,
+                        longitude: this.state.location.coords.longitude 
+                        
+                    }
+                })
+         
+                   
+            }
+
+        }, 5000);
+
+        this.setState({ timer_chofer });
+    }
+
+    findCurrentLocationAsync = async () => {
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permisos denegados por el usuario'
+            });
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        this.setState({ location });
+    };
+
 
     Go = () => {
         const data = {
@@ -202,60 +216,76 @@ export default class TravelMP extends Component {
             HomeTravel: false,
             aceptViaje: false,
             initravel:true,
+            routeInitial: false,
+            routeParada1: true
       
 
         })
     }
 
-     async iniciarViaje(){
-
-         try {
-             //console.log(this.props.switchValue);
-             const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
-                 distancia_km: this.state.distance,
-                 tiempo_min: this.state.duration
-             });
-
-
-             res.data.datos.forEach(element => {
-
-
-
-                if (element["categoria_servicio"] == keys.categoriaVehiculo) {
-
-                    keys.Tarifa= parseInt(element["out_costo_viaje"], 10);
-
-                
-                }
-       
-
-
-             });
-
-         } catch (e) {
-             console.log(e);
-             alert("No hay conexión al web service", "Error");
-         }
-
-        this.setState({
-            HomeTravel: false,
-            aceptViaje: false,
-            initravel: false,
-            Travel: true,
-
-        })
-    }
 
    
     terminarViaje(){
 
         this.props.navigation.navigate("Pago");
     }
+    onRegionChange = async region => {
 
-    alert(){
-        console.log("alert");
+
+        this.setState({
+            region
+        });
+
+
+    } 
+
+    segundaParada(){
+
+
+        Paradas = [];
+
+
+        Paradas.push(keys.travelInfo.Parada2)
+
+        this.setState({
+            Paradas
+        })
+
+        this.setState({
+            routeInitial: false,
+            routeParada1: false,
+            routeParada2: true,
+            routeParada3: false
+        })
     }
 
+    terceraParada(){
+
+
+        Paradas = [];
+
+
+        Paradas.push(keys.travelInfo.Parada3)
+
+        this.setState({
+            Paradas
+        })
+
+        this.state.routeParada2 = false;
+        this.state.routeParada3 = true;
+
+
+     
+
+        console.log(this.state.routeInitial);
+        console.log(this.state.routeParada1);
+        console.log(this.state.routeParada2);
+        console.log(this.state.routeParada3);
+
+
+    }
+
+ 
   
 
     render() {
@@ -326,7 +356,9 @@ export default class TravelMP extends Component {
 
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <Text style={{ marginLeft: 10 }}>{keys.ubicacionUsuario}</Text>
+                                <Text style={{ marginLeft: 10 }}>
+                                    {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1==true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2==true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3==true) ? keys.travelInfo.Parada3.Direccion : "Test" }
+                                </Text>
                             </View>
                         </View>
                     :
@@ -344,7 +376,7 @@ export default class TravelMP extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}>{keys.ubicacionUsuario}</Text>
+                                    <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3 == true) ? keys.travelInfo.Parada3.Direccion : "Test"}</Text>
                                     <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -361,15 +393,20 @@ export default class TravelMP extends Component {
     
                         </View>
                     <View style={styles.containerMap}>
+                    {this.state.positionUser!=null?
+
                         <MapView
 
                         style={styles.map}
                         region={{
-                            latitude: this.state.myPosition.latitude,
-                            longitude: this.state.myPosition.longitude,
-                            latitudeDelta: 0.0105,
-                            longitudeDelta: 0.0105,
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta
                         }}
+
+                        onRegionChangeComplete={this.onRegionChange}
+
                         followUserLocation={true}
                         ref={ref => (this.mapView = ref)}
                         zoomEnabled={true}
@@ -414,56 +451,147 @@ export default class TravelMP extends Component {
                         
                  
                         {/* Primer Parada */}
-                        <MapViewDirections
-
-
-                            origin={{
-                                latitude: this.state.myPosition.latitude,
-                                longitude: this.state.myPosition.longitude,
-                            }}
-                            destination={{
-                                latitude: this.state.positionUser.latitude,
-                                longitude: this.state.positionUser.longitude,
-                            }}
-                            apikey={keys.GOOGLE_MAPS_APIKEY}
-                            strokeWidth={1}
-                            strokeColor="blue"
-                            onReady={result => {
-                                if(result!=null){
-
+                        {this.state.routeInitial && this.state.myPosition!=null && this.state.positionUser !=null?
                         
+                            <MapViewDirections
+
+
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                destination={{
+                                    latitude: this.state.positionUser.latitude,
+                                    longitude: this.state.positionUser.longitude,
+                                }}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="blue"
+                                onReady={result => {
+                                    if(result!=null){
+
+                            
+                                        this.setState({
+                                    
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
+
+                                        })
+                                    }
+
+
+                                }}
+
+                            />
+                    
+                        :
+                            null
+                        }
+                        
+                      { this.state.routeParada1?
+
+                            <MapViewDirections
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                destination={{
+                                    latitude: keys.travelInfo.Parada1.latitude,
+                                    longitude: keys.travelInfo.Parada1.longitude,
+                                }}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="orange"
+                                onReady={result => {
                                     this.setState({
-                                
                                         distance: parseInt(result.distance),
                                         duration: parseInt(result.duration)
 
                                     })
-                                }
 
 
-                            }}
 
-                        />
-                        
+                                }}
+
+                            />
+                        :
+                            null
+                      }
+                      {
+                        this.state.routeParada2?
+
+                                <MapViewDirections
+                                    origin={{
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                    }}
+                                    destination={{
+                                        latitude: keys.travelInfo.Parada2.latitude,
+                                        longitude: keys.travelInfo.Parada2.longitude,
+                                    }}
+                                    apikey={keys.GOOGLE_MAPS_APIKEY}
+                                    strokeWidth={1}
+                                    strokeColor="red"
+                                    onReady={result => {
+                                        this.setState({
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
+
+                                        })
+
+
+
+                                    }}
+
+                                />
+                        :
+                            null
+                      }
+                    
+                     
+
                         {
-                            keys.type =="Multiple"?
+                        this.state.routeParada3==true?
+
+
+                            <MapViewDirections
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                destination={{
+                                    latitude: keys.travelInfo.Parada3.latitude,
+                                    longitude: keys.travelInfo.Parada3.longitude,
+                                }}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="green"
+                                onReady={result => {
+                                    this.setState({
+                                        distance: parseInt(result.distance),
+                                        duration: parseInt(result.duration)
+
+                                    })
+
+
+
+                                }}
+
+                            />
+                    
+                        :
+                            null
+                        }
                                 
-                                MultipleParada.MapViewDirectionMP
-                            
-                                :
-
-                                    keys.type =="Multiple 2 paradas"?
-                                    
-                                        MultipleParada.MapViewDirectionDosParadas
-                                    
-                                    :
-
-                                    null
-                            }
-
-
-
+                                
                     </MapView>
+
+                    :
+                    
+                        null
+                    
+                    }
+
                         <View>
 
                         <View style={{paddingLeft:210, paddingBottom:20}}>
@@ -581,7 +709,8 @@ export default class TravelMP extends Component {
                                     this.setState({
                                         HomeTravel: false,
                                         aceptViaje: true,
-                                        showMapDirections:true
+                                        showMapDirections:true,
+                                    
 
                                     });
                                 }}
@@ -669,7 +798,13 @@ export default class TravelMP extends Component {
                                     title="Iniciar viaje"
                                     type="clear"
                                     onPress={() => {
-                                        this.iniciarViaje()
+                                        this.setState({
+                                            HomeTravel: false,
+                                            aceptViaje: false,
+                                            initravel: false,
+                                            Travel: true,
+
+                                        })
                                     }}
                                 />
 
@@ -740,28 +875,134 @@ export default class TravelMP extends Component {
                         <View>
 
                         </View>
-                        <View style={styles.area}>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
-                            <View style={
-                                {
-                                    paddingLeft: 90
-                                }
-                            }>
-                                <Button
+                        {this.state.routeInitial?
+                            <View style={styles.area}>
 
-                                    title="Terminar viaje"
-                                    type="clear"
-                                    onPress={() => {
-                                        this.terminarViaje()
-                                    }}
-                                />
-                                <Text style={{paddingLeft:25}}>${keys.Tarifa} MXN</Text>
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <View style={
+                                    {
+                                        paddingLeft: 90
+                                    }
+                                }>
+
+                                    
+                                    <Button
+
+                                        title="Ir a primera parada"
+                                        type="clear"
+                                        onPress={() => this.setState({
+                                            routeInitial: false,
+                                            routeParada1: true,
+                                            routeParada2: false,
+                                            routeParada2: false
+                                        })}
+                                    />
+                                   
+
+                                </View>
+
+
+                            </View>
+                        
+                        :
+                            null
+                        }
+
+                        {this.state.routeParada1 ?
+                            <View style={styles.area}>
+
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <View style={
+                                    {
+                                        paddingLeft: 90
+                                    }
+                                }>
+
+
+                                    <Button
+
+                                        title="Ir a segunda parada"
+                                        type="clear"
+                                        onPress={() => this.segundaParada()}
+                                    />
+
+
+                                </View>
+
 
                             </View>
 
+                            :
+                            null
+                        }
 
-                        </View>
+                        {this.state.routeParada2 ?
+                            <View style={styles.area}>
+
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <View style={
+                                    {
+                                        paddingLeft: 90
+                                    }
+                                }>
+
+
+                                    <Button
+
+                                        title={(keys.type == "Multiple") ? "Ir a tercera parada" :  "Terminar Viaje"}
+                                        type="clear"
+                                        onPress={() =>
+                                            
+                                            keys.type=="Multiple"?
+
+                                                this.terceraParada()
+
+                                            :
+                                                this.terminarViaje()
+                                        }
+                                    />
+
+
+                                </View>
+
+
+                            </View>
+
+                            :
+                            null
+                        }
+
+                        {this.state.routeParada3 ?
+                            <View style={styles.area}>
+
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <View style={
+                                    {
+                                        paddingLeft: 90
+                                    }
+                                }>
+
+
+                                    <Button
+
+                                        title="Terminar Viaje 3"
+                                        type="clear"
+                                        onPress={() =>
+                                            this.terminarViaje()
+                                        }
+                                    />
+
+
+                                </View>
+
+
+                            </View>
+
+                            :
+                            null
+                        }
+
 
                     </View>
                 :
