@@ -66,7 +66,7 @@ export default class Travel extends Component {
                 Vehicles:num
             })
     
-            console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
+            // console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
           
 
         })
@@ -141,12 +141,11 @@ export default class Travel extends Component {
         
     }
 
-    setSelectedVehicle(type){
+    setSelectedVehicle(categoriaVehiculo, tipoVehiculo){
 
    
-        if (type == 1){
+        if (categoriaVehiculo == 1 && tipoVehiculo==1 ){
             
-            console.log(type);
             this.setState({
                 standarSelected: true,
                 luxeSelected: false,
@@ -155,11 +154,11 @@ export default class Travel extends Component {
                 showLeftCars:true
                 
             })
-            this.getVehicles(type);
+            this.getVehicles(categoriaVehiculo, tipoVehiculo);
 
          
         }else{
-            if (type == 2){
+            if (categoriaVehiculo == 1 && tipoVehiculo ==2){
 
                 this.setState({
 
@@ -171,10 +170,11 @@ export default class Travel extends Component {
 
                 });
 
-                this.getVehicles(type);
+                this.getVehicles(categoriaVehiculo, tipoVehiculo);
 
             }else{
-                if (type == 3){
+                if (categoriaVehiculo == 3){
+
 
                     this.setState({
 
@@ -185,11 +185,12 @@ export default class Travel extends Component {
                         showLeftCars: true
                     });
 
-                    this.getVehicles(type);
+                    this.getVehicles(categoriaVehiculo, tipoVehiculo);
 
                 
                 }else{
-                    if (type == 4){
+
+                    if (categoriaVehiculo == 4){
 
                         this.setState({
 
@@ -201,7 +202,7 @@ export default class Travel extends Component {
 
                         });
 
-                        this.getVehicles(type);
+                        this.getVehicles(categoriaVehiculo, tipoVehiculo);
 
                     }
                 }
@@ -213,35 +214,28 @@ export default class Travel extends Component {
     }
 
     
-    async getVehicles(typeVehicle) {
+    async getVehicles(categoriaVehiculo, tipoVehiculo ) {
         
-        console.log("getVehicles",typeVehicle);
+ 
 
         clearInterval(this.timer_Vehicles);
 
         clearInterval(this.timer_VehiclesConsult);
 
         keys.socket.emit('vehiclesConsult', {
-            state: typeVehicle, id_usuario_socket: keys.id_usuario_socket
+            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo,id_usuario_socket: keys.id_usuario_socket
         });
         
         this.timer_VehiclesConsult = setInterval(() => {
-
+ 
             keys.socket.emit('vehiclesConsult', {
-                state:typeVehicle,id_usuario_socket: keys.id_usuario_socket
+                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
             });
 
 
         }, 10000);
 
-        keys.tipoVehiculo= typeVehicle;
-
-    
-
-     
-
-        
-        
+        keys.categoriaVehiculo = categoriaVehiculo;
         
     }
     
@@ -295,6 +289,18 @@ export default class Travel extends Component {
 
     } 
 
+    saveConfiguration(){
+
+
+
+        clearInterval(this.timer_Vehicles);
+
+        clearInterval(this.timer_VehiclesConsult);
+
+        this.props.navigation.navigate("Home", {
+            Address: this.state.location
+        })
+    }
 
 
     render() {
@@ -336,7 +342,8 @@ export default class Travel extends Component {
                     ></TextInput>
                 </View>
             </View>
-                <View style={{
+
+               <View style={{
                     flexDirection: "row",
                     backgroundColor: "#fff", paddingLeft: 20,
                     paddingBottom: 20
@@ -345,14 +352,15 @@ export default class Travel extends Component {
                         style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
                         placeholder=" ¿A dónde vamos?"
                         placeholderTextColor="gray"
-                        onFocus={() => this.functionShowFavoritePlaces()}
+                            onFocus={() => this.saveConfiguration()}
                     ></TextInput>
                         <Icon name="plus"
                         color="#ff8834"
-                        //  onPress={() => this.showArrival()} 
+                        onPress={() => this.saveConfiguration()} 
                          size={30} style={{ paddingLeft: 15 }}></Icon>
                     
                 </View>
+                
 
                 <View style={styles.containerMap}>
                     <MapView
@@ -438,7 +446,7 @@ export default class Travel extends Component {
                                 paddingLeft:70
                             }
                         }>
-                            Vehículos disponibles: {this.state.leftVehicles}
+                                Vehículos disponibles: {(this.state.Vehicles!=null)?this.state.Vehicles.length: 0}
                     </Text>
                     :
                         null
@@ -464,7 +472,7 @@ export default class Travel extends Component {
                                 name="car-side"
                                 size={35}
                                 color={this.state.standarSelected ? "green" : "#ff8834"}
-                                onPress={() => this.setSelectedVehicle(1)}
+                                onPress={() => this.setSelectedVehicle(1,1)}
                                 style={
                                     {
                                         marginRight: 15
@@ -483,7 +491,7 @@ export default class Travel extends Component {
                             name="car"
                             size={35}
                             color={this.state.luxeSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle(2)}
+                            onPress={() => this.setSelectedVehicle(1,2)}
                             style={
                                 {
                                     marginRight: 15
@@ -502,7 +510,7 @@ export default class Travel extends Component {
                             name="shuttle-van"
                             size={35}
                             color={this.state.VanSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle(3)}
+                            onPress={() => this.setSelectedVehicle(2)}
                             style={
                                 {
                                     marginRight: 15
@@ -520,7 +528,7 @@ export default class Travel extends Component {
                             name="truck-pickup"
                             color={this.state.TruckSelected ? "green" : "#ff8834"}
                             size={35}
-                            onPress={() => this.setSelectedVehicle(4)}
+                            onPress={() => this.setSelectedVehicle(3)}
                             style={
                                 {
                                     marginRight: 15
@@ -591,6 +599,7 @@ export default class Travel extends Component {
                         <Text>Distancia: {this.state.slideDistance}</Text>
         
                 </View>
+
                     
             </View>
             </ScrollView>

@@ -31,8 +31,12 @@ export default keys={
         id_unidad: '1',
         modelo:'Dodge attitude',
         Matricula:'FRS408A',
-        tipoVehiculo:'1',
+        // Taxi: 1, Van: 2, Camioneta: 3
         categoriaVehiculo: 1,
+        // Estandar: 1, Lujo: 2
+        tipoVehiculo:1,
+        // Express: 1, Pool: 2
+        tipoServicio: 1
 
     },
     datos_chofer:{
@@ -46,6 +50,7 @@ export default keys={
     Tarifa: 0,
     Peaje:0,
     intervalBroadcastCoordinates:null,
+    Chat: [],
     
 
 }

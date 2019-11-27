@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import {View, Text, StyleSheet, TextInput } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
 import Modal from "react-native-modal";
 import { Button, ThemeConsumer } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -78,6 +78,18 @@ export default class Travel2 extends Component {
 
     constructor(props) {
         super(props);
+
+        
+
+        keys.socket.on('chat_usuario', (num) => {
+
+            console.log("chat_usuario", num)
+
+            keys.Chat.push(num.Mensaje);
+
+            alert("Te llegó un mensaje");
+
+        })
     
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
@@ -172,6 +184,38 @@ export default class Travel2 extends Component {
         // Socket para hacer el tracking del chofer
         keys.socket.on('ConductorDisponible', num => {
             alert(num.Msg);
+        });
+
+
+        keys.socket.on('statusChofer', num => {
+
+            alert(num.Msg);
+
+            setTimeout(() => {
+    
+                if (num.Msg == "Solicitud rechazada por conductor, buscando otro conductor"){
+    
+                    usuario_latitud = this.state.myPosition.latitude;
+                    usuario_longitud = this.state.myPosition.longitude;
+                    datos_usuario = keys.datos_usuario;
+                    infoTravel = keys.travelInfo;
+                    type = keys.type;
+                    keys.id_usuario_socket = keys.socket.id;
+    
+    
+                    keys.socket.emit('usuario_solicitud', {
+                        usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud,
+                        datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type,
+                        id_usuario_socket: keys.id_usuario_socket, tipoVehiculo: keys.tipoVehiculo
+    
+                    });
+                }
+
+                
+            }, 2000);
+
+     
+
         });
 
     }
@@ -324,7 +368,8 @@ export default class Travel2 extends Component {
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
             datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
-            id_usuario_socket: keys.id_usuario_socket, tipoVehiculo:keys.tipoVehiculo
+            id_usuario_socket: keys.id_usuario_socket, categoriaVehiculo:keys.categoriaVehiculo, 
+            tipoVehiculo: keys.tipoVehiculo, tipoServicio: keys.tipoServicio
        
         });
 
@@ -639,6 +684,11 @@ export default class Travel2 extends Component {
                 infoVehicleLlegada: d.toLocaleTimeString(),
                 infoVehicleTarifa: this.state.Express_Estandar.out_costo_viaje
             })
+            // Express
+            keys.tipoServicio = 1;
+            // Estandar
+            keys.tipoVehiculo = 1;
+
 
         }else{
             if(typeVehicle=="Express Lujo"){
@@ -647,6 +697,11 @@ export default class Travel2 extends Component {
                     infoVehicleLlegada: d.toLocaleTimeString(),
                     infoVehicleTarifa: this.state.Express_Lujo.out_costo_viaje
                 })
+
+                // Express
+                keys.tipoServicio = 1;
+                // Lujo
+                keys.tipoVehiculo = 2;
             }else{
                 if(typeVehicle=="Pool Estandar"){
                     this.setState({
@@ -654,6 +709,12 @@ export default class Travel2 extends Component {
                         infoVehicleLlegada: d.toLocaleTimeString(),
                         infoVehicleTarifa: this.state.Pool_Estandar.out_costo_viaje
                     })
+
+                    // Pool
+                    keys.tipoServicio = 2;
+                    // Estandar
+                    keys.tipoVehiculo = 1;
+
                 }else{
                     if(typeVehicle=="Pool Lujo"){
                         this.setState({
@@ -661,6 +722,11 @@ export default class Travel2 extends Component {
                             infoVehicleLlegada: d.toLocaleTimeString(),
                             infoVehicleTarifa: Pool_Lujo.out_costo_viaje
                         })
+
+                        // Pool
+                        keys.tipoServicio = 2;
+                        // Lujo
+                        keys.tipoVehiculo = 2;
                     }
                 }
             }
@@ -672,7 +738,12 @@ export default class Travel2 extends Component {
         })
     }
 
-   
+
+    Chat() {
+
+        keys.socket.removeAllListeners("chat_usuario");
+        this.props.navigation.navigate("Chat")
+    }
 
  
     render() {
@@ -1015,7 +1086,7 @@ export default class Travel2 extends Component {
                             {!this.state.Pay?
                             
                                 <View >
-                                    <Button title="Confirmar YiMi Express Estándar"
+                                    <Button title={"Confirmar ",this.state.infoVehicleTipo }
                                         style={{ width: '100%' }}
                                         type="outline" 
                                         onPress={()=>this.generarSolicitud()}
@@ -1163,18 +1234,7 @@ export default class Travel2 extends Component {
                                     Pay: true
                                 })}></Icon>
                             </View>
-                            {!this.state.Pay?
-                            
-                                <View >
-                                    <Button title="Confirmar YiMi Express Estándar"
-                                        style={{ width: '100%' }}
-                                        onPress={() => this.generarSolicitud()}
-                                        type="outline" ></Button>
-                                </View>
-                        
-                            :
-                                null
-                            }
+                       
                             
                     
                     </View>
@@ -1321,12 +1381,12 @@ export default class Travel2 extends Component {
                             <View style={styles.area}>
                                 <Icon color="#ff8834" name="phone" size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
-                                <TextInput
-                                    style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC'}}
-                                    placeholder=" Nota para iniciar el viaje"
-                                    placeholderTextColor="black"
-                                    // Onpress={this.props.navigation.navigate("Chat")}
-                                ></TextInput>
+                                <Icon name="comment-dots"
+                                    style={{ paddingLeft: 40 }}
+                                    size={25}
+                                    onPress={() => this.Chat()}
+                                ></Icon>
+                                  
                             </View>
 
                 

@@ -5,7 +5,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
-import { NavigationEvents } from 'react-navigation';
+import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
@@ -72,11 +72,38 @@ export default class Home extends Component {
         showNewArrival2 = false;
         varplaceArrival = 1;
 
+        // Función para recibir el mensaje del conductor
+        keys.socket.on('chat_usuario', (num) => {
+
+            console.log("chat_usuario", num)
+
+            keys.Chat.push(num.Mensaje);
+
+            this.setState({
+                Chat: keys.Chat
+            })
+
+            console.log(keys.Chat);
+
+        })
+
+     
+
 
 
 
     }
  
+
+    changetoConfigureTravel(){
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Travel' })],
+            key:undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
 
     // Function to show the buttons of position of arrivals
     showPositionArrival() {
@@ -209,6 +236,43 @@ export default class Home extends Component {
 
     async componentDidMount() {     
 
+    
+        let location = await Location.getCurrentPositionAsync({});
+    
+
+        try {
+            var locationAddress = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+
+            Address = this.props.navigation.getParam('Address', 'No Address');
+
+            console.log(Address);
+            console.log(keys.tipoVehiculo);
+
+            if (Address != 'No Address') {
+
+                locationStr = Address;
+            
+            }else{
+
+                locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["name"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
+            }
+
+            this.setState({
+                myPosition:{
+                    address:locationAddress,
+                    addressInput:locationStr,
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
+                }
+            })
+
+        } catch (e) {
+            console.log(e)
+        }
+
         // Método para consultar destinos
         try {
             //console.log(this.props.switchValue);
@@ -233,37 +297,11 @@ export default class Home extends Component {
             });
         }
 
-        let location = await Location.getCurrentPositionAsync({});
-
-
-        try {
-            var locationAddress = await Location.reverseGeocodeAsync({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude
-            });
-
-
-            locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["name"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
-
-
-            this.setState({
-                myPosition:{
-                    address:locationAddress,
-                    addressInput:locationStr,
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude
-                }
-            })
-
-        } catch (e) {
-           console.log(e)
-        }
-
          
     
     }
 
-
+  
 
     autocompleteGoogle1 = async destination => {
         this.setState({ 
@@ -528,10 +566,13 @@ export default class Home extends Component {
 
 
     async DestinosFavoritosTravel(Destino){
-        
+
+
    
 
         if(this.state.myPosition.addressInput!=""){
+
+
 
             try {
                 
@@ -576,125 +617,133 @@ export default class Home extends Component {
     // Función para iniciar el viaje 
     Travel = () =>{
 
-        if(this.state.showNewArrival==false){
 
-            if(this.state.destination4==""){
-                alert("Favor de agregar un destino");
-            }else{
+        if (keys.categoriaVehiculo == null) {
+            alert("Favor de seleccionar un tipo de vehículo en configurar lugar en el mapa");
+        } else {
 
-            
-                keys.travelInfo.puntoPartida = this.state.myPosition;
-                keys.travelInfo.Parada1 = this.state.destination4;
-
-              
-                keys.type = "Unico"
     
-                this.props.navigation.navigate("Travel2");
-            }
-
-
-            
-
-        }else{
-
-                if(this.state.myPosition.addressInput=="" ){
-                    alert("Favor de agregar un punto de partida");
+            if(this.state.showNewArrival==false){
+    
+                if(this.state.destination4==""){
+                    alert("Favor de agregar un destino");
                 }else{
-                    if(this.state.destination2==""){
-                  
-                        alert("favor de agregar la parada 1")
+    
+                
+                    keys.travelInfo.puntoPartida = this.state.myPosition;
+                    keys.travelInfo.Parada1 = this.state.destination4;
+    
+                    
+                    keys.type = "Unico"
+        
+                    this.props.navigation.navigate("Travel2");
+                }
+    
+    
+                
+    
+            }else{
+    
+                    if(this.state.myPosition.addressInput=="" ){
+                        alert("Favor de agregar un punto de partida");
                     }else{
-                        if(this.state.showNewArrival2){
-
-                            if(this.state.destination3==""){
-                                    alert("Favor de agregar la parada 2");
-                            }else{
-                                if(this.state.destination4==""){
-                                    alert("Favor de agregar un destino")
+                        if(this.state.destination2==""){
+                        
+                            alert("favor de agregar la parada 1")
+                        }else{
+                            if(this.state.showNewArrival2){
+    
+                                if(this.state.destination3==""){
+                                        alert("Favor de agregar la parada 2");
                                 }else{
-
-                                    if(this.state.place1==""){
-                                        alert("Favor de asignar número de parada a la parada 1")
+                                    if(this.state.destination4==""){
+                                        alert("Favor de agregar un destino")
                                     }else{
-
-                            
-                                        if(this.state.place2==""){
-                                            alert("Favor de asignar número de parada a la parada 2")
+    
+                                        if(this.state.place1==""){
+                                            alert("Favor de asignar número de parada a la parada 1")
                                         }else{
-                                            if(this.state.place3==""){
-                                                alert("Favor de asignar número de parada a la parada 3")
+    
+                                
+                                            if(this.state.place2==""){
+                                                alert("Favor de asignar número de parada a la parada 2")
                                             }else{
-
-                                                keys.travelInfo.puntoPartida = this.state.myPosition;
-                                                keys.travelInfo.Parada1 = this.state.destination2;
-                                                keys.travelInfo.Parada2 = this.state.destination3;
-                                                keys.travelInfo.Parada3 = this.state.destination4;
-
-                                                var Paradas = {
-                                                    Parada1: this.state.place1,
-                                                    Parada2: this.state.place2,
-                                                    Parada3: this.state.place3
+                                                if(this.state.place3==""){
+                                                    alert("Favor de asignar número de parada a la parada 3")
+                                                }else{
+    
+                                                    keys.travelInfo.puntoPartida = this.state.myPosition;
+                                                    keys.travelInfo.Parada1 = this.state.destination2;
+                                                    keys.travelInfo.Parada2 = this.state.destination3;
+                                                    keys.travelInfo.Parada3 = this.state.destination4;
+    
+                                                    var Paradas = {
+                                                        Parada1: this.state.place1,
+                                                        Parada2: this.state.place2,
+                                                        Parada3: this.state.place3
+                                                    }
+    
+                                                    keys.Paradas= Paradas;
+                                                    keys.flag= true;
+                                                    keys.type="Multiple"
+    
+                                                    this.props.navigation.navigate("Travel2");
                                                 }
-
-                                                keys.Paradas= Paradas;
-                                                keys.flag= true;
-                                                keys.type="Multiple"
-
-                                                this.props.navigation.navigate("Travel2");
                                             }
+    
+                                            
+                                            
                                         }
-
-                                       
-                                        
+        
+                                
+    
                                     }
     
-                            
-
                                 }
-
-                            }
-                        }else{
-
-                            if(this.state.place1==""){
-                                alert("Favor de asignar número de parada a la parada 1")
                             }else{
-                                if(this.state.place3==""){
-                                    alert("Favor de asignar número de parada a la parada 2 ")
+    
+                                if(this.state.place1==""){
+                                    alert("Favor de asignar número de parada a la parada 1")
                                 }else{
-                                    
-                                    if(this.state.destination4!=""){
-
-
-                                        keys.travelInfo.puntoPartida = this.state.myPosition;
-                                        keys.travelInfo.Parada1 = this.state.destination2;
-                                        keys.travelInfo.Parada3 = this.state.destination4;
-
-                                        var Paradas = {
-                                            Parada1: this.state.place1,
-                                            Parada3: this.state.place3
-                                        }
-
-                                        keys.Paradas = Paradas;
-                                        keys.flag = true;
-                                        keys.type = "Multiple 2 paradas"
-
-            
-            
-            
-                                        this.props.navigation.navigate("Travel2");
-        
+                                    if(this.state.place3==""){
+                                        alert("Favor de asignar número de parada a la parada 2 ")
                                     }else{
-                                        alert("¡Favor de agregar un destino!")
+                                        
+                                        if(this.state.destination4!=""){
+    
+    
+                                            keys.travelInfo.puntoPartida = this.state.myPosition;
+                                            keys.travelInfo.Parada1 = this.state.destination2;
+                                            keys.travelInfo.Parada3 = this.state.destination4;
+    
+                                            var Paradas = {
+                                                Parada1: this.state.place1,
+                                                Parada3: this.state.place3
+                                            }
+    
+                                            keys.Paradas = Paradas;
+                                            keys.flag = true;
+                                            keys.type = "Multiple 2 paradas"
+    
+                
+                
+                
+                                            this.props.navigation.navigate("Travel2");
+            
+                                        }else{
+                                            alert("¡Favor de agregar un destino!")
+                                        }
                                     }
                                 }
+    
+    
                             }
-
-
                         }
                     }
+                    
                 }
-              
-            }
+        }
+
 
 
      
@@ -1372,7 +1421,7 @@ export default class Home extends Component {
 
                                 <Icon name="chevron-right"
                                     color="#ff8834"
-                                    onPress={() => this.props.navigation.navigate("Travel")}
+                                    onPress={() => this.changetoConfigureTravel()}
                                     size={20}
                                     // style={
                                     //     {
@@ -1472,35 +1521,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#f0f4f7",
         paddingBottom: 50
     },
-    row: {
-        height: 10,
-        backgroundColor: "#f0f4f7"
-    },
-    line: {
-        height: 2,
-        backgroundColor: "#f0f4f7"
-    },
-    block: {
-        backgroundColor: "#f0f4f7",
-        height: 190
-    },
-    title: {
-        fontSize: 20,
-        paddingBottom: 10
-    },
-    subtitle: {
-        fontSize: 15,
-        paddingLeft: 15
-    },
-    land: {
-        flex: 1,
-        paddingBottom: 30,
-        flexDirection: "row"
-    },
-    icon_close: {
-        paddingBottom: 10,
-        paddingTop: 10
-    },
+
+
     area: {
         flexDirection: "row",
         paddingTop: 20,

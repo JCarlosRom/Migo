@@ -6,8 +6,7 @@ import {
   NavigationActions
 } from "react-navigation"; // Version can be specified in package.json
 import { createStackNavigator } from "react-navigation-stack";
-import { Divider } from "react-native-elements";
-import Icon from "react-native-vector-icons/FontAwesome5";
+
 
 import HomeTravel from "./componentes/Home";
 import Travel from "./componentes/Travel";

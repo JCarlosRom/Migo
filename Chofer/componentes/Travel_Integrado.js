@@ -2,11 +2,6 @@ import React, { Component } from "react";
 import { View, Text, StyleSheet, TextInput, Switch, ScrollView, Slider } from "react-native";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import {
-    createAppContainer,
-    StackActions,
-    NavigationActions
-} from "react-navigation"; // Version can be specified in package.json
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
@@ -52,6 +47,17 @@ export default class Travel_Integrado extends Component {
             intervaltimerAceptViaje: null
         };
 
+        
+        keys.socket.on('chat_chofer', (num) => {
+
+            console.log("chat_chofer", num)
+
+            keys.Chat.push(num.Mensaje);
+
+            alert("Te llegó un mensaje");
+
+        })
+
     
      
         // Socket para hacer el tracking del usuario 
@@ -75,18 +81,28 @@ export default class Travel_Integrado extends Component {
 
     }
 
-    // aceptViaje(){
-    //     keys.socket.emit('chofer_accept_request', {
-    //         id_usuario_socket: keys.id_usuario_socket,
-    //         id_chofer_socket: keys.id_chofer_socket,
-    //         datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
-    //         positionChofer: this.state.myPosition
-    //     });
-    // this.fleet_chofer_usuario();
-    // }
+    aceptViaje(){
+
+        clearInterval(this.state.intervaltimerAceptViaje);
+        
+        keys.socket.emit('chofer_accept_request', {
+            id_usuario_socket: keys.id_usuario_socket,
+            id_chofer_socket: keys.id_chofer_socket,
+            datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
+            positionChofer: this.state.myPosition
+        });
+        this.fleet_chofer_usuario();
+
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: true,
+            showMapDirections: true
+
+        })
+    }
 
     // Función para enviar la posición del chofer al usuario (Con socket) 
-    tracking_chofer_usuario = () => {
+    fleet_chofer_usuario = () => {
         let intervalBroadcastCoordinates = setInterval(() => {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
@@ -219,7 +235,9 @@ export default class Travel_Integrado extends Component {
 
                 clearInterval(this.state.intervaltimerAceptViaje);
                 // Socket para quitar al chófer de la cola
-                keys.socket.emit('popChofer', { id_chofer_socket: keys.id_chofer_socket, });
+                keys.socket.emit('popChofer', { id_chofer_socket: keys.id_chofer_socket,
+                id_usuario_socket: keys.id_usuario_socket, Msg:"Solicitud rechazada por conductor, buscando otro conductor"
+                });
 
                 let timerCoordenadas = setInterval(() => {
 
@@ -360,8 +378,15 @@ export default class Travel_Integrado extends Component {
 
 
 
+    Chat(){
 
+        keys.socket.removeAllListeners("chat_chofer");
+        this.props.navigation.navigate("Chat")
+    }
 
+    terminarViaje(){
+        this.props.navigation.navigate("viajeFinalizado");
+    }
 
     render() {
         return (
@@ -577,8 +602,8 @@ export default class Travel_Integrado extends Component {
                                     strokeColor="orange"
                                     onReady={result => {
                                         this.setState({
-                                            distance: this.state.distance + parseInt(result.distance),
-                                            duration: this.state.duration + parseInt(result.duration)
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
 
                                         })
 
@@ -637,7 +662,9 @@ export default class Travel_Integrado extends Component {
 
                             <Icon name="comment-dots"
                                 style={{ paddingLeft: 40 }}
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.Chat()}
+                                ></Icon>
 
 
                             <Icon name="phone"
@@ -698,12 +725,7 @@ export default class Travel_Integrado extends Component {
                                 title="Aceptar viaje"
                                 type="clear"
                                 onPress={() => {
-                                    this.setState({
-                                        HomeTravel: false,
-                                        aceptViaje: true,
-                                        showMapDirections: true
-
-                                    });
+                                    this.aceptViaje();
                                 }}
                             />
                             <Text style={
@@ -742,7 +764,7 @@ export default class Travel_Integrado extends Component {
                                     paddingLeft: 10,
                                     paddingTop: 5
                                 }
-                            }>{this.state.nombreUsuario}</Text>
+                            }>{keys.datos_usuario.nombreUsuario }</Text>
 
                             <Icon name="times"
                                 style={{ paddingLeft: 10 }}
@@ -757,7 +779,9 @@ export default class Travel_Integrado extends Component {
 
                             <Icon name="comment-dots"
                                 style={{ paddingLeft: 40 }}
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.Chat()}
+                                ></Icon>
 
 
                             <Icon name="phone"
@@ -768,8 +792,8 @@ export default class Travel_Integrado extends Component {
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>1234567890</Text>
-                                <Text>soporte@migo.com</Text>
+                                <Text style={{ paddingLeft: 20 }}>{keys.datos_usuario.numeroTelefono}</Text>
+                                <Text>{keys.datos_usuario.correoElectronico}</Text>
                             </View>
 
                         </View>
@@ -841,7 +865,9 @@ export default class Travel_Integrado extends Component {
 
                             <Icon name="comment-dots"
                                 style={{ paddingLeft: 40 }}
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.Chat()}
+                                ></Icon>
 
 
                             <Icon name="phone"

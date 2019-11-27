@@ -28,8 +28,8 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
 
-        // keys.socket = SocketIOClient('http://34.95.33.177:3001/');
-        keys.socket = SocketIOClient('http://192.168.0.13:3001');
+        keys.socket = SocketIOClient('http://34.95.33.177:3001/');
+        // keys.socket = SocketIOClient('http://192.168.0.13:3001');
 
 
   

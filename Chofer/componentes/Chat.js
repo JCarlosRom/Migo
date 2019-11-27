@@ -12,16 +12,20 @@ export default class Chat extends Component {
         super(props);
 
         this.state = {
+
+            
             Chat:[],
             Mensaje: "",
 
         };
 
         // Función para recibir el mensaje del conductor
-        keys.socket.on('chat_usuario', (num) => {
+        keys.socket.on('chat_chofer', (num) => {
 
-            console.log("chat_usuario",num)
 
+            console.log("chat_chofer", num)
+
+          
             keys.Chat.push(num.Mensaje);
 
             this.setState({
@@ -29,7 +33,6 @@ export default class Chat extends Component {
             })
 
             console.log(keys.Chat);
-
         })
 
 
@@ -41,11 +44,11 @@ export default class Chat extends Component {
     }
 
     componentDidMount() {
-        this.setState({
-            Chat: keys.Chat
-        })
 
-        console.log(this.state.Chat);
+        this.setState({
+            Chat:keys.Chat
+        })
+        
     }
 
 
@@ -55,27 +58,30 @@ export default class Chat extends Component {
     };
 
     sendMessage() {
-        console.log("Mensaje", this.state.Mensaje);
-        var infoMessage = {
-            Usuario: "Usuario",
-            nombreUsuario: keys.datos_usuario.nombreUsuario,
+
+        var infoMessage ={
+            Usuario:"Conductor",
+            nombreUsuario: keys.datos_chofer.nombreChofer,
             Mensaje: this.state.Mensaje
-
+            
         }
-        keys.socket.emit('room_usuario_chofer_chat',
-            {
-                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
-                infoMessage: infoMessage
-            });
 
+        
+        keys.socket.emit('room_chofer_usuario_chat',
+        {
+            id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+            infoMessage: infoMessage
+        });
 
+             
         keys.Chat.push(infoMessage);
 
         this.setState({
             Chat: keys.Chat
         })
+        
 
-        console.log("Chat Usuario",keys.Chat);
+        console.log("Chat Conductor", keys.Chat);
     }
 
 
@@ -87,36 +93,31 @@ export default class Chat extends Component {
                 <View style={{ flex: 5 }}>
 
                     {this.state.Chat!=[]?
+
                         this.state.Chat.map(element => (
 
-                            element.Usuario == "Usuario" ?
+                            element.Usuario == "Conductor" ?
 
-                                    <View style={styles.area}>
-                                        <View style={{ flex: 3 }}></View>
-                                        <View style={{ flex: 3 }}>
-                                            <Text style={{ fontWeight: "bold" }}>{element.nombreUsuario}</Text>
-                                            <Text>{element.Mensaje}</Text>
-                                        </View>
+                                <View style={styles.area}>
+                                    <View style={{ flex: 3 }}></View>
+                                    <View style={{ flex: 3 }}>
+                                        <Text style={{ fontWeight: "bold" }}>{element.nombreUsuario}</Text>
+                                        <Text>{element.Mensaje}</Text>
                                     </View>
-
+                                </View>
 
                                 :
-                                    <View style={styles.area}>
-                                        <View style={{ flex: 2 }}>
-                                            <Text style={{ fontWeight: "bold" }}>{element.nombreUsuario}</Text>
-                                            <Text>{element.Mensaje}</Text>
-                                        </View>
+                                <View style={styles.area}>
+                                    <View style={{ flex: 2 }}>
+                                        
+                                        <Text style={{fontWeight:"bold"}}>{element.nombreUsuario}</Text>
+                                        <Text>{element.Mensaje}</Text>
                                     </View>
-
-
-
+                                </View>
 
                         ))
-
-                        : 
-
+                    :
                         null
-
                     }
 
 
@@ -140,7 +141,9 @@ export default class Chat extends Component {
                                     size={24}
                                     color="#ff8834"
                                 />
+
                             }
+                            
                         />
 
                     </View>

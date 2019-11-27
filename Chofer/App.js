@@ -13,6 +13,7 @@ import Pago from "./componentes/Pago";
 import viajeFinalizado from "./componentes/viajeFinalizado";
 import Travel_Waze from './componentes/Travel_Waze'
 import Notificaciones from  './componentes/Notificaciones';
+import Chat from './componentes/Chat';
 
 
 const MainStack = createStackNavigator({
@@ -38,6 +39,9 @@ const MainStack = createStackNavigator({
   },
   Notificaciones:{
     screen:Notificaciones
+  },
+  Chat:{
+    screen:Chat
   }
 },
   {

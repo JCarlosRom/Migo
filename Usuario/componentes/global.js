@@ -13,7 +13,9 @@ export default keys={
         correoElectronico: "15460810@itcolima.edu.mx"
 
     },
-    tipoVehiculo:1,
+    categoriaVehiculo:null,
+    tipoVehiculo:null, 
+    tipoServicio:null,
     // Chofer
     datos_vehiculo: {
         id_unidad: null,
@@ -30,7 +32,7 @@ export default keys={
         Reconocimientos: null
 
     },
-
+    // Información de viajes 
     travelInfo: {
         puntoPartida:null,
         Parada1:null,
@@ -38,8 +40,11 @@ export default keys={
         Parada3:null
     },
     Paradas: null, 
+    // Punteros
     flag: null,
     type: "",
     data_driver_response: null,
+    addressInput:"",
+    Chat: [],
 
 }
