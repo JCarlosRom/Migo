@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, TextInput, Switch, ScrollView  } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
+import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import BottomNavigation, {
@@ -28,8 +27,13 @@ export default class Home extends Component {
     constructor(props) {
         super(props);
 
-        keys.socket = SocketIOClient('http://34.95.33.177:3001/');
-        // keys.socket = SocketIOClient('http://192.168.0.13:3001');
+        if(keys.socket==null){
+
+            keys.socket = SocketIOClient('http://192.168.0.13:3001');
+            // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
+            
+        }
+
 
 
   
@@ -325,6 +329,10 @@ export default class Home extends Component {
                                     }
                                   
                               }
+
+
+                            showsUserLocation={true}
+                            followsUserLocation={true}
                         
                         >
                            
@@ -337,8 +345,12 @@ export default class Home extends Component {
 
                             <View style={{paddingLeft:210, paddingBottom:20}}>
 
-                                <Icon name="exclamation-circle"
-                                    size={50}></Icon>
+                                <Image
+                                    style={{ width: 50, height: 50 }}
+                                    source={require("./../assets/botonPanico.png")}
+                                >
+
+                                </Image>
 
                             </View>
 

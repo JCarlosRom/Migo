@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, TextInput, Switch, ScrollView, Slider } from "react-native";
+import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
 import MapViewDirections from 'react-native-maps-directions';
@@ -21,7 +21,8 @@ export default class Travel_Integrado extends Component {
             aceptViaje: false,
             initravel: false,
             Travel: false,
-            showMapDirections: false,
+            mapDirectionVehiclePartida: true,
+            mapDirectionPartidaDestino:false,
             positionUser: {
                 latitude: 0,
                 longitude: 0,
@@ -37,6 +38,13 @@ export default class Travel_Integrado extends Component {
             myPosition: {
                 latitude: 0,
                 longitude: 0
+            }, 
+            region: {
+                latitude: 0,
+                longitude: 0,
+                longitudeDelta: 0,
+                latitudeDelta: 0
+
             },
             distance: 0,
             duration: 0,
@@ -60,24 +68,7 @@ export default class Travel_Integrado extends Component {
 
     
      
-        // Socket para hacer el tracking del usuario 
-        keys.socket.on('seguimiento_usuario', num => {
-          
-            this.setState({
-                positionUser:{
-                    latitude: num.coordenadas_usuario.latitude, 
-                    longitude:num.coordenadas_usuario.longitude
-                }
-            })
-
-         
-            console.log("Posición del usuario",this.state.positionUser);
-
-
-        });
-
-        
-
+     
 
     }
 
@@ -91,32 +82,58 @@ export default class Travel_Integrado extends Component {
             datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
             positionChofer: this.state.myPosition
         });
+
         this.fleet_chofer_usuario();
+       
 
         this.setState({
             HomeTravel: false,
             aceptViaje: true,
-            showMapDirections: true
-
+            initravel: false,
+            Travel: false,
         })
+
     }
 
     // Función para enviar la posición del chofer al usuario (Con socket) 
     fleet_chofer_usuario = () => {
+        // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
         let intervalBroadcastCoordinates = setInterval(() => {
             this.findCurrentLocationAsync();
             if (this.state.location != null) {
 
-                console.log('Envia datos chofer a usuario');
+            
                 keys.socket.emit('room_chofer_usuario',
                     {
                         id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
                         coordenadas_chofer: {latitude:this.state.location.coords.latitude, longitude:this.state.location.coords.longitude}
                     });
+                
             }
 
-        }, 10000);
+        }, 5000);
         keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
+        // Actualización de coordenadas de chofer (Yo)
+        let intervalUpdateChoferCoordinates = setInterval(() => {
+            this.findCurrentLocationAsync();
+            if (this.state.location != null) {
+
+
+                this.setState({
+                    myPosition: {
+                        latitude: this.state.location.coords.latitude,
+                        longitude: this.state.location.coords.longitude
+                    },
+                   
+                })
+
+            }
+
+            console.log("CHOFER: Posición del conductor",this.state.myPosition);
+
+        }, 5000);
+
+        keys.intervalUpdateChoferCoordinates = intervalUpdateChoferCoordinates;
     }
 
     // Función global para conseguir la posición del dispositivo 
@@ -211,69 +228,76 @@ export default class Travel_Integrado extends Component {
             latitude = location.coords.latitude;
             longitude = location.coords.longitude;
     
-    
+
             this.setState({
                 myPosition: {
     
                     latitude: latitude,
                     longitude: longitude
     
-                }
+                },
+                region: {
+                    latitude: latitude,
+                    longitude: longitude,
+                    longitudeDelta: 0.0105,
+                    latitudeDelta: 0.0105
+
+                },
             });
             
         }
 
-        // Bloque para la cuenta regresiva, ya sea para cancelación o aceptar el viaje 
+    // Bloque para la cuenta regresiva, ya sea para cancelación o aceptar el viaje 
 
-        let intervaltimerAceptViaje = setInterval(() => {
-            
-            this.setState({ intervaltimerAceptViaje });
+    let intervaltimerAceptViaje = setInterval(() => {
+        
+        this.setState({ intervaltimerAceptViaje });
 
-            console.log(this.state.intervaltimerAceptViaje);
+        console.log(this.state.intervaltimerAceptViaje);
 
-            if (this.state.timerAceptViaje == 0) {
+        if (this.state.timerAceptViaje == 0) {
 
-                clearInterval(this.state.intervaltimerAceptViaje);
-                // Socket para quitar al chófer de la cola
-                keys.socket.emit('popChofer', { id_chofer_socket: keys.id_chofer_socket,
-                id_usuario_socket: keys.id_usuario_socket, Msg:"Solicitud rechazada por conductor, buscando otro conductor"
-                });
+            clearInterval(this.state.intervaltimerAceptViaje);
+            // Socket para quitar al chófer de la cola
+            keys.socket.emit('popChofer', { id_chofer_socket: keys.id_chofer_socket,
+            id_usuario_socket: keys.id_usuario_socket, Msg:"Solicitud rechazada por conductor, buscando otro conductor"
+            });
 
-                let timerCoordenadas = setInterval(() => {
+            let timerCoordenadas = setInterval(() => {
+
+                this.findCurrentLocationAsync();
+
+                if (this.state.location != null) {
+
 
                     this.findCurrentLocationAsync();
+                    keys.socket.emit('coordenadas', {
+                        coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                        datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                    });
 
-                    if (this.state.location != null) {
-
-
-                        this.findCurrentLocationAsync();
-                        keys.socket.emit('coordenadas', {
-                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
-                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
-                        });
-
-                        console.log("timerCoordenadas", keys.timerCoordenadas)
+                    console.log("timerCoordenadas", keys.timerCoordenadas)
 
 
 
-                    }
+                }
 
-                }, 10000);
-                keys.timerCoordenadas = timerCoordenadas;
+            }, 5000);
+            keys.timerCoordenadas = timerCoordenadas;
 
-                this.props.navigation.navigate("Home",{flag:1});
-                alert("Viaje cancelado");
-
-
-            } else {
-
-                this.setState({
-                    timerAceptViaje: this.state.timerAceptViaje - 1
-                })
-            }
+            this.props.navigation.navigate("Home",{flag:1});
+            alert("Viaje cancelado");
 
 
-        }, 1000);
+        } else {
+
+            this.setState({
+                timerAceptViaje: this.state.timerAceptViaje - 1
+            })
+        }
+
+
+    }, 1000);
 
 
 
@@ -306,6 +330,18 @@ export default class Travel_Integrado extends Component {
         if (this.state.Travel == true) {
             data.waypoints = [
                 {
+                    latitude: this.state.positionUser.latitude,
+                    longitude: this.state.positionUser.longitude,
+                },
+
+
+
+            ]
+        }
+
+        if (this.state.puntoEncuentro == true) {
+            data.waypoints = [
+                {
                     latitude: this.state.parada1.latitude,
                     longitude: this.state.parada1.longitude,
                 },
@@ -323,58 +359,24 @@ export default class Travel_Integrado extends Component {
     };
 
     puntoEncuentro() {
+        
+
         this.setState({
             HomeTravel: false,
             aceptViaje: false,
             initravel: true,
-            showMapDirections: true
-
-
+            mapDirectionVehiclePartida:false,
+            mapDirectionPartidaDestino:true
         })
+
+        // Socket de punto de encuentro, socket puntoEncuentroUsuario
+        keys.socket.emit("puntoEncuentro",{
+            id_socket_usuario: keys.id_usuario_socket
+        });
+
+        clearInterval(keys.intervalBroadcastCoordinates);
+        
     }
-
-    async iniciarViaje() {
-
-        try {
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
-                distancia_km: this.state.distance,
-                tiempo_min: this.state.duration
-            });
-
-
-            res.data.datos.forEach(element => {
-
-
-
-                if (element["categoria_servicio"] == this.state.categoriaVehiculo) {
-
-                    this.setState({
-
-                        Tarifa: element["out_costo_viaje"],
-
-
-                    })
-                }
-
-
-
-            });
-
-        } catch (e) {
-            console.log(e);
-            alert("No hay conexión al web service", "Error");
-        }
-
-        this.setState({
-            HomeTravel: false,
-            aceptViaje: false,
-            initravel: false,
-            Travel: true,
-
-        })
-    }
-
 
 
 
@@ -386,7 +388,22 @@ export default class Travel_Integrado extends Component {
 
     terminarViaje(){
         this.props.navigation.navigate("viajeFinalizado");
+
+        keys.socket.emit("terminarViajeChofer", { id_usuario_socket:keys.id_usuario_socket})
     }
+
+    onRegionChange = async region => {
+        latitude = region.latitude;
+        longitude = region.longitude;
+        latitudeDelta = region.latitudeDelta;
+        longitudeDelta = region.longitudeDelta;
+
+        this.setState({
+            region
+        });
+
+
+    } 
 
     render() {
         return (
@@ -495,17 +512,29 @@ export default class Travel_Integrado extends Component {
 
                         style={styles.map}
                         region={{
-                            latitude: this.state.myPosition.latitude,
-                            longitude: this.state.myPosition.longitude,
-                            latitudeDelta: 0.0105,
-                            longitudeDelta: 0.0105,
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta
                         }}
+
+                        onRegionChangeComplete={this.onRegionChange}
                         followUserLocation={true}
                         ref={ref => (this.mapView = ref)}
                         zoomEnabled={true}
                         showsUserLocation={true}
 
                     >
+                        {/* {Ubicación del chofer} */}
+                        <Marker
+                            coordinate={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+
+                        >
+                            <Icon color="#ff8834" name="car" size={20} ></Icon> 
+                        </Marker>
 
                         {/* Ubicación del usuario */}
                         <Marker
@@ -518,53 +547,24 @@ export default class Travel_Integrado extends Component {
                             <Icon name="map-pin" size={20} color="green"></Icon>
                         </Marker>
 
-                        {this.state.showMapDirections ?
-                            <View>
-                                {/* Ubicación del destino 1 */}
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.parada1.latitude,
-                                        longitude: this.state.parada1.longitude,
-                                    }}
-
-                                >
-                                    <Icon name="map-pin" size={20} color="orange"></Icon>
-                                </Marker>
-                                {/* Ubicación del destino 2 */}
-                            
-
-                            </View>
-
-                            :
-                            null
-                        }
-
-
-                        {this.state.initravel?
-                            
-                            null
-                    
-                        :
-                            this.state.Travel?
-                                null
-                            :
-
+                        {this.state.mapDirectionVehiclePartida?
+                        
                             <MapViewDirections
 
 
-                                destination={{
-                                    latitude: this.state.positionUser.latitude,
-                                    longitude: this.state.positionUser.longitude,
-                                }}
                                 origin={{
                                     latitude: this.state.myPosition.latitude,
                                     longitude: this.state.myPosition.longitude,
                                 }}
+                                destination={{
+                                    latitude: this.state.positionUser.latitude,
+                                    longitude: this.state.positionUser.longitude,
+                                }}
                                 apikey={GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
-                                strokeColor="blue"
+                                strokeColor="orange"
                                 onReady={result => {
-                                    if(result!=null){
+                                    if (result != null) {
 
                                         this.setState({
                                             distance: parseInt(result.distance),
@@ -577,49 +577,52 @@ export default class Travel_Integrado extends Component {
                                 }}
 
                             />
+                    
+                        :
+                            null
+                        
                         }
 
-
-                        {this.state.showMapDirections ?
-                           
-                            <View>
-
-
-                                <MapViewDirections
-
-
-                                    origin={{
-                                        latitude: this.state.positionUser.latitude,
-                                        longitude: this.state.positionUser.longitude,
-                                    }}
-
-                                    destination={{
-                                        latitude: this.state.parada1.latitude,
-                                        longitude: this.state.parada1.longitude,
-                                    }}
-                                    apikey={GOOGLE_MAPS_APIKEY}
-                                    strokeWidth={1}
-                                    strokeColor="orange"
-                                    onReady={result => {
+                        {this.state.mapDirectionPartidaDestino?
+    
+                            <MapViewDirections
+    
+    
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                destination={{
+                                    latitude: this.state.parada1.latitude,
+                                    longitude: this.state.parada1.longitude,
+                                }}
+                                apikey={GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="blue"
+                                onReady={result => {
+                                    if (result != null) {
+    
                                         this.setState({
                                             distance: parseInt(result.distance),
                                             duration: parseInt(result.duration)
-
                                         })
-
-
-                                    }}
-
-                                />
-
-                            </View>
-
-                            :
+                                    }
+    
+    
+    
+                                }}
+    
+                            />
+                        
+                    
+                        :
 
                             null
+                            
                         }
+                        {/* Ruta de chofer al punto de partida */}
 
-
+                      
 
                     </MapView>
                 </View>
@@ -752,11 +755,10 @@ export default class Travel_Integrado extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <Icon style={
-                                {
-                                    paddingLeft: 10
-                                }
-                            } name="user" size={20}></Icon>
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
 
 
                             <Text style={

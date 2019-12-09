@@ -4,15 +4,23 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
+import SocketIOClient from 'socket.io-client/dist/socket.io.js';
+import keys from "./global";
 
 
 export default class Travel extends Component {
     constructor(props) {
+
+        if (keys.socket == null) {
+
+            keys.socket = SocketIOClient('http://192.168.0.13:3001');
+            // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
+
+        }
         super(props);
         this.state = {
-            id_usuario:"2",
             slideDistance:1,
-            standarSelected:false,
+            standarSelected:true,
             luxeSelected:false,
             VanSelected:false,
             TruckSelected:false,
@@ -34,30 +42,15 @@ export default class Travel extends Component {
             leftVehicles:0,
 
      
-            
         
-      
-
-
         };
+
+     
+
+
         keys.id_usuario_socket = keys.socket.id;
 
-        keys.socket.emit('vehiclesInit', {
-            id_usuario_socket: keys.id_usuario_socket
-        });
-
-
-        // Intervalo para consultar todos los conductores conectados
-        this.timer_Vehicles = setInterval(() => {
-
-            keys.socket.emit('vehiclesInit', {
-                id_usuario_socket: keys.id_usuario_socket
-            });
-
-
-        }, 10000);
-
-
+        this.getVehicles(1, 1);
 
         // Socket para escuchar el socket de vehículo
         keys.socket.on('vehiclesGet', (num) => {
@@ -80,6 +73,78 @@ export default class Travel extends Component {
   
 
     async componentDidMount() {
+
+        
+        if (keys.categoriaVehiculo != null) {
+
+
+            if (keys.categoriaVehiculo == 1 && keys.tipoVehiculo == 1) {
+
+                this.setState({
+                    standarSelected: true,
+                    luxeSelected: false,
+                    VanSelected: false,
+                    TruckSelected: false,
+                    showLeftCars: true
+
+                })
+                
+
+
+            } else {
+                if (keys.categoriaVehiculo == 1 && keys.tipoVehiculo == 2) {
+
+                    this.setState({
+
+                        standarSelected: false,
+                        luxeSelected: true,
+                        VanSelected: false,
+                        TruckSelected: false,
+                        showLeftCars: true
+
+                    });
+
+                    
+
+                } else {
+                    if (keys.categoriaVehiculo == 3) {
+
+
+                        this.setState({
+
+                            standarSelected: false,
+                            luxeSelected: false,
+                            VanSelected: true,
+                            TruckSelected: false,
+                            showLeftCars: true
+                        });
+
+                        
+
+
+                    } else {
+
+                        if (keys.categoriaVehiculo == 4) {
+
+                            this.setState({
+
+                                standarSelected: false,
+                                luxeSelected: false,
+                                VanSelected: false,
+                                TruckSelected: true,
+                                showLeftCars: true
+
+                            });
+
+                            
+
+                        }
+                    }
+                }
+
+            }
+
+        }
 
         const myLocation = await Location.getCurrentPositionAsync({});
         latitude = myLocation.coords.latitude;
@@ -117,8 +182,8 @@ export default class Travel extends Component {
            
         } catch (e) {
             this.setState({ errorMessage: e });
+            console.log("Error: " + this.state.errorMessage);
         }
-        console.log("Error: " + this.state.errorMessage);
 
     
 
@@ -236,6 +301,8 @@ export default class Travel extends Component {
         }, 10000);
 
         keys.categoriaVehiculo = categoriaVehiculo;
+
+        keys.tipoVehiculo = tipoVehiculo; 
         
     }
     
@@ -354,10 +421,7 @@ export default class Travel extends Component {
                         placeholderTextColor="gray"
                             onFocus={() => this.saveConfiguration()}
                     ></TextInput>
-                        <Icon name="plus"
-                        color="#ff8834"
-                        onPress={() => this.saveConfiguration()} 
-                         size={30} style={{ paddingLeft: 15 }}></Icon>
+                    
                     
                 </View>
                 

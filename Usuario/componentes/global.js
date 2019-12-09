@@ -1,12 +1,12 @@
 export default keys={
-
+    socket:null,
     id_chofer_socket: '',
     id_usuario_socket: '',
     id_servicio: '',
     id_recorrido: '',
     // Usuario
     datos_usuario: {
-        id_usuario: "2",
+        id_usuario: 2,
         nombreUsuario: 'Juan Hernandez',
         CURP: 'GUGL970208MCMTRR05',
         numeroTelefono: "3121942513",

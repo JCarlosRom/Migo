@@ -1,11 +1,7 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, TextInput, Switch, ScrollView } from "react-native";
-import { Divider, CheckBox } from "react-native-elements";
+import { View, Text, StyleSheet, Button, Image, Switch, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import BottomNavigation, {
-    FullTab
-} from 'react-native-material-bottom-navigation'
+
 
 
 
@@ -94,7 +90,10 @@ export default class viajeFinalizado extends Component {
                         <View style={{flex:3}}>
                             <View style={{flexDirection:"row"}}>
                                 <View>
-                                    <Icon name="user-circle" size={30}></Icon>  
+                                    <Image
+                                        style={{ width: 50, height: 50 }}
+                                        source={require("./../assets/user.png")}
+                                    ></Image>  
                                 </View>
                                 <View style={{ paddingLeft: 10 }}>
                                     <Text style={{ marginTop: 3, fontWeight: "bold"}}>{keys.nombreUsuario}</Text>

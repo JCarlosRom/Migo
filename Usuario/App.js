@@ -10,13 +10,20 @@ import { createStackNavigator } from "react-navigation-stack";
 
 import HomeTravel from "./componentes/Home";
 import Travel from "./componentes/Travel";
-import Travel2 from "./componentes/Travel2";
+import Travel_Integrado from "./componentes/Travel_Integrado";
+import Travel_MP from "./componentes/TravelMP";
+import Travel_MP2 from "./componentes/TravelMP2";
 import DesgloseTarifa from "./componentes/DesgloseTarifa";
 import InfoTravel from "./componentes/InfoTravel";
-import Chat from "./componentes/Chat.js";
+import Chat from "./componentes/Chat";
+import Inicio from "./componentes/Inicio";
 
 
 const MainStack = createStackNavigator({
+
+  Inicio:{
+    screen:Inicio
+  },
 
   Home:{
     screen:HomeTravel
@@ -25,8 +32,14 @@ const MainStack = createStackNavigator({
   Travel:{
     screen:Travel
   },
-  Travel2:{
-    screen:Travel2
+  Travel_MP:{
+    screen:Travel_MP
+  },
+  Travel_MP2: {
+    screen: Travel_MP2
+  },
+  Travel_Integrado: {
+    screen: Travel_Integrado
   },
   DesgloseTarifa:{
     screen:DesgloseTarifa
@@ -40,7 +53,7 @@ const MainStack = createStackNavigator({
  
 },
   {
-    initialRouteName: "Home",
+    initialRouteName: "Inicio",
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#fff"

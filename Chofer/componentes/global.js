@@ -3,7 +3,7 @@ export default keys={
     timerCoordenadas:null,
     id_chofer_socket:'',
     id_usuario_socket:'',
-    id_chofer: "1",
+    id_chofer: 2,
     myPosition: null,
     stateConductor: false,
     id_servicio: '',
@@ -28,7 +28,7 @@ export default keys={
 
     },
     datos_vehiculo: {
-        id_unidad: '1',
+        id_unidad: 2,
         modelo:'Dodge attitude',
         Matricula:'FRS408A',
         // Taxi: 1, Van: 2, Camioneta: 3
@@ -40,7 +40,7 @@ export default keys={
 
     },
     datos_chofer:{
-        idChofer:'1',
+        idChofer:1,
         nombreChofer:'Oscar Dario Leyva',
         Estrellas:'4.5',
         Reconocimientos:'Habla inglés y español'
@@ -50,6 +50,7 @@ export default keys={
     Tarifa: 0,
     Peaje:0,
     intervalBroadcastCoordinates:null,
+    intervalUpdateChoferCoordinates: null,
     Chat: [],
     
 

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import Modal from "react-native-modal";
-import { Button, ThemeConsumer } from "react-native-elements";
+import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { ScrollView } from "react-native-gesture-handler";
@@ -14,7 +14,7 @@ import * as Permissions from 'expo-permissions';
 
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
-export default class Travel2 extends Component {
+export default class Travel_Integrado extends Component {
     state = {
 
         myPosition: {
@@ -69,34 +69,63 @@ export default class Travel2 extends Component {
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
         infoVehicleTarifa:0,
-
- 
-
-        
-
     };
 
     constructor(props) {
         super(props);
-
         
+        // Socket para designar el punto de encuentro 
+        keys.socket.on('puntoEncuentroUsuario', (num) => {
+            this.setState({
+                ConductorMapDirection:false
+            })
+            
+            clearInterval(this.state.timer_2);
 
-        keys.socket.on('chat_usuario', (num) => {
+            this.findCurrentLocationAsync();
 
-            console.log("chat_usuario", num)
+            if (this.state.location != null) {
+                console.log(this.state.location);
 
-            keys.Chat.push(num.Mensaje);
+                this.setState({
+                    myPosition: {
+                        latitude: this.state.location.coords.latitude,
+                        longitude: this.state.location.coords.longitude
+                    }
+                })
 
-            alert("Te llegó un mensaje");
+                console.log(this.state.myPosition);
+            }
 
+            let timer_coordenadasUsuario = setInterval(() => {
+
+                this.findCurrentLocationAsync();
+
+                if (this.state.location != null) {
+                    console.log(this.state.location);
+
+                    this.setState({
+                        myPosition:{
+                            latitude: this.state.location.coords.latitude,
+                            longitude: this.state.location.coords.longitude
+                        }
+                    })
+
+                    console.log(this.state.myPosition);
+                }
+
+            }, 10000);
+
+            this.setState({
+                timer_coordenadasUsuario
+            })
+    
         })
     
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
             // console.log('Llego respuesta: ', num);
             this.state.id_recorrido = num;
-            //this.state.datos_solicitud=num;
-            // console.log(this.state.id_recorrido);
             this.setState({
 
             });
@@ -136,6 +165,7 @@ export default class Travel2 extends Component {
 
             this.setState({
                 Onway: true,
+                ConductorMapDirection:true,
                 showEstimations: false,
                 Home: false
             })
@@ -147,7 +177,6 @@ export default class Travel2 extends Component {
         // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
    
-
             this.setState({
                 positionChofer:{
                     latitude: num.coordenadas_chofer.latitude, 
@@ -155,14 +184,10 @@ export default class Travel2 extends Component {
                 }
             })
 
-
-
-            // console.log("Posición del chófer en usuario",this.state.positionChofer);
-          
-            
+            console.log("Posición del chófer", this.state.positionChofer);
         
         });
-
+        // Timer para transmitir coordenadas del usuario
         let timer_coordenadasUsuario = setInterval(() => {
 
             this.findCurrentLocationAsync();
@@ -173,9 +198,6 @@ export default class Travel2 extends Component {
                     coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
                     datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
                 });
-
-
-
             }
 
         }, 10000);
@@ -192,16 +214,13 @@ export default class Travel2 extends Component {
             alert(num.Msg);
 
             setTimeout(() => {
-    
                 if (num.Msg == "Solicitud rechazada por conductor, buscando otro conductor"){
-    
                     usuario_latitud = this.state.myPosition.latitude;
                     usuario_longitud = this.state.myPosition.longitude;
                     datos_usuario = keys.datos_usuario;
                     infoTravel = keys.travelInfo;
                     type = keys.type;
                     keys.id_usuario_socket = keys.socket.id;
-    
     
                     keys.socket.emit('usuario_solicitud', {
                         usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud,
@@ -213,14 +232,8 @@ export default class Travel2 extends Component {
 
                 
             }, 2000);
-
-     
-
         });
-
     }
-
-
 
     fleet_usuario_chofer = () => {
         let timer_2 = setInterval(() => {
@@ -284,11 +297,8 @@ export default class Travel2 extends Component {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
-     
-            
+    
             res.data.datos.forEach(element => {
-
-          
 
                 if(element["categoria_servicio"]==1){
                    
@@ -300,70 +310,54 @@ export default class Travel2 extends Component {
                             out_costo_viaje: element["out_costo_viaje"],
                         }
                      
-                         
                     })
                 }
                 if (element["categoria_servicio"] == 2) {
                     
                     this.setState({
-                   
                         Express_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: element["out_costo_viaje"],
                         }
-                     
                     })
                 }
 
                 if (element["categoria_servicio"] == 3) {
                     
                     this.setState({
-                    
                         Pool_Estandar: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: element["out_costo_viaje"],
                         }
-                        
                     })
                 }
 
                 if (element["categoria_servicio"] == 4) {
                    
                     this.setState({
-                    
                         Pool_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: element["out_costo_viaje"],
-                        }
-                      
+                        } 
                     })
                 }
-
-               
             });
-        
-    
-
-
         } catch (e) {
             console.log(e);
-            alert("No hay conexión al web service", "Error");
+            alert("Servicio no disponible, Intente más tarde", "Error");
         }
     }
 
     generarSolicitud = () => {
-
-     
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
         datos_usuario = keys.datos_usuario;
         infoTravel= keys.travelInfo;
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
-
 
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
@@ -372,13 +366,10 @@ export default class Travel2 extends Component {
             tipoVehiculo: keys.tipoVehiculo, tipoServicio: keys.tipoServicio
        
         });
-
-
     }
     
-
-    
     findCurrentLocationAsync = async () => {
+
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -403,9 +394,6 @@ export default class Travel2 extends Component {
             let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
             let Parada2 = await Location.geocodeAsync(keys.travelInfo.Parada2);
             let Parada3 = await Location.geocodeAsync(keys.travelInfo.Parada3);
-
-          
-
 
             // Asignar la posición del usuario en cuanto a su punto de partida
             this.setState({
@@ -877,6 +865,16 @@ export default class Travel2 extends Component {
                                 <Icon name="map-pin" size={20} color="green"></Icon>
                             </Marker>
 
+                            <Marker
+                                coordinate={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+
+                            >
+                                <Icon name="map-pin" size={20} color="red"></Icon>
+                            </Marker>
+
                             {this.state.Onway?
                                 <Marker
                                     coordinate={{
@@ -893,28 +891,42 @@ export default class Travel2 extends Component {
                             }
                           
 
-                            {/* {this.state.Paradas != null ?
 
-                                
 
-                                this.state.Paradas.map(marker => (
+                            {this.state.ConductorMapDirection ?
+                                <MapViewDirections
 
-                                    <Marker
-                                        key={marker.numParada ? marker.numParada:"key"}
-                                        coordinate={{
-                                            latitude: marker.latitude,
-                                            longitude: marker.longitude
-                                        }}
-            
-                                    >
-                                        <Icon name="map-pin" size={20} color="orange"></Icon>
 
-                                    </Marker>
-                                ))
-                                    :
-                                    null
+                                    destination={{
+                                        latitude: this.state.positionChofer.latitude,
+                                        longitude: this.state.positionChofer.longitude,
+                                    }}
+                                    origin={{
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                    }}
+                                    apikey={GOOGLE_MAPS_APIKEY}
+                                    strokeWidth={1}
+                                    strokeColor="blue"
+                                    onReady={result => {
 
-                            } */}
+                                        this.setState({
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
+
+                                        });
+
+                                        this.getTarifas();
+
+
+                                    }}
+
+                                />
+
+                                :
+                                null
+                            }
+
                             {
                                 this.state.Paradas!=null?
 
@@ -1360,12 +1372,18 @@ export default class Travel2 extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="user-circle" size={60}></Icon>
-                                <Icon color="#ff8834" name="car" size={45}  style={{paddingLeft:10}}></Icon>
+                                <Image
+                                    style={{ width: 50, height: 50 }}
+                                    source={require("./../assets/user.png")}
+                                ></Image>
+                                <Image
+                                    style={{ width: 50, height: 50 }}
+                                    source={require("./../assets/Auto.png")}
+                                ></Image>
                                 <View style={{paddingLeft:120}}>
                                     <Text>{keys.datos_vehiculo.modelo}</Text>
                                     <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
-                                    <Button color="red" title="Cancelar"
+                                    <Button color="#ff8834" title="Cancelar"
                                         onPress={() => this.setState({
                                             showModalCancel:true
                                         })}
@@ -1382,6 +1400,7 @@ export default class Travel2 extends Component {
                                 <Icon color="#ff8834" name="phone" size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <Icon name="comment-dots"
+                                    color="#ff8834"
                                     style={{ paddingLeft: 40 }}
                                     size={25}
                                     onPress={() => this.Chat()}

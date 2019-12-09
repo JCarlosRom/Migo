@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, TextInput, ScrollView, Slider } from "react-native";
+import { View, Text, StyleSheet, Button, ScrollView, Image } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 
 
@@ -62,7 +62,7 @@ export default class InfoTravel extends Component {
                     </View>
                     <View style={{flex:1}}></View>
                     <View style={{flex:2, marginRight:5}}>
-                        <Button title="Ayuda" color="red"></Button>
+                        <Button title="Ayuda" color="#ff8834"></Button>
                     </View>
                 </View>
                 <View
@@ -75,8 +75,14 @@ export default class InfoTravel extends Component {
                 </View>
 
                 <View style={styles.area}>
-                    <Icon name="user-circle" size={60}></Icon>
-                    <Icon name="car" size={45} style={{ paddingLeft: 10 }}></Icon>
+                    <Image
+                        style={{ width: 50, height: 50 }}
+                        source={require("./../assets/user.png")}
+                    ></Image>
+                    <Image
+                        style={{ width: 50, height: 50 }}
+                        source={require("./../assets/Auto.png")}
+                    ></Image>
                     <View style={{ paddingLeft: 120 }}>
                         <Text>{this.state.ModeloChofer}</Text>
                         <Text style={{ fontWeight: "bold", fontSize: 16 }}>{this.state.matriculaChofer}</Text>
@@ -90,16 +96,17 @@ export default class InfoTravel extends Component {
                 </View>
 
                 <View style={styles.area}>
-                    <Icon name="phone" size={30}></Icon>
+                    <Icon name="phone" color="#ff8834" size={30}></Icon>
                     <View style={{ paddingLeft: 10 }}></View>
-                    <TextInput
-                        style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
-                        placeholder=" Nota para iniciar el viaje"
-                        placeholderTextColor="black"
-                    ></TextInput>
+                    <Icon name="comment-dots"
+                        color="#ff8834"
+                        style={{ paddingLeft: 40 }}
+                        size={25}
+                        onPress={() => this.Chat()}
+                    ></Icon>
                 </View>
                 <View >
-                    <Button color="red" title="Cancelar"
+                    <Button color="#ff8834" title="Cancelar"
                         onPress={() => this.setModalCancel(!this.state.modalVisible)}
                     ></Button>
                 </View>
@@ -111,7 +118,7 @@ export default class InfoTravel extends Component {
                     backgroundColor: "#fff",
                     paddingTop: 10
                 }}>
-                    <Icon name="map-marker-alt" size={25}></Icon>
+                    <Icon name="map-marker-alt" color="#ff8834" size={25}></Icon>
                     <Text style={{paddingLeft:30, marginTop:2}}>Lomas del Centenario</Text>
                     <Text style={{ paddingLeft: 30, marginTop: 2, color:"blue" }}>Agregar o cambiar</Text>
                 </View>
@@ -125,7 +132,7 @@ export default class InfoTravel extends Component {
                     paddingTop:10
         
                 }}>
-                    <Icon name="money-bill-alt" size={25}></Icon>
+                    <Icon name="money-bill-alt" color="#ff8834" size={25}></Icon>
                     <Text style={{ paddingLeft: 30, marginTop: 2 }}>Efectivo</Text>
                     <Text style={{ paddingLeft: 170, marginTop: 2, color:"blue" }}>Cambiar</Text>
                 </View>
@@ -140,7 +147,7 @@ export default class InfoTravel extends Component {
                     paddingTop: 10
               
                 }}>
-                    <Icon name="share" size={25}></Icon>
+                    <Icon name="share" color="#ff8834" size={25}></Icon>
                     <Text style={{ paddingLeft: 30, marginTop: 2 }}>Compartir estado del viaje</Text>
                     <Text style={{ paddingLeft: 50, marginTop: 2, color:"blue" }}>Compartir</Text>
                 </View>
@@ -161,7 +168,10 @@ export default class InfoTravel extends Component {
                         <Text>Únete a miles de usuarios que también conducen con Migo</Text>
                     </View>
                     <View style={{paddingTop:10}}>
-                        <Icon name="car" size={50}></Icon>
+                        <Image
+                            style={{ width: 50, height: 50 }}
+                            source={require("./../assets/Auto.png")}
+                        ></Image>
                     </View>
                 </View>
 

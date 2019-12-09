@@ -17,8 +17,8 @@ export default class Home extends Component {
 
     constructor(props) {
 
-        keys.socket = SocketIOClient('http://192.168.0.13:3001');
-        // keys.socket = SocketIOClient('http://34.95.33.177:3001/');
+        // keys.socket = SocketIOClient('http://192.168.1.161:3001');
+        // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
         
         super(props);
         this.state = {
@@ -276,7 +276,7 @@ export default class Home extends Component {
         // Método para consultar destinos
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://34.95.33.177:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
+            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
                 id_usuario: this.state.id_usuario
             });
 
@@ -598,7 +598,7 @@ export default class Home extends Component {
                         keys.travelInfo.Parada1 = Destino;
                         keys.type="Unico"
                 
-                        this.props.navigation.navigate("Travel2");
+                        this.props.navigation.navigate("Travel_Integrado");
                     }
                 }
 
@@ -636,7 +636,7 @@ export default class Home extends Component {
                     
                     keys.type = "Unico"
         
-                    this.props.navigation.navigate("Travel2");
+                    this.props.navigation.navigate("Travel_Integrado");
                 }
     
     
@@ -687,7 +687,7 @@ export default class Home extends Component {
                                                     keys.flag= true;
                                                     keys.type="Multiple"
     
-                                                    this.props.navigation.navigate("Travel2");
+                                                    this.props.navigation.navigate("TravelMP");
                                                 }
                                             }
     
@@ -728,7 +728,7 @@ export default class Home extends Component {
                 
                 
                 
-                                            this.props.navigation.navigate("Travel2");
+                                            this.props.navigation.navigate("TravelMP2");
             
                                         }else{
                                             alert("¡Favor de agregar un destino!")
