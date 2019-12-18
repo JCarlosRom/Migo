@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native"
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import axios from 'axios';
 import * as Location from "expo-location";
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
@@ -52,7 +51,9 @@ export default class Travel_Integrado extends Component {
             Tarifa: 0,
             timer_2:null,
             timerAceptViaje: 15,
-            intervaltimerAceptViaje: null
+            intervaltimerAceptViaje: null,
+            infoVehicleLlegada: null,
+            DistanceVehicle: null 
         };
 
         
@@ -71,8 +72,12 @@ export default class Travel_Integrado extends Component {
      
 
     }
-
+    // Función para aceptar el viaje
     aceptViaje(){
+
+        var d = new Date(); // get current date
+        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
+        
 
         clearInterval(this.state.intervaltimerAceptViaje);
         
@@ -83,6 +88,20 @@ export default class Travel_Integrado extends Component {
             positionChofer: this.state.myPosition
         });
 
+        // keys.socket.emit('generar_servicio',{
+        //     distancia_destino_usuario:,
+        //     tiempo_viaje_destino:,
+        //     latitud_usuario:,
+        //     longitud_usuario:,
+        //     latitud_usuario_destino:,
+        //     longitud_usuario_destino:,
+        //     geocoder_origen:,
+        //     geocoder_destino:,
+        //     id_usuario:,
+        //     id_unidad:,
+        //     id_conductor:
+        // })
+
         this.fleet_chofer_usuario();
        
 
@@ -91,6 +110,7 @@ export default class Travel_Integrado extends Component {
             aceptViaje: true,
             initravel: false,
             Travel: false,
+            infoVehicleLlegada: d.toLocaleTimeString()
         })
 
     }
@@ -103,37 +123,25 @@ export default class Travel_Integrado extends Component {
             if (this.state.location != null) {
 
             
-                keys.socket.emit('room_chofer_usuario',
-                    {
-                        id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
-                        coordenadas_chofer: {latitude:this.state.location.coords.latitude, longitude:this.state.location.coords.longitude}
-                    });
-                
-            }
-
-        }, 5000);
-        keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
-        // Actualización de coordenadas de chofer (Yo)
-        let intervalUpdateChoferCoordinates = setInterval(() => {
-            this.findCurrentLocationAsync();
-            if (this.state.location != null) {
-
-
                 this.setState({
                     myPosition: {
                         latitude: this.state.location.coords.latitude,
                         longitude: this.state.location.coords.longitude
                     },
-                   
+
                 })
+                
+                keys.socket.emit('room_chofer_usuario',
+                    {
+                        id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
+                        coordenadas_chofer: {latitude:this.state.location.coords.latitude, longitude:this.state.location.coords.longitude}
+                    });
 
             }
 
-            console.log("CHOFER: Posición del conductor",this.state.myPosition);
-
         }, 5000);
-
-        keys.intervalUpdateChoferCoordinates = intervalUpdateChoferCoordinates;
+        keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
+      
     }
 
     // Función global para conseguir la posición del dispositivo 
@@ -195,8 +203,24 @@ export default class Travel_Integrado extends Component {
         }
     }
 
+    async componentDidMount(){
 
-    async componentDidMount() {
+        const location = await Location.getCurrentPositionAsync({});
+        latitude = location.coords.latitude;
+        longitude = location.coords.longitude;
+
+        this.setState({
+            region: {
+                latitude: latitude,
+                longitude: longitude,
+                longitudeDelta: 0.0105,
+                latitudeDelta: 0.0105
+
+            },
+        })
+    }
+
+    async componentWillMount() {
         // Bloque para asignar markers y trazos de rutas
         console.log("Travel integrado");
         console.log(keys.travelInfo);
@@ -236,13 +260,7 @@ export default class Travel_Integrado extends Component {
                     longitude: longitude
     
                 },
-                region: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    longitudeDelta: 0.0105,
-                    latitudeDelta: 0.0105
-
-                },
+              
             });
             
         }
@@ -357,7 +375,7 @@ export default class Travel_Integrado extends Component {
     static navigationOptions = {
         title: "Viaje"
     };
-
+    // Función para iniciar en el punto de encuentro
     puntoEncuentro() {
         
 
@@ -374,7 +392,7 @@ export default class Travel_Integrado extends Component {
             id_socket_usuario: keys.id_usuario_socket
         });
 
-        clearInterval(keys.intervalBroadcastCoordinates);
+        
         
     }
 
@@ -385,13 +403,27 @@ export default class Travel_Integrado extends Component {
         keys.socket.removeAllListeners("chat_chofer");
         this.props.navigation.navigate("Chat")
     }
+    // Función para iniciar el viaje 
+    iniciarViaje(){
 
+
+
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: false,
+            initravel: false,
+            Travel: true,
+            
+        })
+        
+    }
+    // Función para terminar el viaje 
     terminarViaje(){
         this.props.navigation.navigate("viajeFinalizado");
 
         keys.socket.emit("terminarViajeChofer", { id_usuario_socket:keys.id_usuario_socket})
     }
-
+    // Función para actualizar la región del mapa 
     onRegionChange = async region => {
         latitude = region.latitude;
         longitude = region.longitude;
@@ -491,7 +523,7 @@ export default class Travel_Integrado extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View style={{ width: 280 }}>
-                                    <Text style={{ marginLeft: 10 }}>{keys.travelInfo.Parada1.Direccion}</Text>
+                                    <Text style={{ marginLeft: 10 }}>{this.state.aceptViaje? keys.travelInfo.puntoPartida.addressInput : keys.travelInfo.Parada1.Direccion}</Text>
                                     <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -570,6 +602,8 @@ export default class Travel_Integrado extends Component {
                                             distance: parseInt(result.distance),
                                             duration: parseInt(result.duration)
                                         })
+
+
                                     }
 
 
@@ -584,37 +618,50 @@ export default class Travel_Integrado extends Component {
                         }
 
                         {this.state.mapDirectionPartidaDestino?
+
+                            <View>
+                                <MapViewDirections
+        
+        
+                                    origin={{
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                    }}
+                                    destination={{
+                                        latitude: this.state.parada1.latitude,
+                                        longitude: this.state.parada1.longitude,
+                                    }}
+                                    apikey={GOOGLE_MAPS_APIKEY}
+                                    strokeWidth={1}
+                                    strokeColor="blue"
+                                    onReady={result => {
+                                        if (result != null) {
+        
+                                            this.setState({
+                                                distance: parseInt(result.distance),
+                                                duration: parseInt(result.duration)
+                                            })
+                                        }
+        
+        
+        
+                                    }}
+        
+                                />
+
+                                <Marker
+                                    coordinate={{
+                                        latitude: this.state.parada1.latitude,
+                                        longitude: this.state.parada1.longitude,
+                                    }}
+
+                                >
+                                    <Icon name="map-pin" size={20} color="green"></Icon>
+                                </Marker>
+
+
+                            </View>
     
-                            <MapViewDirections
-    
-    
-                                origin={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
-                                }}
-                                destination={{
-                                    latitude: this.state.parada1.latitude,
-                                    longitude: this.state.parada1.longitude,
-                                }}
-                                apikey={GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="blue"
-                                onReady={result => {
-                                    if (result != null) {
-    
-                                        this.setState({
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
-                                        })
-                                    }
-    
-    
-    
-                                }}
-    
-                            />
-                        
-                    
                         :
 
                             null
@@ -632,8 +679,7 @@ export default class Travel_Integrado extends Component {
 
                         <View style={styles.area}>
 
-                            <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las 21:11</Text>
-
+                            <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
 
                         </View>
                         <View style={styles.area}>
@@ -904,7 +950,7 @@ export default class Travel_Integrado extends Component {
                                         this.terminarViaje()
                                     }}
                                 />
-                                <Text style={{ paddingLeft: 25 }}>${this.state.Tarifa} MXN</Text>
+                                <Text style={{ paddingLeft: 25 }}>${keys.Tarifa} MXN</Text>
 
                             </View>
 

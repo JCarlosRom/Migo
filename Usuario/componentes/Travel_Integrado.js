@@ -13,121 +13,82 @@ import * as Permissions from 'expo-permissions';
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_Integrado extends Component {
-    state = {
-
-        myPosition: {
-            latitude: 0,
-            longitude: 0,
-
-        },
-        region: {
-            latitude: 0,
-            longitude: 0,
-            longitudeDelta: 0,
-            latitudeDelta: 0
-
-        },
-        puntoPartida: {
-            latitude: 0,
-            longitude: 0,
-
-        },
-
-        positionChofer:{
-            latitude:0,
-            longitude:0
-        },
-
-        Home:true,
-        showEstimations:false,
-        helperPay:false,
-        Pay:false,
-        Onway:false,
-        showModalCancel:false,
-        showModalCancelAcept:false,
-        location:null,
-    
-        distance:0,
-        duration:0,
-
-        Express_Estandar:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Express_Lujo:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Pool_Estandar:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        Pool_Lujo:{
-            categoria_servicio: 0,
-            nombre_categoria: "",
-            out_costo_viaje: 0
-        },
-        isNextVehicles:true,
-        routeParada1: true,
-        cashPay:true,
-        creditPay:false,
-        infoVehicleTipo:"",
-        infoVehicleLlegada:"",
-        infoVehicleTarifa:0,
-    };
+   
 
     constructor(props) {
+
         super(props);
+
+        this.state = {
+
+            myPosition: {
+                latitude: 0,
+                longitude: 0,
+
+            },
+            region: {
+                latitude: 0,
+                longitude: 0,
+                longitudeDelta: 0,
+                latitudeDelta: 0
+
+            },
+
+
+            Home: true,
+            showEstimations: false,
+            helperPay: false,
+            Pay: false,
+            Onway: false,
+            showModalCancel: false,
+            showModalCancelAcept: false,
+            location: null,
+
+            distance: 0,
+            duration: 0,
+
+            Express_Estandar: {
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Express_Lujo: {
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Pool_Estandar: {
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            Pool_Lujo: {
+                categoria_servicio: 0,
+                nombre_categoria: "",
+                out_costo_viaje: 0
+            },
+            isNextVehicles: true,
+            routeParada1: true,
+            routeChoferDestino: false,
+            cashPay: true,
+            creditPay: false,
+            infoVehicleTipo: "",
+            infoVehicleLlegada: "",
+            infoVehicleTarifa: 0,
+            timer_coordenadasUsuario: null,
+
+        };
         
         // Socket para designar el punto de encuentro 
         keys.socket.on('puntoEncuentroUsuario', (num) => {
+
             this.setState({
                 ConductorMapDirection:false,
-                routeParada1:true
+                routeParada1:false,
+                routeChoferDestino:true
             })
             
-            clearInterval(this.state.timer_2);
 
-            this.findCurrentLocationAsync();
-
-            if (this.state.location != null) {
-                console.log(this.state.location);
-
-                this.setState({
-                    myPosition: {
-                        latitude: this.state.location.coords.latitude,
-                        longitude: this.state.location.coords.longitude
-                    }
-                })
-
-                console.log(this.state.myPosition);
-            }
-
-            let timer_coordenadasUsuario = setInterval(() => {
-
-                this.findCurrentLocationAsync();
-
-                if (this.state.location != null) {
-                 
-
-                    this.setState({
-                        myPosition:{
-                            latitude: this.state.location.coords.latitude,
-                            longitude: this.state.location.coords.longitude
-                        }
-                    })
-
-                    console.log("Punto de encuentro Usuario:",this.state.myPosition);
-                }
-
-            }, 5000);
-
-            this.setState({
-                timer_coordenadasUsuario
-            })
     
         })
     
@@ -198,21 +159,7 @@ export default class Travel_Integrado extends Component {
             console.log("USUARIO: Posición del chófer", this.state.positionChofer);
         
         });
-        // Timer para transmitir coordenadas del usuario
-        let timer_coordenadasUsuario = setInterval(() => {
-
-            this.findCurrentLocationAsync();
-
-            if (this.state.location != null) {
-
-                keys.socket.emit('coordenadas_usuario', {
-                    coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
-                    datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
-                });
-            }
-
-        }, 5000);
-        this.setState({ timer_coordenadasUsuario });
+    
 
         // Socket para hacer el tracking del chofer
         keys.socket.on('ConductorDisponible', num => {
@@ -308,6 +255,8 @@ export default class Travel_Integrado extends Component {
 
     async getTarifas(){
         try {
+            console.log(this.state.distance);
+            console.log(this.state.duration);
             //console.log(this.props.switchValue);
             const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
@@ -374,12 +323,18 @@ export default class Travel_Integrado extends Component {
         infoTravel= keys.travelInfo;
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
+        Tarifa = this.state.infoVehicleTarifa;
+        Distancia= this.state.distance,
+        Tiempo= this.state.duration
+        
+        keys.Tarifa= Tarifa; 
 
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
             datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
             id_usuario_socket: keys.id_usuario_socket, categoriaVehiculo:keys.categoriaVehiculo, 
-            tipoVehiculo: keys.tipoVehiculo, tipoServicio: keys.tipoServicio
+            tipoVehiculo: keys.tipoVehiculo, tipoServicio: keys.tipoServicio, Tarifa: Tarifa,
+            Distancia:Distancia, Tiempo:Tiempo, 
        
         });
     }
@@ -397,10 +352,11 @@ export default class Travel_Integrado extends Component {
         let location = await Location.getCurrentPositionAsync({});
         this.setState({ location });
     };
+    
 
 
 
-    async componentDidMount() {
+    async componentWillMount() {
 
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
         let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
@@ -424,12 +380,8 @@ export default class Travel_Integrado extends Component {
 
         console.log(this.state.region);
 
-        this.setState({
-            puntoPartida:{
-                latitude: primeraParada[0]["latitude"],
-                longitude: primeraParada[0]["longitude"]
-            }
-        })
+      
+
 
         Paradas = []
 
@@ -448,6 +400,7 @@ export default class Travel_Integrado extends Component {
     
 
         keys.Paradas= this.state.Paradas;
+
     }
 
 
@@ -678,8 +631,8 @@ export default class Travel_Integrado extends Component {
                         >
                             <Marker
                                 coordinate={{
-                                    latitude: this.state.puntoPartida.latitude,
-                                    longitude: this.state.puntoPartida.longitude,
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
                                 }}
 
                             >
@@ -723,12 +676,12 @@ export default class Travel_Integrado extends Component {
                             {this.state.ConductorMapDirection ?
                                 <MapViewDirections
 
-
-                                    destination={{
+                                    origin={{
                                         latitude: this.state.positionChofer.latitude,
                                         longitude: this.state.positionChofer.longitude,
                                     }}
-                                    origin={{
+
+                                    destination={{
                                         latitude: this.state.myPosition.latitude,
                                         longitude: this.state.myPosition.longitude,
                                     }}
@@ -743,7 +696,7 @@ export default class Travel_Integrado extends Component {
 
                                         });
 
-                                        this.getTarifas();
+                                  
 
 
                                     }}
@@ -762,17 +715,18 @@ export default class Travel_Integrado extends Component {
                                         <MapViewDirections
         
         
-                                            destination={{
+                                            origin={{
                                                 latitude: this.state.myPosition.latitude,
                                                 longitude: this.state.myPosition.longitude,
                                             }}
-                                            origin={{
+                                            destination={{
                                                 latitude: this.state.Paradas[0]["latitude"],
                                                 longitude: this.state.Paradas[0]["longitude"],
                                             }}
                                             apikey={GOOGLE_MAPS_APIKEY}
                                             strokeWidth={1}
                                             strokeColor="blue"
+                                        
                                             onReady={result => {
 
                                                 this.setState({
@@ -782,6 +736,8 @@ export default class Travel_Integrado extends Component {
                                                 });
 
                                                 this.getTarifas();
+
+                                                
         
         
                                             }}
@@ -795,6 +751,53 @@ export default class Travel_Integrado extends Component {
                                 :
 
                                 null
+                            }
+
+
+                            {
+                                this.state.Paradas != null ?
+
+                                    this.state.routeChoferDestino ?
+
+                                        <MapViewDirections
+
+
+                                            origin={{
+                                                latitude: this.state.positionChofer.latitude,
+                                                longitude: this.state.positionChofer.longitude,
+                                            }}
+                                            destination={{
+                                                latitude: this.state.Paradas[0]["latitude"],
+                                                longitude: this.state.Paradas[0]["longitude"],
+                                            }}
+                                            apikey={GOOGLE_MAPS_APIKEY}
+                                            strokeWidth={1}
+                                            strokeColor="blue"
+
+                                            onReady={result => {
+
+                                                this.setState({
+                                                    distance: parseInt(result.distance),
+                                                    duration: parseInt(result.duration)
+
+                                                });
+
+                                                this.getTarifas();
+
+
+
+
+                                            }}
+
+                                        />
+
+                                        :
+                                        null
+
+
+                                    :
+
+                                    null
                             }
 
                         </MapView>

@@ -23,12 +23,17 @@ export default class viajeFinalizado extends Component {
     }
 
 
+    finalizarViaje(){
 
-    async componentDidMount() {
+        // Socket para quitar al chófer de la cola
+        keys.socket.emit('popChofer', {
+            id_chofer_socket: keys.id_chofer_socket,
+            id_usuario_socket: keys.id_usuario_socket, Msg: "Viaje Finalizado"
+        });
+        // Limpia el intervalo de transmisión de coordenadas de chofer a usuario
+        clearInterval(keys.intervalBroadcastCoordinates);
 
-    
-           
-
+        this.props.navigation.navigate("Home")
     }
 
 
@@ -113,7 +118,7 @@ export default class viajeFinalizado extends Component {
                         </View>
                     </View>
 
-                    <View style={{paddingTop:220, backgroundColor:"white"}}>
+                    <View style={{ paddingTop: 30, backgroundColor:"white"}}>
 
                         <View style={{ alignSelf: "center", width:280 }}>
 
@@ -130,25 +135,16 @@ export default class viajeFinalizado extends Component {
                     </View>
 
 
-                    <View style={{ paddingTop: 70, backgroundColor: "white" }}>
+                    <View style={{ paddingTop: 10, backgroundColor: "white" }}>
 
                         <View style={{ alignSelf: "center", width: 280 }}>
 
-                            <Button title="Finalizar el viaje" onPress={() => this.props.navigation.navigate("Home")}></Button>
+                            <Button title="Finalizar el viaje" onPress={() => this.finalizarViaje()}></Button>
 
                         </View>
 
 
                     </View>
-
-
-                   
-
-
-
-
-
-
 
                 </View>
 

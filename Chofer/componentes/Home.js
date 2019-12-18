@@ -29,7 +29,7 @@ export default class Home extends Component {
 
         if(keys.socket==null){
 
-            keys.socket = SocketIOClient('http://192.168.0.13:3001');
+            keys.socket = SocketIOClient(keys.socketUrl);
             // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
             
         }
@@ -53,14 +53,14 @@ export default class Home extends Component {
                     numeroTelefono: num.datos_usuario.numeroTelefono,
                     correoElectronico: num.datos_usuario.correoElectronico
                 }
-    
-
 
                 keys.travelInfo={
                     puntoPartida: num.infoTravel.puntoPartida,
                     Parada1: num.Paradas[0],
                     Parada2: num.Paradas[1],
-                    Parada3: num.Paradas[2]
+                    Parada3: num.Paradas[2],
+                    // Distancia: num.Distancia, 
+                    // Tiempo: num.Tiempo
                 }
     
                 keys.type= num.type;
@@ -74,6 +74,12 @@ export default class Home extends Component {
      
                 keys.id_chofer_socket = keys.socket.id;
 
+                keys.Tarifa = num.Tarifa;
+
+                
+
+              
+
                 // console.log("Socket del chofer", keys.id_chofer_socket)
 
 
@@ -86,7 +92,12 @@ export default class Home extends Component {
 
                 } else {
 
-                    this.props.navigation.navigate("TravelMP");
+                    if(keys.type=="Multiple"){
+                        
+                        this.props.navigation.navigate("TravelMP");
+
+                    }
+
 
                 }
 
@@ -130,7 +141,7 @@ export default class Home extends Component {
         this.setState({ timer_2 });
     }
 
-    async componentDidMount() {
+    async componentWillMount() {
 
 
         let { status } = await Permissions.askAsync(Permissions.LOCATION);

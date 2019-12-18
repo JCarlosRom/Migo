@@ -1,14 +1,12 @@
 import React, { Component } from "react";
-import { Text, View, StyleSheet, TextInput } from "react-native";
+import { Text, View, StyleSheet, TextInput, Button } from "react-native";
+import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import keys from "./global";
-import * as Permissions from 'expo-permissions';
 import MapView from 'react-native-maps';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 
-// import keys from "../../config/Keys";
 
 export default class Inicio extends Component {
 
@@ -17,8 +15,8 @@ export default class Inicio extends Component {
 
         if (keys.socket == null) {
 
-            keys.socket = SocketIOClient('http://192.168.0.13:3001');
-            // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
+            keys.socket = SocketIOClient(keys.urlSocket);
+            
 
         }
 
@@ -32,7 +30,10 @@ export default class Inicio extends Component {
             },
             Comida: false,
             Flete: false,
-            Taxi: true
+            Taxi: true,
+            showModalPay:false,
+            tarifaFinal:0,
+            Propina:1
         };
 
 
@@ -45,7 +46,19 @@ export default class Inicio extends Component {
 
 
 
-    async componentDidMount() {
+    async componentWillMount () {
+        
+        Flag = this.props.navigation.getParam('Flag', false);
+
+
+        if (Flag==true) {
+
+            this.setState({
+                showModalPay:true
+            })
+
+        } 
+
 
         const myLocation = await Location.getCurrentPositionAsync({});
         latitude = myLocation.coords.latitude;
@@ -59,21 +72,186 @@ export default class Inicio extends Component {
                 longitude: longitude
 
             },
+            tarifaFinal:keys.Tarifa
        
 
         });
+
+     
 
     }
 
 
 
 
+    setPropina(tipoPropina){
+        if(tipoPropina==1){
+            this.setState({
+                tarifaFinal: keys.Tarifa+0,
+                Propina: tipoPropina
+            })
+        }else{
+            if(tipoPropina==2){
 
+                this.setState({
+                    tarifaFinal: keys.Tarifa + 6,
+                    Propina: tipoPropina
+                })
+            }else{
+                if(tipoPropina==3){
+                    this.setState({
+                        tarifaFinal: keys.Tarifa + 8,
+                        Propina: tipoPropina
+                    })
+                }else{
+                    if(tipoPropina==4){
+                        this.setState({
+                            tarifaFinal: keys.Tarifa + 11,
+                            Propina: tipoPropina
+                        })
+                    }
+                }
+            }
+        }
+    }
 
     render() {
 
         return (
             <View>
+
+                <View  >
+                    {/* Modal de cobro final */}
+                    <Modal 
+
+                        isVisible={this.state.showModalPay}
+                      
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+                                <Text style={{ fontWeight: "bold", fontSize: 16, marginLeft:10 }}>Pagar al conductor</Text>
+                                <View>
+                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10, paddingBottom:20 }}>MX${keys.Tarifa}</Text>
+                                    <Text onPress={() => this.props.navigation.navigate("DesgloseTarifa")} style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Detalles del costo</Text>
+                                </View>
+
+                            </View>
+                            {/* Cupón  */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}></View>
+                                <View style={{flex: 1 }}>
+                                    <Text>Cupón</Text>
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                                <View style={{ flex: 2 }}>
+                                    <Text>-MX$0.00</Text>
+                                </View>
+                    
+                            </View>
+
+                            {/* Método de pago  */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}></View>
+                                <View style={{ flex: 2 }}>
+                                    <Text>Método de pago</Text>
+                                </View>
+                                <View style={{ flex:  1}}></View>
+                                <View style={{ flex: 2 }}>
+                                    <Text>Efectivo</Text>
+                                </View>
+                            </View>
+                            {/* Titulo de propina */}
+                            <View style={styles.area}>
+                                <Text style={{fontWeight:"bold"}}>Propina</Text>
+                            </View>
+                            {/* Mensaje de propina */}
+                            <View style={{paddingTop:20, paddingLeft:20}}>
+                                <View style={{ alignSelf:"center" }}>
+                                    <Text >¡Da propina si lo deseas!</Text>
+                                </View>
+                            </View>
+                            <View style={{ paddingTop: 10, paddingLeft: 20 }}>
+                                <View style={{ alignSelf: "center" }}>
+                                    <Text >Si deseas otorgar un extra al socio conductor</Text>
+                                </View>
+                            </View>
+                            <View style={{ paddingTop: 10, paddingLeft: 20 }}>
+                                <View style={{ alignSelf: "center" }}>
+                                    <Text >siéntete en la libertad de hacerlo</Text>
+                                </View>
+                            </View>
+
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 20,
+                                paddingLeft: 20,
+                                paddingRight:20,
+                                backgroundColor: "#fff"
+                            }}>
+                                <View style={{flex:1.5}}>
+                                    <Button
+                                        title="$0.00"
+                                        color={(this.state.Propina == 1) ? "#32CD32" : "#DCDCDC"}
+                                        onPress={() => this.setPropina(1)}
+                                    ></Button>
+                           
+                                </View>
+                                <View style={{ flex: 1.5 }}>
+                                    <Button
+                                        title="$6.00"
+                                        color={(this.state.Propina == 2) ? "#32CD32" : "#DCDCDC" }
+                                        onPress={() => this.setPropina(2)}
+                                    ></Button>
+                                </View>
+                                <View style={{ flex: 1.5 }}>
+                                    <Button
+                                        title="$8.00"
+                                        color={(this.state.Propina == 3) ? "#32CD32" : "#DCDCDC"}
+                                        onPress={() => this.setPropina(3)}
+                                    ></Button>
+                                </View>
+                                <View style={{ flex: 1.5 }}>
+                                    <Button
+                                        title="$11.00"
+                                        color={(this.state.Propina == 4) ? "#32CD32" : "#DCDCDC"}
+                                        onPress={() => this.setPropina(4)}
+                                    ></Button>
+                                </View>
+                            </View>
+                            
+                            {/* Total a pagar */}
+
+                            <View style={styles.area}>
+                                <Text>Total a pagar:</Text>
+                            </View>
+                            <View style={{ paddingLeft: 20 }}>
+                                <View style={{ alignSelf: "center" }}>
+                                    <View style={{flexDirection:"row"}}>
+                                        <Text>MX$</Text>
+                                        <Text style={{fontWeight:"bold"}}>{this.state.tarifaFinal}</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            <View style={{ paddingLeft: 20, marginBottom:20 }}>
+                                <View style={{ alignSelf: "center", paddingLeft: 10, paddingRight: 10, width: "100%" }}>
+                                   <Button
+                                   style={{width:"100%"}}
+                                   title="Confirmar pago"
+                                   onPress={()=>this.setState({
+                                    showModalPay:false
+                                   })}></Button>
+                                </View>
+                            </View>
+
+                          
+                        </View>
+
+
+                    </Modal>
+
+                </View>
                 
                 <View style={{ flexDirection: "row", position:"relative", paddingTop:10 }}>
                     <View style={{ flex: 1, alignContent: "center", marginLeft:10 }}>
@@ -188,7 +366,6 @@ const styles = StyleSheet.create({
     area: {
         flexDirection: "row",
         paddingTop: 20,
-        paddingBottom: 20,
         paddingLeft: 20,
         backgroundColor: "#fff"
     },

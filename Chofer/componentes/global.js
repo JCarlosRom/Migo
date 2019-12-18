@@ -12,7 +12,9 @@ export default keys={
         puntoPartida: null,
         Parada1: null,
         Parada2: null,
-        Parada3: null
+        Parada3: null,
+        Distancia: null, 
+        Tiempo: null
     },
     positionUser:{
         longitude:null, 
@@ -52,6 +54,8 @@ export default keys={
     intervalBroadcastCoordinates:null,
     intervalUpdateChoferCoordinates: null,
     Chat: [],
+    socketUrl:'http://192.168.0.13:3001',
+    // socketUrl:'http://35.203.42.33:3001/'
     
 
 }

@@ -40,16 +40,83 @@ export default class TravelMP extends Component {
                  latitudeDelta: 0
 
              },
+            timerAceptViaje: 15,
+            intervaltimerAceptViaje: null,
     
 
         };
 
-        
-        
-    }
+        keys.socket.on('chat_chofer', (num) => {
 
-  
-    async componentDidMount() {
+            console.log("chat_chofer", num)
+
+            keys.Chat.push(num.Mensaje);
+
+            alert("Te llegó un mensaje");
+
+        })
+        // Bloque de cuenta regresiva de aceptar viaje de chófer 
+        let intervaltimerAceptViaje = setInterval(() => {
+
+            this.setState({ intervaltimerAceptViaje });
+
+            console.log(this.state.intervaltimerAceptViaje);
+
+            if (this.state.timerAceptViaje == 0) {
+
+                clearInterval(this.state.intervaltimerAceptViaje);
+                // Socket para quitar al chófer de la cola
+                keys.socket.emit('popChofer', {
+                    id_chofer_socket: keys.id_chofer_socket,
+                    id_usuario_socket: keys.id_usuario_socket, Msg: "Solicitud rechazada por conductor, buscando otro conductor"
+                });
+
+                let timerCoordenadas = setInterval(() => {
+
+                    this.findCurrentLocationAsync();
+
+                    if (this.state.location != null) {
+
+
+                        this.findCurrentLocationAsync();
+                        keys.socket.emit('coordenadas', {
+                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                        });
+
+                        console.log("timerCoordenadas", keys.timerCoordenadas)
+
+
+
+                    }
+
+                }, 5000);
+                keys.timerCoordenadas = timerCoordenadas;
+
+                this.props.navigation.navigate("Home", { flag: 1 });
+                alert("Viaje cancelado");
+
+
+            } else {
+
+                this.setState({
+                    timerAceptViaje: this.state.timerAceptViaje - 1
+                })
+            }
+
+
+        }, 1000);
+        
+    };
+
+    
+    
+
+
+
+    async componentWillMount() {
+        
+        console.log(keys.travelInfo);
 
         // Check my current position
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -76,8 +143,8 @@ export default class TravelMP extends Component {
                 region: {
                     latitude: this.state.location.coords.latitude,
                     longitude: this.state.location.coords.longitude,
-                    longitudeDelta: 0.0105,
-                    latitudeDelta: 0.0105
+                    longitudeDelta: 0.050,
+                    latitudeDelta: 0.50
 
                 },
             })
@@ -89,11 +156,12 @@ export default class TravelMP extends Component {
         try {
            
 
-          
+            let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+           
             this.setState({
                 positionUser: {
-                    latitude: keys.travelInfo.puntoPartida.latitude,
-                    longitude: keys.travelInfo.puntoPartida.longitude
+                    latitude: primeraParada[0]["latitude"],
+                    longitude: primeraParada[0]["longitude"]
                 }
             })
 
@@ -118,11 +186,83 @@ export default class TravelMP extends Component {
             Paradas
         })
 
-        this.chofer_setPosition();
+        // this.chofer_setPosition();
 
         console.log('Paradas',Paradas);
         
         
+    }
+    
+    // Función para aceptar el viaje
+    aceptViaje() {
+
+        var d = new Date(); // get current date
+        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
+
+
+        clearInterval(this.state.intervaltimerAceptViaje);
+
+        keys.socket.emit('chofer_accept_request', {
+            id_usuario_socket: keys.id_usuario_socket,
+            id_chofer_socket: keys.id_chofer_socket,
+            datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
+            positionChofer: this.state.myPosition
+        });
+
+        // keys.socket.emit('generar_servicio',{
+        //     distancia_destino_usuario:,
+        //     tiempo_viaje_destino:,
+        //     latitud_usuario:,
+        //     longitud_usuario:,
+        //     latitud_usuario_destino:,
+        //     longitud_usuario_destino:,
+        //     geocoder_origen:,
+        //     geocoder_destino:,
+        //     id_usuario:,
+        //     id_unidad:,
+        //     id_conductor:
+        // })
+
+        this.fleet_chofer_usuario();
+
+
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: true,
+            initravel: false,
+            Travel: false,
+            infoVehicleLlegada: d.toLocaleTimeString()
+        })
+
+    }
+
+    // Función para enviar la posición del chofer al usuario (Con socket) 
+    fleet_chofer_usuario = () => {
+        // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
+        let intervalBroadcastCoordinates = setInterval(() => {
+            this.findCurrentLocationAsync();
+            if (this.state.location != null) {
+
+
+                this.setState({
+                    myPosition: {
+                        latitude: this.state.location.coords.latitude,
+                        longitude: this.state.location.coords.longitude
+                    },
+
+                })
+
+                keys.socket.emit('room_chofer_usuario',
+                    {
+                        id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
+                        coordenadas_chofer: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude }
+                    });
+
+            }
+
+        }, 5000);
+        keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
+
     }
 
     chofer_setPosition(){
@@ -221,6 +361,15 @@ export default class TravelMP extends Component {
       
 
         })
+
+     
+
+        // Socket de punto de encuentro, socket puntoEncuentroUsuario
+        keys.socket.emit("puntoEncuentro", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
+
+
     }
 
 
@@ -228,6 +377,12 @@ export default class TravelMP extends Component {
     terminarViaje(){
 
         this.props.navigation.navigate("Pago");
+
+        // Socket de punto de encuentro, socket puntoEncuentroUsuario
+        keys.socket.emit("terminarViajeChofer", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
+
     }
     onRegionChange = async region => {
 
@@ -238,6 +393,17 @@ export default class TravelMP extends Component {
 
 
     } 
+
+    primeraParada(){
+        this.setState({
+            routeInitial: false,
+            routeParada1: true,
+            routeParada2: false,
+            routeParada2: false
+        })
+
+
+    }
 
     segundaParada(){
 
@@ -257,6 +423,11 @@ export default class TravelMP extends Component {
             routeParada2: true,
             routeParada3: false
         })
+
+           // Socket de segunda parada
+        keys.socket.emit("segundaParada", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
     }
 
     terceraParada(){
@@ -275,13 +446,10 @@ export default class TravelMP extends Component {
         this.state.routeParada3 = true;
 
 
-     
-
-        console.log(this.state.routeInitial);
-        console.log(this.state.routeParada1);
-        console.log(this.state.routeParada2);
-        console.log(this.state.routeParada3);
-
+        // Socket de tercera parada
+        keys.socket.emit("terceraParada", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
 
     }
 
@@ -413,7 +581,18 @@ export default class TravelMP extends Component {
                         showsUserLocation={true}
 
                         >
-           
+
+                        {/* Mi posición */}
+                        <Marker
+                            coordinate={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+
+                        >
+                            <Icon name="car" size={20} color="orange"></Icon>
+                        </Marker>
+                        
                         {/* Ubicación del usuario */}
                         <Marker
                             coordinate={{
@@ -705,21 +884,13 @@ export default class TravelMP extends Component {
 
                                 title="Aceptar viaje"
                                 type="clear"
-                                onPress={() => {
-                                    this.setState({
-                                        HomeTravel: false,
-                                        aceptViaje: true,
-                                        showMapDirections:true,
-                                    
-
-                                    });
-                                }}
+                                onPress={() => this.aceptViaje()}
                             />
                             <Text style={
                                 {
                                     paddingLeft: 45
                                 }
-                            }>15 s</Text>
+                            }>{this.state.timerAceptViaje} s</Text>
                         </View>
 
 
@@ -891,12 +1062,7 @@ export default class TravelMP extends Component {
 
                                         title="Ir a primera parada"
                                         type="clear"
-                                        onPress={() => this.setState({
-                                            routeInitial: false,
-                                            routeParada1: true,
-                                            routeParada2: false,
-                                            routeParada2: false
-                                        })}
+                                        onPress={() => this.primeraParada()}
                                     />
                                    
 
@@ -950,16 +1116,12 @@ export default class TravelMP extends Component {
 
                                     <Button
 
-                                        title={(keys.type == "Multiple") ? "Ir a tercera parada" :  "Terminar Viaje"}
+                                        title={"Ir a tercera parada" }
                                         type="clear"
                                         onPress={() =>
                                             
-                                            keys.type=="Multiple"?
+                                            this.terceraParada()
 
-                                                this.terceraParada()
-
-                                            :
-                                                this.terminarViaje()
                                         }
                                     />
 
@@ -986,7 +1148,7 @@ export default class TravelMP extends Component {
 
                                     <Button
 
-                                        title="Terminar Viaje 3"
+                                        title="Terminar Viaje"
                                         type="clear"
                                         onPress={() =>
                                             this.terminarViaje()

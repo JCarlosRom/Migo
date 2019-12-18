@@ -16,9 +16,6 @@ export default class Home extends Component {
 
 
     constructor(props) {
-
-        // keys.socket = SocketIOClient('http://192.168.1.161:3001');
-        // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
         
         super(props);
         this.state = {
@@ -95,10 +92,17 @@ export default class Home extends Component {
     }
  
 
-    changetoConfigureTravel(){
+    async changetoConfigureTravel(){
+
+        const AddressCoordinates = await Location.geocodeAsync(this.state.myPosition.addressInput);
+
         const resetAction = StackActions.reset({
             index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Travel' })],
+            actions: [NavigationActions.navigate({ routeName: 'Travel', params: { 
+                Address: this.state.myPosition.addressInput,
+                Latitude: AddressCoordinates[0]["latitude"],
+                Longitude: AddressCoordinates[0]["longitude"]
+            } })],
             key:undefined
         });
 
@@ -234,7 +238,7 @@ export default class Home extends Component {
   
 
 
-    async componentDidMount() {     
+    async componentWillMount() {     
 
     
         let location = await Location.getCurrentPositionAsync({});
@@ -687,7 +691,7 @@ export default class Home extends Component {
                                                     keys.flag= true;
                                                     keys.type="Multiple"
     
-                                                    this.props.navigation.navigate("TravelMP");
+                                                    this.props.navigation.navigate("Travel_MP");
                                                 }
                                             }
     
@@ -728,7 +732,7 @@ export default class Home extends Component {
                 
                 
                 
-                                            this.props.navigation.navigate("TravelMP2");
+                                            this.props.navigation.navigate("Travel_MP2");
             
                                         }else{
                                             alert("¡Favor de agregar un destino!")
@@ -752,7 +756,12 @@ export default class Home extends Component {
     
     reinitializeComponents = () => {
         this.setState({
-            id_usuario: "2",
+            myPosition: {
+                address: null,
+                addressInput: null,
+                latitude: null,
+                longitude: null
+            },
             // Arrivals
             showNewArrival: false,
             showNewArrival2: false,
@@ -785,19 +794,10 @@ export default class Home extends Component {
             flagDestino: "",
             direccion: null,
             coordinatesPuntoPartida: null,
-            myPosition: {
-                latitude: 0,
-                longitude: 0,
-                address: "",
-                addressInput: "",
 
-            },
-            travelInfo: {
-                puntoPartida: null,
-                Parada1: null,
-                Parada2: null,
-                Parada3: null
-            }
+
+            checked: false
+
         })
     }
 

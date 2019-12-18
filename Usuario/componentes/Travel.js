@@ -1,9 +1,10 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, TextInput, ScrollView, Slider } from "react-native";
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, Slider, TouchableWithoutFeedback } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
+import { StackActions, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 import keys from "./global";
 
@@ -13,8 +14,8 @@ export default class Travel extends Component {
 
         if (keys.socket == null) {
 
-            keys.socket = SocketIOClient('http://192.168.0.13:3001');
-            // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
+            // keys.socket = SocketIOClient('http://192.168.0.38:3001');
+            keys.socket = SocketIOClient('http://35.203.42.33:3001/');
 
         }
         super(props);
@@ -50,7 +51,16 @@ export default class Travel extends Component {
 
         keys.id_usuario_socket = keys.socket.id;
 
-        this.getVehicles(1, 1);
+        if(keys.categoriaVehiculo==null && keys.tipoVehiculo==null){
+
+            this.getVehicles(1, 1);
+            
+        }else{
+            
+            this.getVehicles(keys.categoriaVehiculo, keys.tipoVehiculo);
+
+        }
+
 
         // Socket para escuchar el socket de vehículo
         keys.socket.on('vehiclesGet', (num) => {
@@ -68,11 +78,36 @@ export default class Travel extends Component {
         
     }
 
- 
+    async componentDidMount(){
+        const myLocation = await Location.getCurrentPositionAsync({});
+        latitude = myLocation.coords.latitude;
+        longitude = myLocation.coords.longitude;
+
+        this.setState({
+            region: {
+                latitude: latitude,
+                longitude: longitude,
+                longitudeDelta: 0.0105,
+                latitudeDelta: 0.0105
+
+            },
+        })
+
+
+
+    }
 
   
 
-    async componentDidMount() {
+  
+
+    async componentWillMount() {
+
+        // console.log("componentWillMount Categoria Vehiculo");
+        // console.log(keys.categoriaVehiculo);
+        // console.log("componentWillMount tipo de Vehiculo");
+        // console.log(keys.tipoVehiculo);
+        
 
         
         if (keys.categoriaVehiculo != null) {
@@ -88,6 +123,8 @@ export default class Travel extends Component {
                     showLeftCars: true
 
                 })
+
+                // console.log(keys.categoriaVehiculo, keys.tipoVehiculo);
                 
 
 
@@ -104,7 +141,7 @@ export default class Travel extends Component {
 
                     });
 
-                    
+                    // console.log(keys.categoriaVehiculo, keys.tipoVehiculo);
 
                 } else {
                     if (keys.categoriaVehiculo == 3) {
@@ -120,7 +157,7 @@ export default class Travel extends Component {
                         });
 
                         
-
+                        // console.log(keys.categoriaVehiculo, keys.tipoVehiculo);
 
                     } else {
 
@@ -136,7 +173,7 @@ export default class Travel extends Component {
 
                             });
 
-                            
+                            // console.log(keys.categoriaVehiculo, keys.tipoVehiculo);
 
                         }
                     }
@@ -146,44 +183,79 @@ export default class Travel extends Component {
 
         }
 
-        const myLocation = await Location.getCurrentPositionAsync({});
-        latitude = myLocation.coords.latitude;
-        longitude = myLocation.coords.longitude;
 
-  
-        this.setState({
-            myPosition: {
-
-                latitude:latitude,
-                longitude:longitude
-
-            },
-            region: {
-                latitude: latitude,
-                longitude: longitude,
-                longitudeDelta: 0.0105,
-                latitudeDelta: 0.0105
-
-            },
-        
-        });
 
           try {
+
+            Address = this.props.navigation.getParam('Address', 'No Address');
+            Latitude = this.props.navigation.getParam('Latitude', 'No Latitude');
+            Longitude = this.props.navigation.getParam('Longitude', 'No Longitude');
+
+ 
+
+            if(Address!='No Address' && Address!=""){
+
+                locationStr = Address;
+
+                console.log(locationStr);
+                this.setState({ location: locationStr });
+
+                console.log(this.state.location);
+                console.log(Latitude);
+                console.log(Longitude);
+
+                this.setState({
+                    myPosition:{
+                        latitude: Latitude,
+                        longitude: Longitude
+                    }
+                })
+
+            }else{
+
+                const myLocation = await Location.getCurrentPositionAsync({});
+                latitude = myLocation.coords.latitude;
+                longitude = myLocation.coords.longitude;
+
+
+                this.setState({
+                    myPosition: {
+
+                        latitude: latitude,
+                        longitude: longitude
+
+                    },
+                    region: {
+                        latitude: latitude,
+                        longitude: longitude,
+                        longitudeDelta: 0.0105,
+                        latitudeDelta: 0.0105
+
+                    },
+
+                });
+
+                var location = await Location.reverseGeocodeAsync({
+                    latitude: this.state.myPosition.latitude,
+                    longitude: this.state.myPosition.longitude
+                });
+    
+    
+                locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
+                
+                this.setState({ location:locationStr });
+
+
+           
+            }
        
-            var location = await Location.reverseGeocodeAsync({
-                latitude: this.state.myPosition.latitude,
-                longitude: this.state.myPosition.longitude
-            });
-
-
-            locationStr =location[0]["street"] + " #" +location[0]["name"] + " " +location[0]["city"] + " " +location[0]["region"];
-            
-            this.setState({ location:locationStr });
            
         } catch (e) {
             this.setState({ errorMessage: e });
             console.log("Error: " + this.state.errorMessage);
         }
+
+
 
     
 
@@ -303,6 +375,11 @@ export default class Travel extends Component {
         keys.categoriaVehiculo = categoriaVehiculo;
 
         keys.tipoVehiculo = tipoVehiculo; 
+
+        console.log("Categoria vehiculo get");
+        console.log(keys.categoriaVehiculo);
+        console.log("Tipo Vehiculo Get");
+        console.log(keys.tipoVehiculo);
         
     }
     
@@ -364,9 +441,16 @@ export default class Travel extends Component {
 
         clearInterval(this.timer_VehiclesConsult);
 
-        this.props.navigation.navigate("Home", {
-            Address: this.state.location
-        })
+     
+
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Home', params:{Address:this.state.location} })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+
     }
 
 
@@ -379,25 +463,7 @@ export default class Travel extends Component {
             
             <View style={styles.container}>
                
-                <View style={{
-                    flexDirection: "row",
-                    backgroundColor: "#fff", paddingLeft: 10,
-     
-                }}>
-                <Icon
-                    color="#ff8834"
-                    name="times-circle"
-                    size={30}
-                    // onPress={() => this.reinitializeComponents()}
-                    style={{
-
-                        paddingLeft: 15,
-                        paddingBottom:10,
-                        paddingTop:10
-                    }
-                    }
-                />
-            </View>
+            
             <View style={styles.area}>
 
                 <View>
@@ -523,84 +589,99 @@ export default class Travel extends Component {
                     style={{
 
                         flexDirection: "row",
-                        paddingBottom: 20,
+                        paddingBottom: 10,
                         backgroundColor: "#fff"
                     }
                     }>
                     
-                    <View style={{flex:1}}></View>
+                  
 
-                    <View style={{flex:1}}>
-                            <Icon
-                                color="#ff8834"
-                                name="car-side"
-                                size={35}
-                                color={this.state.standarSelected ? "green" : "#ff8834"}
-                                onPress={() => this.setSelectedVehicle(1,1)}
-                                style={
-                                    {
-                                        marginRight: 15
-                                    }
-                                }
-                            ></Icon>
+                    <View style={{flex:1, marginRight:35, paddingLeft:25}}>
+                        <View style={{height:55}}>
 
-                            <Text style={{ fontSize: 9 }}> Estandar</Text>
+                            <TouchableWithoutFeedback  onPress={() => this.setSelectedVehicle(1, 1)}>
+
+                                <Image
+                                    source={this.state.standarSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-ESTANDAR-41.png")
+                                    :require("./../assets/TipoVehiculos/ESTANDAR-37.png")}
+                                    
+                                >
+                                </Image>
+
+                            </TouchableWithoutFeedback>
+
+                        </View>
+                        <Text style={{ fontSize: 9, alignSelf:"center" }}> Estandar</Text>
+
 
                     </View>
 
-                    <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1, marginRight: 35 }}>
 
-                        <Icon
-                            color="#ff8834"
-                            name="car"
-                            size={35}
-                            color={this.state.luxeSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle(1,2)}
-                            style={
-                                {
-                                    marginRight: 15
-                                }
-                            }
-                        ></Icon>
+                            <View style={{ height: 55 }}>
+                            
+                                <TouchableWithoutFeedback onPress={() => this.setSelectedVehicle(1, 2)}>
+
+                                    <Image
+                                        source={this.state.luxeSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-DE-LUJO-42.png")
+                                            : require("./../assets/TipoVehiculos/DE-LUJO-38.png")}
+                                
+                                    >
+                                    </Image>
+
+                                </TouchableWithoutFeedback>
+                            
+                            </View>
+
                         
-                        <Text style={{ fontSize: 9 }}>De Lujo</Text>
+                            <Text style={{ fontSize: 9, alignSelf: "center" }}>De Lujo</Text>
                     </View>
 
 
-                    <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1, marginRight: 35 }}>
 
-                        <Icon
-                            color="#ff8834"
-                            name="shuttle-van"
-                            size={35}
-                            color={this.state.VanSelected ? "green" : "#ff8834"}
-                            onPress={() => this.setSelectedVehicle(2)}
-                            style={
-                                {
-                                    marginRight: 15
-                                }
-                            }
-                        ></Icon>
+                            <View style={{ height: 55 }}>
 
-                        <Text style={{ fontSize: 9 }}>Van</Text>
+                                <TouchableWithoutFeedback onPress={() => this.setSelectedVehicle(3)}>
+
+                                    <Image
+                                        source={this.state.VanSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-VANS-43.png")
+                                            : require("./../assets/TipoVehiculos/VANS-39.png")}
+                                        
+                                    >
+
+                                    </Image>
+
+                                </TouchableWithoutFeedback>
+
+                            </View>
+                        
+
+                            <Text style={{ fontSize: 9, alignSelf: "center" }}>Van</Text>
 
                     </View>
 
                     <View style={{ flex: 1 }}>
-                        <Icon
-            
-                            name="truck-pickup"
-                            color={this.state.TruckSelected ? "green" : "#ff8834"}
-                            size={35}
-                            onPress={() => this.setSelectedVehicle(3)}
-                            style={
-                                {
-                                    marginRight: 15
-                                }
-                            }
-                        ></Icon>
 
-                        <Text style={{fontSize:9}}>Camioneta</Text>
+                            <View style={{ height: 55 }}>
+
+                                <TouchableWithoutFeedback onPress={() => this.setSelectedVehicle(4)}>
+
+                                    <Image
+                                        source={this.state.TruckSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-CAMIONETA-44.png")
+                                            : require("./../assets/TipoVehiculos/CAMIONETA-40.png")}
+                                        
+                                    >
+
+                                    </Image>
+                                    
+                                </TouchableWithoutFeedback>
+
+                            </View>
+
+
+
+                            <Text style={{ fontSize: 8, alignSelf: "center"}}>Camioneta</Text>
                         
                     </View>
 
