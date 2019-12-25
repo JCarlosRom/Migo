@@ -1,27 +1,30 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
-import { Button } from "react-native-elements";
+import { View, Text, StyleSheet, Switch, ScrollView, Image, FlatList, TouchableHighlight } from "react-native";
+import { Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import * as Location from "expo-location";
+import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
-const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 import * as Permissions from 'expo-permissions';
+import axios from 'axios';
 
 export default class Travel_Integrado extends Component {
     constructor(props) {
+
+        keys.socket.on('isConnected', () => { })
      
         super(props);
         this.state = {
             id_usuario: "2",
-            puntoEncuentro: false,
             HomeTravel: true,
             aceptViaje: false,
             initravel: false,
             Travel: false,
             mapDirectionVehiclePartida: true,
             mapDirectionPartidaDestino:false,
+            showInputAddress: false,
             positionUser: {
                 latitude: 0,
                 longitude: 0,
@@ -53,7 +56,10 @@ export default class Travel_Integrado extends Component {
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             infoVehicleLlegada: null,
-            DistanceVehicle: null 
+            DistanceVehicle: null,
+            destination: null,
+            predictions: [],
+            showListdestination: false,
         };
 
         
@@ -67,10 +73,51 @@ export default class Travel_Integrado extends Component {
 
         })
 
-    
-     
-     
+      
 
+    
+
+
+    }
+
+    async getTarifas() {
+        try {
+            console.log(this.state.distance);
+            console.log(this.state.duration);
+            //console.log(this.props.switchValue);
+            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+                distancia_km: this.state.distance,
+                tiempo_min: this.state.duration
+            });
+
+            res.data.datos.forEach(element => {
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 1) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+
+                 
+                }
+                if (keys.datos_vehiculo.categoriaVehiculo == 2) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+
+                }
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 3) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+                }
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 4) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+                }
+            });
+        } catch (e) {
+            console.log(e);
+            alert("Servicio no disponible, Intente más tarde", "Error");
+        }
     }
     // Función para aceptar el viaje
     aceptViaje(){
@@ -222,11 +269,8 @@ export default class Travel_Integrado extends Component {
 
     async componentWillMount() {
         // Bloque para asignar markers y trazos de rutas
-        console.log("Travel integrado");
-        console.log(keys.travelInfo);
-        
 
-        if (keys.type=="Unico"){
+        
     
             let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
    
@@ -237,13 +281,18 @@ export default class Travel_Integrado extends Component {
                     longitude: usuarioPosition[0]["longitude"]
                 }
             })
-    
+
+
+
             this.setState({
                 parada1:{
                     latitude: keys.travelInfo.Parada1.latitude,
                     longitude: keys.travelInfo.Parada1.longitude
                 }
             })
+
+     
+    
 
             console.log(this.state.parada1);
     
@@ -262,8 +311,10 @@ export default class Travel_Integrado extends Component {
                 },
               
             });
+
+            console.log("positionChofer", this.state.myPosition);
             
-        }
+        
 
     // Bloque para la cuenta regresiva, ya sea para cancelación o aceptar el viaje 
 
@@ -322,14 +373,43 @@ export default class Travel_Integrado extends Component {
     }
 
     Go = () => {
+
+        coordinates ={
+            latitude:0,
+            longitude:0
+        }
+
+        if (this.state.aceptViaje == true) {
+                coordinates={
+                    latitude: this.state.positionUser.latitude,
+                    longitude: this.state.positionUser.longitude,
+                }
+
+                console.log(coordinates);
+               
+        }else{
+            if (this.state.Travel == true) {
+
+                coordinates = {
+                    latitude: this.state.parada1.latitude,
+                    longitude: this.state.parada1.longitude,
+                }
+
+
+                console.log("punto de encuentro",coordinates);
+              
+            }
+        }
+
         const data = {
             source: {
                 latitude: this.state.myPosition.latitude,
                 longitude: this.state.myPosition.longitude
             },
+           
             destination: {
-                latitude: this.state.positionUser.latitude,
-                longitude: this.state.positionUser.longitude
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude
             },
             params: [
                 {
@@ -345,30 +425,7 @@ export default class Travel_Integrado extends Component {
 
         }
 
-        if (this.state.Travel == true) {
-            data.waypoints = [
-                {
-                    latitude: this.state.positionUser.latitude,
-                    longitude: this.state.positionUser.longitude,
-                },
-
-
-
-            ]
-        }
-
-        if (this.state.puntoEncuentro == true) {
-            data.waypoints = [
-                {
-                    latitude: this.state.parada1.latitude,
-                    longitude: this.state.parada1.longitude,
-                },
-           
-
-
-            ]
-        }
-
+       
         getDirections(data)
     }
 
@@ -385,7 +442,9 @@ export default class Travel_Integrado extends Component {
             initravel: true,
             mapDirectionVehiclePartida:false,
             mapDirectionPartidaDestino:true
+       
         })
+    
 
         // Socket de punto de encuentro, socket puntoEncuentroUsuario
         keys.socket.emit("puntoEncuentro",{
@@ -404,8 +463,7 @@ export default class Travel_Integrado extends Component {
         this.props.navigation.navigate("Chat")
     }
     // Función para iniciar el viaje 
-    iniciarViaje(){
-
+    async iniciarViaje(){
 
 
         this.setState({
@@ -414,7 +472,10 @@ export default class Travel_Integrado extends Component {
             initravel: false,
             Travel: true,
             
+            
         })
+
+
         
     }
     // Función para terminar el viaje 
@@ -436,6 +497,80 @@ export default class Travel_Integrado extends Component {
 
 
     } 
+
+    autocompleteGoogle = async destination => {
+        this.setState({
+            destination: destination
+        });
+
+        this.setState({
+            showListdestination: true
+        })
+
+        const apiUrl =
+            "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=" +
+            'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY' +
+            "&input=" +
+            this.state.destination +
+            "&location=" +
+            this.state.latitude +
+            ",%20" +
+            this.state.longitude +
+            "&radius=2000";
+        try {
+            const result = await fetch(apiUrl);
+            const json = await result.json();
+            this.setState({
+                predictions: json.predictions
+            });
+
+
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    Item = ({ item }) => {
+
+
+        return (
+            <View>
+                <NavigationEvents onDidFocus={() => console.log('I am triggered')} />
+                <TouchableHighlight
+
+                    onPress={() => this.setDirectionInput(item.description)}
+                >
+                    <View style={[styles.area, { paddingTop: 10, paddingBottom: 10 }]}>
+                        <Icon color="#ff8834" name="map-marker-alt" style={styles.iconLeft} size={30} />
+                        <View style={{ justifyContent: "center", width: 250 }}>
+                            <Text
+                                style={styles.text}
+                            >
+                                {item.description}
+                            </Text>
+                        </View>
+                    </View>
+                </TouchableHighlight>
+
+            </View>
+        );
+    };
+
+    setDirectionInput = (description) => {
+
+        console.log("Description", description);
+
+        this.setState({
+            destination: description
+        });
+
+        this.setState({
+            showListdestination: false
+        })
+
+        console.log("Destination", this.state.destination);
+    };
+
 
     render() {
         return (
@@ -471,6 +606,48 @@ export default class Travel_Integrado extends Component {
                                 size={30}></Icon>
                         </View>
                     </View>
+
+                    {
+                        this.state.showInputAddress ?
+
+                            <View style={styles.area}>
+                                <View style={{ flex: 6, paddingTop: 10, paddingLeft: 10, paddingRight: 10 }}>
+
+                                    <Input
+                                        value={this.state.destination}
+                                        placeholder="Ingrese el destino"
+                                        onChangeText={destination => this.autocompleteGoogle(destination)}
+
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}></View>
+
+                            </View>
+
+
+                            :
+
+                            null
+                    }
+
+                    {this.state.showListdestination ? (
+                        <View>
+
+                            <FlatList
+                                style={{
+                                    height: 340
+                                }}
+
+
+
+                                data={this.state.predictions}
+                                renderItem={this.Item}
+                                keyExtractor={item => item.id}
+
+                            />
+
+                        </View>
+                    ) : null}
                     {/* Barra superior de punto de encuentro  */}
                     {this.state.HomeTravel ?
 
@@ -531,6 +708,7 @@ export default class Travel_Integrado extends Component {
                                     <Text style={{ paddingLeft: 4 }}>Go</Text>
                                 </View>
                             </View>
+                          
                         </View>
                         :
                         null
@@ -592,7 +770,7 @@ export default class Travel_Integrado extends Component {
                                     latitude: this.state.positionUser.latitude,
                                     longitude: this.state.positionUser.longitude,
                                 }}
-                                apikey={GOOGLE_MAPS_APIKEY}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
                                 strokeWidth={1}
                                 strokeColor="orange"
                                 onReady={result => {
@@ -617,7 +795,7 @@ export default class Travel_Integrado extends Component {
                         
                         }
 
-                        {this.state.mapDirectionPartidaDestino?
+                        {this.state.mapDirectionPartidaDestino ?
 
                             <View>
                                 <MapViewDirections
@@ -631,7 +809,7 @@ export default class Travel_Integrado extends Component {
                                         latitude: this.state.parada1.latitude,
                                         longitude: this.state.parada1.longitude,
                                     }}
-                                    apikey={GOOGLE_MAPS_APIKEY}
+                                    apikey={keys.GOOGLE_MAPS_APIKEY}
                                     strokeWidth={1}
                                     strokeColor="blue"
                                     onReady={result => {
@@ -641,6 +819,8 @@ export default class Travel_Integrado extends Component {
                                                 distance: parseInt(result.distance),
                                                 duration: parseInt(result.duration)
                                             })
+
+                                       
                                         }
         
         

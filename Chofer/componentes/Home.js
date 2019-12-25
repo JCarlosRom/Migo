@@ -25,6 +25,8 @@ export default class Home extends Component {
     };
 
     constructor(props) {
+
+
         super(props);
 
         if(keys.socket==null){
@@ -35,7 +37,7 @@ export default class Home extends Component {
         }
 
 
-
+        keys.socket.on('isConnected', () => { })
   
         console.log('APP CONDUCTOR');
 
@@ -53,17 +55,27 @@ export default class Home extends Component {
                     numeroTelefono: num.datos_usuario.numeroTelefono,
                     correoElectronico: num.datos_usuario.correoElectronico
                 }
+                
+                keys.type= num.type;
 
-                keys.travelInfo={
-                    puntoPartida: num.infoTravel.puntoPartida,
-                    Parada1: num.Paradas[0],
-                    Parada2: num.Paradas[1],
-                    Parada3: num.Paradas[2],
-                    // Distancia: num.Distancia, 
-                    // Tiempo: num.Tiempo
+                if (keys.type !="SinDestino"){
+    
+    
+                    keys.travelInfo={
+                        puntoPartida: num.infoTravel.puntoPartida,
+                        Parada1: num.Paradas[0],
+                        Parada2: num.Paradas[1],
+                        Parada3: num.Paradas[2],
+                        // Distancia: num.Distancia, 
+                        // Tiempo: num.Tiempo
+                    }
+
+                }else{
+                    keys.travelInfo = {
+                        puntoPartida: num.infoTravel.puntoPartida,
+                    }
                 }
     
-                keys.type= num.type;
     
                 keys.positionUser={
                     latitude:num.usuario_latitud,
@@ -86,7 +98,7 @@ export default class Home extends Component {
 
                 clearInterval(this.state.timer);
 
-                if (keys.type == "Unico") {
+                if (keys.type == "Unico" ) {
 
                     this.props.navigation.navigate("Travel_Integrado");
 
@@ -96,6 +108,16 @@ export default class Home extends Component {
                         
                         this.props.navigation.navigate("TravelMP");
 
+                    }else{
+                       
+                        if(keys.type=="Multiple 2 paradas"){
+                            this.props.navigation.navigate("TravelMP2");
+                        }else{
+                            if(keys.type=="SinDestino"){
+                                this.props.navigation.navigate("TravelNoDestination");
+                            }
+                        }
+                        
                     }
 
 
@@ -142,6 +164,7 @@ export default class Home extends Component {
     }
 
     async componentWillMount() {
+
 
 
         let { status } = await Permissions.askAsync(Permissions.LOCATION);

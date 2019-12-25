@@ -491,65 +491,70 @@ export default class Travel extends Component {
                     
                 </View>
                 
+                {this.state.region.latitude!=0 && this.state.region.longitude !=0 && this.state.region.latitudeDelta!=0 && this.state.region.longitudeDelta!=0 ?
+                
+                    <View style={styles.containerMap}>
+                        <MapView
 
-                <View style={styles.containerMap}>
-                    <MapView
+                            style={styles.map}
+                            region={{
+                                latitude: this.state.region.latitude,
+                                longitude: this.state.region.longitude,
+                                latitudeDelta: this.state.region.latitudeDelta,
+                                longitudeDelta: this.state.region.longitudeDelta
+                            }}
 
-                        style={styles.map}
-                        region={{
-                            latitude: this.state.region.latitude,
-                            longitude: this.state.region.longitude,
-                            latitudeDelta: this.state.region.latitudeDelta,
-                            longitudeDelta: this.state.region.longitudeDelta
-                        }}
-
-                        onRegionChangeComplete={this.onRegionChange}
-                        
-                        showsUserLocation={true}
-                        followsUserLocation={true}
-                        showsMyLocationButton={false}
-                   
-
-                        onLongPress={this.onMapPress.bind(this)}
-                    >
-                        <Marker
-                        coordinate={{
-                            latitude: this.state.myPosition.latitude,
-                            longitude: this.state.myPosition.longitude,
-                        }}
+                            onRegionChangeComplete={this.onRegionChange}
+                            
+                            showsUserLocation={true}
+                            followsUserLocation={true}
+                            showsMyLocationButton={false}
                     
-                            >
-                                <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
-                        </Marker> 
 
-                            {this.state.Vehicles != null ?
+                            onLongPress={this.onMapPress.bind(this)}
+                        >
+                            <Marker
+                            coordinate={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+                        
+                                >
+                                    <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
+                            </Marker> 
 
-                              
-                                this.state.Vehicles.map(marker => (
+                                {this.state.Vehicles != null ?
 
-                                    <Marker
-                                        key={"key"}
-                                        coordinate={{
-                                            latitude: marker.latitud,
-                                            longitude: marker.longitud
-                                        }}
+                                
+                                    this.state.Vehicles.map(marker => (
 
-                                    >
-                                        <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" :"car-side"} size={20} color="orange"></Icon>
-                                        
-                                    </Marker>
-                                ))
+                                        <Marker
+                                            key={"key"}
+                                            coordinate={{
+                                                latitude: marker.latitud,
+                                                longitude: marker.longitud
+                                            }}
 
-                          
-                                :
-                                    null
+                                        >
+                                            <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" :"car-side"} size={20} color="orange"></Icon>
+                                            
+                                        </Marker>
+                                    ))
 
-                            }
+                            
+                                    :
+                                        null
 
-                  
-                          
-                    </MapView>
-                </View>
+                                }
+
+                    
+                            
+                        </MapView>
+                    </View>
+            
+                :
+                    null
+                }
              
                 <View
                     style={

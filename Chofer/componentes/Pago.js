@@ -11,6 +11,7 @@ export default class Pago extends Component {
 
 
     constructor(props) {
+        keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
           

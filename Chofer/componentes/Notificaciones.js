@@ -14,6 +14,8 @@ export default class Notificaciones extends Component {
 
 
     constructor(props) {
+
+        keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
             id_usuario: null,

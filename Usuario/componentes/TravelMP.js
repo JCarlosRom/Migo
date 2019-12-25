@@ -172,7 +172,7 @@ export default class Travel_Integrado extends Component {
         })
 
         keys.socket.on('terminarViajeUsuario', (num) => {
-            console.log('terminarViajeUsuario');
+            // console.log('terminarViajeUsuario');
 
             const resetAction = StackActions.reset({
                 index: 0,
@@ -375,6 +375,7 @@ export default class Travel_Integrado extends Component {
     }
 
     generarSolicitud = () => {
+        
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
         datos_usuario = keys.datos_usuario;

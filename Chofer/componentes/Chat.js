@@ -10,6 +10,8 @@ export default class Chat extends Component {
 
     constructor(props) {
 
+        keys.socket.on('isConnected', () => {})
+
         super(props);
 
         this.state = {

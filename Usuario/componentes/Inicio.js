@@ -5,6 +5,7 @@ import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import keys from "./global";
 import MapView from 'react-native-maps';
+import { StackActions, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 
 
@@ -32,6 +33,7 @@ export default class Inicio extends Component {
             Flete: false,
             Taxi: true,
             showModalPay:false,
+            showModalCancel:false,
             tarifaFinal:0,
             Propina:1
         };
@@ -50,6 +52,8 @@ export default class Inicio extends Component {
         
         Flag = this.props.navigation.getParam('Flag', false);
 
+        console.log(Flag);
+
 
         if (Flag==true) {
 
@@ -57,7 +61,13 @@ export default class Inicio extends Component {
                 showModalPay:true
             })
 
-        } 
+        } else{
+            if (Flag =="CancelarServicio"){
+                this.setState({
+                    showModalCancel: true
+                })
+            }
+        }
 
 
         const myLocation = await Location.getCurrentPositionAsync({});
@@ -115,6 +125,16 @@ export default class Inicio extends Component {
         }
     }
 
+    detallesCosto(){
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'DesgloseTarifa' })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
     render() {
 
         return (
@@ -131,9 +151,9 @@ export default class Inicio extends Component {
                         <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                             <View>
                                 <Text style={{ fontWeight: "bold", fontSize: 16, marginLeft:10 }}>Pagar al conductor</Text>
-                                <View>
-                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10, paddingBottom:20 }}>MX${keys.Tarifa}</Text>
-                                    <Text onPress={() => this.props.navigation.navigate("DesgloseTarifa")} style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Detalles del costo</Text>
+                                <View style={{paddingTop:20}}>
+                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10 }}>MX${keys.Tarifa}</Text>
+                                    <Text onPress={() => this.detallesCosto()} style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, color:"blue" }}>Detalles del costo</Text>
                                 </View>
 
                             </View>
@@ -234,7 +254,7 @@ export default class Inicio extends Component {
                                 </View>
                             </View>
 
-                            <View style={{ paddingLeft: 20, marginBottom:20 }}>
+                            <View style={{ paddingLeft: 20, marginBottom:40 }}>
                                 <View style={{ alignSelf: "center", paddingLeft: 10, paddingRight: 10, width: "100%" }}>
                                    <Button
                                    style={{width:"100%"}}
@@ -249,6 +269,45 @@ export default class Inicio extends Component {
                         </View>
 
 
+                    </Modal>
+
+                </View>
+
+                <View>
+
+                    <Modal
+                        isVisible={this.state.showModalCancel}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 10,
+                                paddingBottom: 10,
+                                paddingLeft: 20,
+                                backgroundColor: "#fff",
+                                alignSelf: "center"
+                            }}>
+
+                                <View style={{ marginRight: 10, width: 120 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        onPress={() => this.setState({
+                                            showModalCancel: false,
+                                          
+                                        })}
+                                    ></Button>
+                                </View>
+
+
+                            </View>
+                        </View>
                     </Modal>
 
                 </View>

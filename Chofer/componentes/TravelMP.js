@@ -12,6 +12,7 @@ import * as Permissions from 'expo-permissions';
 
 export default class TravelMP extends Component {
     constructor(props) {
+        keys.socket.on('isConnected', () => { })
         super(props);
          this.state = {
             id_usuario: "2",
@@ -143,8 +144,8 @@ export default class TravelMP extends Component {
                 region: {
                     latitude: this.state.location.coords.latitude,
                     longitude: this.state.location.coords.longitude,
-                    longitudeDelta: 0.050,
-                    latitudeDelta: 0.50
+                    longitudeDelta: 0.0105,
+                    latitudeDelta: 0.0105
 
                 },
             })
@@ -302,14 +303,51 @@ export default class TravelMP extends Component {
 
 
     Go = () => {
+
+        coordinates = {
+            latitude: 0,
+            longitude: 0
+        }
+
+        if (this.state.aceptViaje == true) {
+
+            coordinates = {
+                latitude: this.state.positionUser.latitude,
+                longitude: this.state.positionUser.longitude
+            }
+
+        }
+
+        if (this.state.Travel == true && this.state.routeParada2 == false) {
+            coordinates = {
+                latitude: keys.travelInfo.Parada1.latitude,
+                longitude: keys.travelInfo.Parada1.longitude,
+            }
+        }
+
+        if (this.state.routeParada2 == true) {
+            coordinates = {
+                latitude: keys.travelInfo.Parada2.latitude,
+                longitude: keys.travelInfo.Parada2.longitude,
+            }
+        }
+
+
+        if (this.state.routeParada3 == true) {
+            coordinates = {
+                latitude: keys.travelInfo.Parada3.latitude,
+                longitude: keys.travelInfo.Parada3.longitude,
+            }
+        }
+
         const data = {
             source: {
                 latitude: this.state.myPosition.latitude,
                 longitude: this.state.myPosition.longitude
             },
             destination: {
-                latitude: this.state.positionUser.latitude,
-                longitude: this.state.positionUser.longitude
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude
             },
             params: [
                 {
@@ -325,24 +363,7 @@ export default class TravelMP extends Component {
           
         }
 
-        if (this.state.Travel==true){
-            data.waypoints = [
-                {
-                    latitude: this.state.parada1.latitude,
-                    longitude: this.state.parada1.longitude,
-                },
-                {
-                    latitude: this.state.parada2.latitude,
-                    longitude: this.state.parada2.longitude,
-                },
-                {
-                    latitude: this.state.parada3.latitude,
-                    longitude: this.state.parada3.longitude,
-                },
-
-
-            ]
-        }
+   
 
         getDirections(data)
     }
@@ -380,7 +401,7 @@ export default class TravelMP extends Component {
 
         // Socket de punto de encuentro, socket puntoEncuentroUsuario
         keys.socket.emit("terminarViajeChofer", {
-            id_socket_usuario: keys.id_usuario_socket
+            id_usuario_socket: keys.id_usuario_socket
         });
 
     }

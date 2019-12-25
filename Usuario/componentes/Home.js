@@ -618,134 +618,149 @@ export default class Home extends Component {
         }
     }
 
+   
+
     // Función para iniciar el viaje 
     Travel = () =>{
+
+        
 
 
         if (keys.categoriaVehiculo == null) {
             alert("Favor de seleccionar un tipo de vehículo en configurar lugar en el mapa");
         } else {
 
-    
-            if(this.state.showNewArrival==false){
-    
-                if(this.state.destination4==""){
-                    alert("Favor de agregar un destino");
-                }else{
-    
-                
-                    keys.travelInfo.puntoPartida = this.state.myPosition;
-                    keys.travelInfo.Parada1 = this.state.destination4;
-    
-                    
-                    keys.type = "Unico"
-        
-                    this.props.navigation.navigate("Travel_Integrado");
-                }
-    
-    
-                
-    
+            if (this.state.myPosition.addressInput != "" && this.state.destination2 == "" && this.state.destination3 == "" && this.state.destination4 == ""){
+               
+                keys.travelInfo.puntoPartida = this.state.myPosition;
+
+                keys.type = "SinDestino"
+
+                this.props.navigation.navigate("TravelNoDestination");
             }else{
-    
-                    if(this.state.myPosition.addressInput=="" ){
-                        alert("Favor de agregar un punto de partida");
+
+                if(this.state.showNewArrival==false){
+        
+                    if(this.state.destination4==""){
+                        alert("Favor de agregar un destino");
                     }else{
-                        if(this.state.destination2==""){
+        
+                    
+                        keys.travelInfo.puntoPartida = this.state.myPosition;
+                        keys.travelInfo.Parada1 = this.state.destination4;
+        
                         
-                            alert("favor de agregar la parada 1")
+                        keys.type = "Unico"
+            
+                        this.props.navigation.navigate("Travel_Integrado");
+                    }
+        
+        
+                    
+        
+                }else{
+        
+                        if(this.state.myPosition.addressInput=="" ){
+                            alert("Favor de agregar un punto de partida");
                         }else{
-                            if(this.state.showNewArrival2){
-    
-                                if(this.state.destination3==""){
-                                        alert("Favor de agregar la parada 2");
-                                }else{
-                                    if(this.state.destination4==""){
-                                        alert("Favor de agregar un destino")
+                            if(this.state.destination2==""){
+                            
+                                alert("favor de agregar la parada 1")
+                            }else{
+                                if(this.state.showNewArrival2){
+        
+                                    if(this.state.destination3==""){
+                                            alert("Favor de agregar la parada 2");
                                     }else{
-    
-                                        if(this.state.place1==""){
-                                            alert("Favor de asignar número de parada a la parada 1")
+                                        if(this.state.destination4==""){
+                                            alert("Favor de agregar un destino")
                                         }else{
-    
-                                
-                                            if(this.state.place2==""){
-                                                alert("Favor de asignar número de parada a la parada 2")
+        
+                                            if(this.state.place1==""){
+                                                alert("Favor de asignar número de parada a la parada 1")
                                             }else{
-                                                if(this.state.place3==""){
-                                                    alert("Favor de asignar número de parada a la parada 3")
+        
+                                    
+                                                if(this.state.place2==""){
+                                                    alert("Favor de asignar número de parada a la parada 2")
                                                 }else{
-    
-                                                    keys.travelInfo.puntoPartida = this.state.myPosition;
-                                                    keys.travelInfo.Parada1 = this.state.destination2;
-                                                    keys.travelInfo.Parada2 = this.state.destination3;
-                                                    keys.travelInfo.Parada3 = this.state.destination4;
-    
-                                                    var Paradas = {
-                                                        Parada1: this.state.place1,
-                                                        Parada2: this.state.place2,
-                                                        Parada3: this.state.place3
+                                                    if(this.state.place3==""){
+                                                        alert("Favor de asignar número de parada a la parada 3")
+                                                    }else{
+        
+                                                        keys.travelInfo.puntoPartida = this.state.myPosition;
+                                                        keys.travelInfo.Parada1 = this.state.destination2;
+                                                        keys.travelInfo.Parada2 = this.state.destination3;
+                                                        keys.travelInfo.Parada3 = this.state.destination4;
+        
+                                                        var Paradas = {
+                                                            Parada1: this.state.place1,
+                                                            Parada2: this.state.place2,
+                                                            Parada3: this.state.place3
+                                                        }
+        
+                                                        keys.Paradas= Paradas;
+                                                        keys.flag= true;
+                                                        keys.type="Multiple"
+        
+                                                        this.props.navigation.navigate("Travel_MP");
                                                     }
-    
-                                                    keys.Paradas= Paradas;
-                                                    keys.flag= true;
-                                                    keys.type="Multiple"
-    
-                                                    this.props.navigation.navigate("Travel_MP");
                                                 }
+        
+                                                
+                                                
                                             }
-    
-                                            
-                                            
+            
+                                    
+        
                                         }
         
-                                
-    
                                     }
-    
-                                }
-                            }else{
-    
-                                if(this.state.place1==""){
-                                    alert("Favor de asignar número de parada a la parada 1")
                                 }else{
-                                    if(this.state.place3==""){
-                                        alert("Favor de asignar número de parada a la parada 2 ")
+        
+                                    if(this.state.place1==""){
+                                        alert("Favor de asignar número de parada a la parada 1")
                                     }else{
-                                        
-                                        if(this.state.destination4!=""){
-    
-    
-                                            keys.travelInfo.puntoPartida = this.state.myPosition;
-                                            keys.travelInfo.Parada1 = this.state.destination2;
-                                            keys.travelInfo.Parada3 = this.state.destination4;
-    
-                                            var Paradas = {
-                                                Parada1: this.state.place1,
-                                                Parada3: this.state.place3
-                                            }
-    
-                                            keys.Paradas = Paradas;
-                                            keys.flag = true;
-                                            keys.type = "Multiple 2 paradas"
-    
-                
-                
-                
-                                            this.props.navigation.navigate("Travel_MP2");
-            
+                                        if(this.state.place3==""){
+                                            alert("Favor de asignar número de parada a la parada 2 ")
                                         }else{
-                                            alert("¡Favor de agregar un destino!")
+                                            
+                                            if(this.state.destination4!=""){
+        
+        
+                                                keys.travelInfo.puntoPartida = this.state.myPosition;
+                                                keys.travelInfo.Parada1 = this.state.destination2;
+                                                keys.travelInfo.Parada3 = this.state.destination4;
+        
+                                                var Paradas = {
+                                                    Parada1: this.state.place1,
+                                                    Parada3: this.state.place3
+                                                }
+        
+                                                keys.Paradas = Paradas;
+                                                keys.flag = true;
+                                                keys.type = "Multiple 2 paradas"
+        
+                    
+                    
+                    
+                                                this.props.navigation.navigate("Travel_MP2");
+                
+                                            }else{
+                                                alert("¡Favor de agregar un destino!")
+                                            }
                                         }
                                     }
+        
+        
                                 }
-    
-    
                             }
                         }
+                        
                     }
-                    
-                }
+            }
+
+    
         }
 
 
@@ -1167,22 +1182,38 @@ export default class Home extends Component {
 
                 </View>
 
-                <View style={{
-                    flexDirection: "row",
-                    backgroundColor: "#fff",
-                    paddingRight: 120
-                }}>
-                    <View style={{ paddingLeft: 200 }}>
+                <View style={styles.area}>
 
-                        <CheckBox
-                            checked={this.state.checked}
-                            onPress={() => this.setState({ checked: !this.state.checked })}
-                        />
+                    <View style={{ flex: 2}}>
+                  
+                        <Text style={{color:"blue", marginLeft:5}}
+                            onPress={()=>this.travelSinDestino()}
+                        >Sin destino</Text>
+                  
                     </View>
 
-                    <View style={{ paddingLeft: 20, flexDirection: "row", }}>
+                    <View style={{flex:2}}></View>
+                    <View style={{ flex: 2}}>
 
-                        <Text style={{ marginTop: 15, marginLeft: -20 }}> Ida y vuelta</Text>
+                        <View style={{flexDirection:"row"}}>
+
+                            <View style={{flex:2}}>
+
+                                <CheckBox
+                                    checked={this.state.checked}
+                                    onPress={() => this.setState({ checked: !this.state.checked })}
+                                />
+
+                            </View>
+
+                            <View style={{ flex: 4, paddingLeft: 20}}>
+                                
+                                <Text  >Ida y vuelta</Text>
+
+                            </View>
+
+
+                        </View>
 
                     </View>
 

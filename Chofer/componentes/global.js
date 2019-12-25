@@ -3,7 +3,7 @@ export default keys={
     timerCoordenadas:null,
     id_chofer_socket:'',
     id_usuario_socket:'',
-    id_chofer: 2,
+    id_chofer: 1,
     myPosition: null,
     stateConductor: false,
     id_servicio: '',
@@ -57,7 +57,6 @@ export default keys={
     socketUrl:'http://192.168.0.13:3001',
     // socketUrl:'http://35.203.42.33:3001/'
     
-
 }
 
 

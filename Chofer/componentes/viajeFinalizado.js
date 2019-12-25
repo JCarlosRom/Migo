@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, Image, Switch, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { StackActions, NavigationActions } from 'react-navigation';
 
 
 
@@ -10,6 +11,7 @@ export default class viajeFinalizado extends Component {
 
 
     constructor(props) {
+        keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
             id_usuario: null,
@@ -33,7 +35,13 @@ export default class viajeFinalizado extends Component {
         // Limpia el intervalo de transmisión de coordenadas de chofer a usuario
         clearInterval(keys.intervalBroadcastCoordinates);
 
-        this.props.navigation.navigate("Home")
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Address: this.state.location } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
     }
 
 

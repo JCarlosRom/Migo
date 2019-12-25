@@ -8,12 +8,15 @@ import {
 import { createStackNavigator } from "react-navigation-stack";
 import HomeTravel from "./componentes/Home";
 import TravelMP from "./componentes/TravelMP";
+import TravelMP2 from "./componentes/TravelMP2";
 import Travel_Integrado from "./componentes/Travel_Integrado";
+import TravelNoDestination from "./componentes/TravelNoDestination";
 import Pago from "./componentes/Pago";
 import viajeFinalizado from "./componentes/viajeFinalizado";
 import Travel_Waze from './componentes/Travel_Waze'
 import Notificaciones from  './componentes/Notificaciones';
 import Chat from './componentes/Chat';
+import ViewSetUbication from './componentes/ViewSetUbication';
 
 
 const MainStack = createStackNavigator({
@@ -22,11 +25,17 @@ const MainStack = createStackNavigator({
     screen:HomeTravel
   },
 
+  Travel_Integrado:{
+    screen:Travel_Integrado
+  },
   TravelMP:{
     screen:TravelMP
   },
-  Travel_Integrado:{
-    screen:Travel_Integrado
+  TravelMP2: {
+    screen: TravelMP2
+  },
+  TravelNoDestination:{
+    screen:TravelNoDestination
   },
   Pago:{
     screen:Pago
@@ -42,6 +51,9 @@ const MainStack = createStackNavigator({
   },
   Chat:{
     screen:Chat
+  },
+  ViewSetUbication:{
+    screen:ViewSetUbication
   }
 },
   {

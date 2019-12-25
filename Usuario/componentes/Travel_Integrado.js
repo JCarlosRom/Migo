@@ -7,6 +7,7 @@ import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE imp
 import { ScrollView } from "react-native-gesture-handler";
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from "expo-location";
+import { StackActions, NavigationActions } from 'react-navigation';
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
@@ -78,7 +79,9 @@ export default class Travel_Integrado extends Component {
             timer_coordenadasUsuario: null,
 
         };
-        
+    
+ 
+
         // Socket para designar el punto de encuentro 
         keys.socket.on('puntoEncuentroUsuario', (num) => {
 
@@ -168,7 +171,15 @@ export default class Travel_Integrado extends Component {
 
         // Socket para terminar el viaje
         keys.socket.on('terminarViajeUsuario', num => {
-            this.props.navigation.navigate("DesgloseTarifa");
+           
+
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: true } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
         });
 
 
@@ -197,6 +208,8 @@ export default class Travel_Integrado extends Component {
             }, 2000);
         });
     }
+
+
 
     fleet_usuario_chofer = () => {
         let timer_2 = setInterval(() => {
@@ -358,8 +371,11 @@ export default class Travel_Integrado extends Component {
 
     async componentWillMount() {
 
+        console.log("Travel Integrado");
+
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
-        let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
+        
+        
 
         this.setState({
             myPosition: {
@@ -381,25 +397,28 @@ export default class Travel_Integrado extends Component {
         console.log(this.state.region);
 
       
-
-
-        Paradas = []
-
-        Parada1Info = {
-            latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], Direccion: keys.travelInfo.Parada1
-        }
-
-        Paradas.push(Parada1Info)
-
-        this.setState({
-
-            Paradas
-
-        })
-
+        if (keys.type !="SinDestino"){
+            
+            let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
     
-
-        keys.Paradas= this.state.Paradas;
+            Paradas = []
+    
+            Parada1Info = {
+                latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], Direccion: keys.travelInfo.Parada1
+            }
+    
+            Paradas.push(Parada1Info)
+    
+            this.setState({
+    
+                Paradas
+    
+            })
+    
+        
+    
+            keys.Paradas= this.state.Paradas;
+        }
 
     }
 
@@ -505,6 +524,24 @@ export default class Travel_Integrado extends Component {
 
     } 
 
+    cancelarServicio(){
+        this.setState({
+            
+            showModalCancel: false,
+            showModalCancelAcept: true
+            
+        })
+
+
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
  
     render() {
         return (
@@ -554,10 +591,7 @@ export default class Travel_Integrado extends Component {
 
                                         <Button
                                             title="Si"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: true
-                                            })}
+                                            onPress={() => this.cancelarServicio()}
                                         ></Button>
 
                                    
@@ -571,46 +605,7 @@ export default class Travel_Integrado extends Component {
 
                     </View>
 
-                    {/* Modal para aceptar la cancelación del servicio  */}
-
-                    <View>
-
-                        <Modal
-                            isVisible={this.state.showModalCancelAcept}
-                     
-                        >
-                            <View style={{ marginTop: 22, backgroundColor:"#fff"}}>
-                                <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
-
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 10,
-                                    paddingBottom: 10,
-                                    paddingLeft: 20,
-                                    backgroundColor: "#fff",
-                                    alignSelf: "center"
-                                }}>
-
-                                    <View style={{ marginRight: 10, width: 120 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: false
-                                            })}
-                                        ></Button>
-                                    </View>
-
-
-                                </View>
-                            </View>
-                        </Modal>
-
-                    </View>
+                  
 
                     
                     <View style={styles.containerMap}>

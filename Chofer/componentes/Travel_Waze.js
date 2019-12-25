@@ -9,6 +9,8 @@ import { showLocation } from 'react-native-map-link'
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_Integrado extends Component {
     constructor(props) {
+
+        keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
             id_usuario: "2",

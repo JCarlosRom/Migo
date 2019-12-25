@@ -17,6 +17,7 @@ import DesgloseTarifa from "./componentes/DesgloseTarifa";
 import InfoTravel from "./componentes/InfoTravel";
 import Chat from "./componentes/Chat";
 import Inicio from "./componentes/Inicio";
+import TravelNoDestination from "./componentes/TravelNoDestination";
 
 
 const MainStack = createStackNavigator({
@@ -50,6 +51,9 @@ const MainStack = createStackNavigator({
   Chat: {
     screen: Chat
   },
+  TravelNoDestination:{
+    screen: TravelNoDestination
+  }
  
 },
   {
