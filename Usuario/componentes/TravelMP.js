@@ -45,6 +45,7 @@ export default class Travel_Integrado extends Component {
         Onway:false,
         showModalCancel:false,
         showModalCancelAcept:false,
+        showModalLlegada:false,
         location:null,
     
         distance:0,
@@ -138,6 +139,7 @@ export default class Travel_Integrado extends Component {
                 routeParada1:true,
                 routeParada2: false,
                 routeParada3: false,
+                showModalLlegada:true
             })
         
     
@@ -182,6 +184,16 @@ export default class Travel_Integrado extends Component {
 
             this.props.navigation.dispatch(resetAction);
 
+        })
+
+        keys.socket.on("cancelViajeUsuario", num => {
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicioUsuario" } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
         })
     
         // Aqui se acepta el recorrido
@@ -657,6 +669,28 @@ export default class Travel_Integrado extends Component {
 
     } 
 
+    cancelarServicio() {
+        this.setState({
+
+            showModalCancel: false,
+            showModalCancelAcept: true
+
+        })
+
+        keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
+
+
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
+
+
  
     render() {
         return (
@@ -667,30 +701,30 @@ export default class Travel_Integrado extends Component {
                     {/* Modal para la cancelación del servicio */}
 
                    
-                    <View > 
+                    <View >
 
                         <Modal
                             isVisible={this.state.showModalCancel}
 
-                        >   
-                            <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                                 <View>
                                     <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
                                     <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
                                     <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
                                     <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
 
                                 </View>
                                 <View style={{
                                     flexDirection: "row",
-                                    paddingTop:5,
-                                    marginBottom:5
-                                
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
                                 }}>
-                                    <View style={{ flex:2 }}></View>
-                                    <View style={{ flex:1, paddingRight:5 }}>
+                                    <View style={{ flex: 2 }}></View>
+                                    <View style={{ flex: 1, paddingRight: 5 }}>
                                         <Button
                                             title="No"
                                             onPress={() => this.setState({
@@ -699,337 +733,340 @@ export default class Travel_Integrado extends Component {
 
 
                                         ></Button>
-                                      
+
                                     </View>
 
-                                    <View style={{ flex:1, paddingLeft:5 }}>
+                                    <View style={{ flex: 1, paddingLeft: 5 }}>
 
                                         <Button
                                             title="Si"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: true
-                                            })}
+                                            onPress={() => this.cancelarServicio()}
                                         ></Button>
 
-                                   
+
                                     </View>
                                     <View style={{ flex: 2 }}></View>
                                 </View>
                             </View>
 
-        
+
                         </Modal>
 
                     </View>
-
-                    {/* Modal para aceptar la cancelación del servicio  */}
-
+                    {/* Modal para la confirmación de llegada del conductor  */}
                     <View>
 
                         <Modal
-                            isVisible={this.state.showModalCancelAcept}
-                     
+                            isVisible={this.state.showModalLlegada}
+
                         >
-                            <View style={{ marginTop: 22, backgroundColor:"#fff"}}>
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                                 <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Llegada</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>El conductor ha llegado al punto de partida</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solo te esperará 7 minutos</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>¡Ve hacía ahí! De lo contrario, se te cobrará tarifa</Text>
+                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
 
                                 </View>
                                 <View style={{
                                     flexDirection: "row",
-                                    paddingTop: 10,
-                                    paddingBottom: 10,
-                                    paddingLeft: 20,
-                                    backgroundColor: "#fff",
-                                    alignSelf: "center"
-                                }}>
+                                    paddingTop: 5,
+                                    marginBottom: 5
 
-                                    <View style={{ marginRight: 10, width: 120 }}>
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
 
                                         <Button
                                             title="Ok"
                                             onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: false
+                                                showModalLlegada: false
                                             })}
                                         ></Button>
+
+
                                     </View>
-
-
+                                    <View style={{ flex: 2 }}></View>
                                 </View>
                             </View>
+
+
                         </Modal>
 
                     </View>
+                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
 
-                    
-                    <View style={styles.containerMap}>
-                        <MapView
+                        <View style={styles.containerMap}>
+                            <MapView
 
-                            style={styles.map}
-                            region={{
-                                latitude: this.state.region.latitude,
-                                longitude: this.state.region.longitude,
-                                latitudeDelta: this.state.region.latitudeDelta,
-                                longitudeDelta: this.state.region.longitudeDelta,
-                            }}
-
-                            onRegionChangeComplete={this.onRegionChange}
-
-                            showsUserLocation={true}
-                            showsMyLocationButton={true}
-                        >   
-                            {/*  */}
-
-                            {/* Marker de posición inicial */}
-                            <Marker
-                                coordinate={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
+                                style={styles.map}
+                                region={{
+                                    latitude: this.state.region.latitude,
+                                    longitude: this.state.region.longitude,
+                                    latitudeDelta: this.state.region.latitudeDelta,
+                                    longitudeDelta: this.state.region.longitudeDelta,
                                 }}
 
-                            >
-                                <Icon name="map-pin" size={20} color="green"></Icon>
-                            </Marker>
-                            {/* Marker de la primera parada */}
-                            {this.state.Paradas!=null && this.state.showMarker1 ?
-                            
-                            <Marker
-                                coordinate={{
-                                    latitude: this.state.Paradas[0]["latitude"],
-                                    longitude: this.state.Paradas[0]["longitude"],
-                                }}
+                                onRegionChangeComplete={this.onRegionChange}
 
-                            >
-                                <Icon name="map-pin" size={20} color="yellow"></Icon>
-                            </Marker>
-                            :
-                                null
-                            }
+                                showsUserLocation={true}
+                                showsMyLocationButton={true}
+                            >   
+                                {/*  */}
 
-                            {/* Marker de la segunda parada */}
-                            {this.state.Paradas != null && this.state.showMarker2 ?
-
+                                {/* Marker de posición inicial */}
                                 <Marker
                                     coordinate={{
-                                        latitude: this.state.Paradas[1]["latitude"],
-                                        longitude: this.state.Paradas[1]["longitude"],
-                                    }}
-
-                                >
-                                    <Icon name="map-pin" size={20} color="blue"></Icon>
-                                </Marker>
-                                :
-                                null
-                            }
-
-                            {/* Marker del destino */}
-                            {this.state.Paradas != null && this.state.showMarker3 ?
-
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.Paradas[2]["latitude"],
-                                        longitude: this.state.Paradas[2]["longitude"],
-                                    }}
-
-                                >
-                                    <Icon name="map-pin" size={20} color="red"></Icon>
-                                </Marker>
-                                :
-                                null
-                            }
-
-                            {this.state.Onway?
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.positionChofer.latitude,
-                                        longitude: this.state.positionChofer.longitude,
-                                    }}
-
-                                >
-                                    <Icon color="#ff8834" name="car" size={20} ></Icon> 
-                                </Marker>
-
-                            :
-                                null
-                            }
-                          
-
-
-
-                            {this.state.ConductorMapDirection ?
-                                <MapViewDirections
-
-
-                                    origin={{
-                                        latitude: this.state.positionChofer.latitude,
-                                        longitude: this.state.positionChofer.longitude,
-                                        
-                                    }}
-
-                                    destination={{
                                         latitude: this.state.myPosition.latitude,
                                         longitude: this.state.myPosition.longitude,
                                     }}
-                                    apikey={GOOGLE_MAPS_APIKEY}
-                                    strokeWidth={1}
-                                    strokeColor="orange"
-                                    onReady={result => {
 
-                                        this.setState({
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
-
-                                        });
-
-                                        this.getTarifas();
-
-
+                                >
+                                    <Icon name="map-pin" size={20} color="green"></Icon>
+                                </Marker>
+                                {/* Marker de la primera parada */}
+                                {this.state.Paradas!=null && this.state.showMarker1 ?
+                                
+                                <Marker
+                                    coordinate={{
+                                        latitude: this.state.Paradas[0]["latitude"],
+                                        longitude: this.state.Paradas[0]["longitude"],
                                     }}
 
-                                />
+                                >
+                                    <Icon name="map-pin" size={20} color="yellow"></Icon>
+                                </Marker>
+                                :
+                                    null
+                                }
+
+                                {/* Marker de la segunda parada */}
+                                {this.state.Paradas != null && this.state.showMarker2 ?
+
+                                    <Marker
+                                        coordinate={{
+                                            latitude: this.state.Paradas[1]["latitude"],
+                                            longitude: this.state.Paradas[1]["longitude"],
+                                        }}
+
+                                    >
+                                        <Icon name="map-pin" size={20} color="blue"></Icon>
+                                    </Marker>
+                                    :
+                                    null
+                                }
+
+                                {/* Marker del destino */}
+                                {this.state.Paradas != null && this.state.showMarker3 ?
+
+                                    <Marker
+                                        coordinate={{
+                                            latitude: this.state.Paradas[2]["latitude"],
+                                            longitude: this.state.Paradas[2]["longitude"],
+                                        }}
+
+                                    >
+                                        <Icon name="map-pin" size={20} color="red"></Icon>
+                                    </Marker>
+                                    :
+                                    null
+                                }
+
+                                {this.state.Onway?
+                                    <Marker
+                                        coordinate={{
+                                            latitude: this.state.positionChofer.latitude,
+                                            longitude: this.state.positionChofer.longitude,
+                                        }}
+
+                                    >
+                                        <Icon color="#ff8834" name="car" size={20} ></Icon> 
+                                    </Marker>
 
                                 :
-                                null
-                            }
+                                    null
+                                }
+                            
 
-                            {
-                                this.state.Paradas!=null?
 
-                                    this.state.routeParada1?
-        
-                                        <MapViewDirections
-        
-        
-                                            destination={{
-                                                latitude: this.state.Onway? this.state.positionChofer.latitude :this.state.myPosition.latitude,
-                                                longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.myPosition.longitude
-                                            }}
-                                            origin={{
-                                                latitude: this.state.Paradas[0]["latitude"],
-                                                longitude: this.state.Paradas[0]["longitude"],
-                                            }}
-                                            apikey={GOOGLE_MAPS_APIKEY}
-                                            strokeWidth={1}
-                                            strokeColor="blue"
-                                            onReady={result => {
 
-                                                this.setState({
-                                                    distance: parseInt(result.distance),
-                                                    duration: parseInt(result.duration)
-                                                
-                                                });
+                                {this.state.ConductorMapDirection ?
+                                    <MapViewDirections
 
-                                                this.getTarifas();
-        
-        
-                                            }}
-        
-                                        />
+
+                                        origin={{
+                                            latitude: this.state.positionChofer.latitude,
+                                            longitude: this.state.positionChofer.longitude,
+                                            
+                                        }}
+
+                                        destination={{
+                                            latitude: this.state.myPosition.latitude,
+                                            longitude: this.state.myPosition.longitude,
+                                        }}
+                                        apikey={GOOGLE_MAPS_APIKEY}
+                                        strokeWidth={1}
+                                        strokeColor="orange"
+                                        onReady={result => {
+
+                                            this.setState({
+                                                distance: parseInt(result.distance),
+                                                duration: parseInt(result.duration)
+
+                                            });
+
+                                            this.getTarifas();
+
+
+                                        }}
+
+                                    />
+
+                                    :
+                                    null
+                                }
+
+                                {
+                                    this.state.Paradas!=null?
+
+                                        this.state.routeParada1?
+            
+                                            <MapViewDirections
+            
+            
+                                                destination={{
+                                                    latitude: this.state.Onway? this.state.positionChofer.latitude :this.state.myPosition.latitude,
+                                                    longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.myPosition.longitude
+                                                }}
+                                                origin={{
+                                                    latitude: this.state.Paradas[0]["latitude"],
+                                                    longitude: this.state.Paradas[0]["longitude"],
+                                                }}
+                                                apikey={GOOGLE_MAPS_APIKEY}
+                                                strokeWidth={1}
+                                                strokeColor="blue"
+                                                onReady={result => {
+
+                                                    this.setState({
+                                                        distance: parseInt(result.distance),
+                                                        duration: parseInt(result.duration)
+                                                    
+                                                    });
+
+                                                    this.getTarifas();
+            
+            
+                                                }}
+            
+                                            />
+                                            
+                                        :
+                                            null
                                         
-                                    :
-                                        null
-                                    
-
-                                :
-
-                                null
-                            }
-
-                            {
-                                this.state.Paradas != null ?
-
-                                    this.state.routeParada2 ?
-
-                                        <MapViewDirections
-
-
-                                            destination={{
-
-                                                latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[0]["latitude"],
-                                                longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[0]["longitude"]
-                                                
-                                            }}
-                                            origin={{
-                                                latitude: this.state.Paradas[1]["latitude"],
-                                                longitude: this.state.Paradas[1]["longitude"],
-                                            }}
-                                            apikey={GOOGLE_MAPS_APIKEY}
-                                            strokeWidth={1}
-                                            strokeColor="red"
-                                            onReady={result => {
-                                                this.setState({
-                                                    distance: this.state.distance + parseInt(result.distance),
-                                                    duration: this.state.duration + parseInt(result.duration)
-
-                                                })
-                                                
-                                                this.getTarifas();
-
-                                            }}
-
-                                        />
-
-                                        :
-                                        null
-
 
                                     :
 
                                     null
-                            }
+                                }
+
+                                {
+                                    this.state.Paradas != null ?
+
+                                        this.state.routeParada2 ?
+
+                                            <MapViewDirections
 
 
-                            {
-                                this.state.Paradas != null ?
+                                                destination={{
 
-                                    this.state.routeParada3 ?
+                                                    latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[0]["latitude"],
+                                                    longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[0]["longitude"]
+                                                    
+                                                }}
+                                                origin={{
+                                                    latitude: this.state.Paradas[1]["latitude"],
+                                                    longitude: this.state.Paradas[1]["longitude"],
+                                                }}
+                                                apikey={GOOGLE_MAPS_APIKEY}
+                                                strokeWidth={1}
+                                                strokeColor="red"
+                                                onReady={result => {
+                                                    this.setState({
+                                                        distance: this.state.distance + parseInt(result.distance),
+                                                        duration: this.state.duration + parseInt(result.duration)
 
-                                        <MapViewDirections
+                                                    })
+                                                    
+                                                    this.getTarifas();
 
+                                                }}
 
-                                            destination={{
-                                                latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[1]["latitude"],
-                                                longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[1]["longitude"]
-                                            }}
-                                            origin={{
-                                                latitude: this.state.Paradas[2]["latitude"],
-                                                longitude: this.state.Paradas[2]["longitude"],
-                                            }}
-                                            apikey={GOOGLE_MAPS_APIKEY}
-                                            strokeWidth={1}
-                                            strokeColor="green"
-                                            onReady={result => {
-                                                this.setState({
-                                                    distance: this.state.distance + parseInt(result.distance),
-                                                    duration: this.state.duration + parseInt(result.duration)
+                                            />
 
-                                                })
+                                            :
+                                            null
 
-                                                this.getTarifas();
-
-                                            }}
-
-                                        />
 
                                         :
+
                                         null
+                                }
 
 
-                                    :
+                                {
+                                    this.state.Paradas != null ?
 
-                                    null
-                            }
+                                        this.state.routeParada3 ?
+
+                                            <MapViewDirections
 
 
+                                                destination={{
+                                                    latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[1]["latitude"],
+                                                    longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[1]["longitude"]
+                                                }}
+                                                origin={{
+                                                    latitude: this.state.Paradas[2]["latitude"],
+                                                    longitude: this.state.Paradas[2]["longitude"],
+                                                }}
+                                                apikey={GOOGLE_MAPS_APIKEY}
+                                                strokeWidth={1}
+                                                strokeColor="green"
+                                                onReady={result => {
+                                                    this.setState({
+                                                        distance: this.state.distance + parseInt(result.distance),
+                                                        duration: this.state.duration + parseInt(result.duration)
+
+                                                    })
+
+                                                    this.getTarifas();
+
+                                                }}
+
+                                            />
+
+                                            :
+                                            null
+
+
+                                        :
+
+                                        null
+                                }
+
+
+                                
+                    
+                                
                             
-                
-                            
-                        
-                        </MapView>
-                    </View>
+                            </MapView>
+                        </View>
+                    :
+                        null
+                    }
                     {this.state.showEstimations?
                         <View>
 

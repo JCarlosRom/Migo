@@ -261,7 +261,7 @@ export default class Home extends Component {
             
             }else{
 
-                locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["name"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
+                locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["na e"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
             }
 
             this.setState({
@@ -630,7 +630,7 @@ export default class Home extends Component {
             alert("Favor de seleccionar un tipo de vehículo en configurar lugar en el mapa");
         } else {
 
-            if (this.state.myPosition.addressInput != "" && this.state.destination2 == "" && this.state.destination3 == "" && this.state.destination4 == ""){
+            if (this.state.myPosition.addressInput != "" && this.state.destination4 == "" && this.state.showNewArrival == false && this.state.showNewArrival2 == false){
                
                 keys.travelInfo.puntoPartida = this.state.myPosition;
 
@@ -692,7 +692,8 @@ export default class Home extends Component {
                                                         keys.travelInfo.Parada1 = this.state.destination2;
                                                         keys.travelInfo.Parada2 = this.state.destination3;
                                                         keys.travelInfo.Parada3 = this.state.destination4;
-        
+
+                                                   
                                                         var Paradas = {
                                                             Parada1: this.state.place1,
                                                             Parada2: this.state.place2,
@@ -971,36 +972,70 @@ export default class Home extends Component {
 
                         <View style={{ flexDirection: "row" }}>
                             <View style={!this.state.showButtonsDelete?{width:300}:{width:330}}>
-                                <Input
-                                    
-                                    ref={input => this.parada1Focus = input}
-                                    placeholder={this.state.hit}
-                                    value={this.state.destination2}
-                                    placeholder="Agregar parada 1"
+                                {!this.state.showButtonsDelete ?
 
-                                    rightIcon={
-                                        this.state.showButtonsDelete ?
-                                            <Icon name="times-circle" 
-                                            onPress={() => this.hideArrival()} 
-                                            size={30} style={{ paddingLeft: 15 }}></Icon>
-                                        :
-                                        
-                                        null
+                                    <Input
+                                        ref={input => this.parada1Focus = input}
+                                        placeholder={this.state.hit}
+                                        value={this.state.destination2}
 
-                                    }
-                                
+                                        placeholder="Agregar parada 1"
 
-                                    onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
-                                />
+                                        rightIcon={
+                                            this.state.showButtonsDelete ?
+                                                <Icon name="times-circle"
+                                                    onPress={() => this.hideArrival()}
+                                                    size={30} style={{ paddingLeft: 15 }}></Icon>
+                                                :
+
+                                                null
+
+                                        }
+
+                                       
+                                        // onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
+                                        onFocus={()=>this.setplaceArrival("Place 1")}
+                                    />
+
+                               
+
+                                    :
+                                       <Input
+                                        ref={input => this.parada1Focus = input}
+                                        placeholder={this.state.hit}
+                                        value={this.state.destination2}
+
+                                        placeholder="Agregar parada 1"
+
+                                        rightIcon={
+                                            this.state.showButtonsDelete ?
+                                                <Icon name="times-circle"
+                                                    onPress={() => this.hideArrival()}
+                                                    size={30} style={{ paddingLeft: 15 }}></Icon>
+                                                :
+
+                                                null
+
+                                        }
+
+
+                                        onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
+                                    />
+                                }
+                           
 
                             </View>
 
 
                             {!this.state.showButtonsDelete ?
 
-                                <Button title={this.state.place1}
-                                onPress={()=>this.setplaceArrival("Place 1")}
-                                ></Button>
+                                <View style={{ width: 25 }}>
+
+                                    <Button 
+                                        title={this.state.place1}
+                                    ></Button>
+
+                                </View>
 
                                 :
                                 null
@@ -1039,28 +1074,55 @@ export default class Home extends Component {
 
                             <View style={!this.state.showButtonsDelete ? { width: 300 } : { width: 330 }}>
 
-                            <Input
-                                ref={input => this.parada2Focus = input}
-                                placeholder={this.state.hit}
-                                value={this.state.destination3}
-                                placeholder="Agregar parada 2"
+                                {!this.state.showButtonsDelete ?
+                                
+                                    <Input
+                                        ref={input => this.parada2Focus = input}
+                                        placeholder={this.state.hit}
+                                        value={this.state.destination3}
+                                        placeholder="Agregar parada 2"
+        
+                                        rightIcon={
+                                            this.state.showButtonsDelete ?
+                                                <Icon name="times-circle"
+                                                    onPress={() => this.hideArrival()}
+                                                    size={30} style={{ paddingLeft: 15 }}></Icon>
+                                                :
+        
+                                                null
+        
+                                        }
+        
+        
+        
+                                        onFocus={() => this.setplaceArrival("Place 2")}
+                                        // onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
+                                    />
+                                    : 
 
-                                rightIcon={
-                                    this.state.showButtonsDelete ?
-                                        <Icon name="times-circle"
-                                            onPress={() => this.hideArrival()}
-                                            size={30} style={{ paddingLeft: 15 }}></Icon>
-                                        :
+                                    <Input
+                                        ref={input => this.parada2Focus = input}
+                                        placeholder={this.state.hit}
+                                        value={this.state.destination3}
+                                        placeholder="Agregar parada 2"
 
-                                        null
+                                        rightIcon={
+                                            this.state.showButtonsDelete ?
+                                                <Icon name="times-circle"
+                                                    onPress={() => this.hideArrival()}
+                                                    size={30} style={{ paddingLeft: 15 }}></Icon>
+                                                :
 
+                                                null
+
+                                        }
+
+
+
+
+                                        onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
+                                    />
                                 }
-
-
-
-
-                                onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
-                            />
 
                             </View>
 
@@ -1068,9 +1130,14 @@ export default class Home extends Component {
 
                             {!this.state.showButtonsDelete ?
 
-                                <Button title={this.state.place2}
-                                onPress={() => this.setplaceArrival("Place 2")}
-                                ></Button>
+                                <View style= {{width: 25 }}>
+                                
+                                    <Button 
+                                    title={this.state.place2}
+                                    ></Button>
+                                
+                                </View>
+
 
                                 :
                                 null
@@ -1103,28 +1170,54 @@ export default class Home extends Component {
 
                     <View style={{flexDirection:"row"}}>
                         <View style={!this.state.showButtonsDelete ? { width: 300} : { width: 330 }}>
+                            {!this.state.showButtonsDelete ?
+                                <Input
+                                    ref={this.stop2}
+                                    placeholder={this.state.hit}
+                                    value={this.state.destination4}
+                                    placeholder="¿A dónde vamos?"
 
-                            <Input
-                                ref={this.stop2}
-                                placeholder={this.state.hit}
-                                value={this.state.destination4}
-                                placeholder="¿A dónde vamos?"
+                                    rightIcon={
+                                        this.state.showButtonsDelete ?
+
+                                            <Icon name="plus"
+                                                color="#ff8834"
+                                                onPress={this.showArrival}
+                                                size={30}
+                                                style={{ paddingLeft: 15 }}></Icon>
+                                            :
+                                            null
+
+                                    }
+
+                                    onFocus={() => this.setplaceArrival("Place 3")}
+                                    // onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
+                                />
+                                :
+
+                                <Input
+                                    ref={this.stop2}
+                                    placeholder={this.state.hit}
+                                    value={this.state.destination4}
+                                    placeholder="¿A dónde vamos?"
+                                
+                                    rightIcon={
+                                        this.state.showButtonsDelete?
+                                        
+                                            <Icon name="plus"
+                                            color="#ff8834"
+                                            onPress={this.showArrival}
+                                            size={30} 
+                                            style={{ paddingLeft: 15 }}></Icon>
+                                        :
+                                            null
+    
+                                    }
+    
+                                    onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
+                                />
                             
-                                rightIcon={
-                                    this.state.showButtonsDelete?
-                                    
-                                        <Icon name="plus"
-                                        color="#ff8834"
-                                        onPress={this.showArrival}
-                                        size={30} 
-                                        style={{ paddingLeft: 15 }}></Icon>
-                                    :
-                                        null
-
-                                }
-
-                                onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
-                            />
+                            }   
 
                         </View>
 
@@ -1136,7 +1229,6 @@ export default class Home extends Component {
                                 
                                 <Button 
                                 title={this.state.place3}
-                                onPress={() => this.setplaceArrival("Place 3")}
                                 ></Button>
 
                             </View>
@@ -1186,9 +1278,7 @@ export default class Home extends Component {
 
                     <View style={{ flex: 2}}>
                   
-                        <Text style={{color:"blue", marginLeft:5}}
-                            onPress={()=>this.travelSinDestino()}
-                        >Sin destino</Text>
+                        
                   
                     </View>
 
@@ -1469,7 +1559,9 @@ export default class Home extends Component {
 
                     </View>
                     :
-                    <View style={styles.container}>
+                    <View style={{
+                        paddingTop: 20,
+                        backgroundColor: "#f0f4f7",}}>
 
                         <View >
 
@@ -1521,7 +1613,7 @@ export default class Home extends Component {
 
            
 
-                    <View style={{ backgroundColor: "white", position:"relative", marginTop:120 }}>
+                    <View style={{ backgroundColor: "white", position:"relative", marginTop:50 }}>
 
                         <Button title="Confirmar"
                             style={{ width: '100%' }}

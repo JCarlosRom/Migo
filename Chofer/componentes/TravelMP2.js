@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Switch, ScrollView } from "react-native";
+import Modal from "react-native-modal";
 import { Button  } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
+import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 import keys from './global';
@@ -56,6 +58,18 @@ export default class TravelMP2 extends Component {
             keys.Chat.push(num.Mensaje);
 
             alert("Te llegó un mensaje");
+
+        })
+
+        keys.socket.on('cancelViajeChofer', () => {
+
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicio" } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
 
         })
         // Bloque de cuenta regresiva de aceptar viaje de chófer 
@@ -406,6 +420,22 @@ export default class TravelMP2 extends Component {
         });
 
     }
+
+    cancelViaje() {
+
+        keys.socket.emit("cancelViajeChofer", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
+
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
     onRegionChange = async region => {
 
 
@@ -460,6 +490,145 @@ export default class TravelMP2 extends Component {
         return (
             <ScrollView contentContainerStyle={styles.contentContainer}>
                 <View style={styles.container}>
+                    <View >
+
+                        <Modal
+                            isVisible={this.state.showModalCancel}
+
+                        >
+                            <View style={styles.area}>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
+                            </View>
+                            {/* Primer motivo */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ alignSelf: "center" }}>
+
+                                        <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                            clienteNoPresento: true,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: false,
+                                            Otro: false
+                                        })}></Icon>
+
+                                    </View>
+                                </View>
+                                <View style={{ flex: 5 }}>
+                                    <Text> El cliente no se presentó</Text>
+                                </View>
+                            </View>
+                            {/* Segundo mótivo */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ alignSelf: "center" }}>
+
+                                        <Icon name="check-circle" color={this.state.clienteNoCancelacion ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: true,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: false,
+                                            Otro: false
+                                        })}></Icon>
+
+                                    </View>
+                                </View>
+                                <View style={{ flex: 5 }}>
+                                    <Text> El cliente pidió la cancelación</Text>
+                                </View>
+                            </View>
+                            {/* Tercer mótivo */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ alignSelf: "center" }}>
+
+                                        <Icon name="check-circle" color={this.state.direccionIncorrecta ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: true,
+                                            noCobrarCliente: false,
+                                            Otro: false
+                                        })}></Icon>
+
+                                    </View>
+                                </View>
+                                <View style={{ flex: 5 }}>
+                                    <Text> Dirección incorrecta</Text>
+                                </View>
+                            </View>
+
+                            {/* Cuarto mótivo */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ alignSelf: "center" }}>
+                                        <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: true,
+                                            Otro: false
+                                        })}></Icon>
+                                    </View>
+                                </View>
+                                <View style={{ flex: 5 }}>
+                                    <Text> No cobrar al cliente</Text>
+                                </View>
+                            </View>
+
+                            {/* Quinto mótivo */}
+                            <View style={styles.area}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ alignSelf: "center" }}>
+
+                                        <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
+                                            onPress={() => this.setState({
+                                                clienteNoPresento: false,
+                                                clienteNoCancelacion: false,
+                                                direccionIncorrecta: false,
+                                                noCobrarCliente: false,
+                                                Otro: true
+                                            })}></Icon>
+                                    </View>
+                                </View>
+                                <View style={{ flex: 5 }}>
+                                    <Text> Otro</Text>
+                                </View>
+                            </View>
+
+
+                            <View
+                                style={styles.area}>
+                                <View style={{ flex: 2 }}></View>
+
+                                <View style={{ flex: 2, marginBottom: 5 }}>
+                                    <Button
+                                        title="No Cancelar"
+                                        type="outline"
+                                        titleStyle={{ color: "black", fontSize: 6 }}
+                                        onPress={() => this.setState({
+                                            showModalCancel: false
+                                        })}
+
+                                    ></Button>
+
+                                </View>
+                                <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
+
+                                    <Button
+                                        title="Cancelar"
+                                        type="outline"
+                                        titleStyle={{ color: "black", fontSize: 6 }}
+                                        onPress={() => this.cancelViaje()}
+
+                                    ></Button>
+
+                                </View>
+                            </View>
+
+
+                        </Modal>
+
+                    </View>
                     <View style={styles.area}>
                         <View>
                             <Switch
@@ -561,7 +730,7 @@ export default class TravelMP2 extends Component {
     
                         </View>
                     <View style={styles.containerMap}>
-                    {this.state.positionUser!=null?
+                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null?
 
                         <MapView
 
@@ -786,12 +955,19 @@ export default class TravelMP2 extends Component {
                                 style={{ paddingLeft:10}}
                                 color="red"
                                 size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
                                 ></Icon>  
                                 
                                 <Icon name="angle-double-right"
                                 style={{paddingLeft:10}}
                                 color="red"
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                                ></Icon>
                                
                                 <Icon name="comment-dots"
                                     style={{ paddingLeft: 40 }}
@@ -899,12 +1075,19 @@ export default class TravelMP2 extends Component {
                                 style={{ paddingLeft: 10 }}
                                 color="red"
                                 size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
                             ></Icon>
 
                             <Icon name="angle-double-right"
                                 style={{ paddingLeft: 10 }}
                                 color="red"
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                                ></Icon>
 
                             <Icon name="comment-dots"
                                 style={{ paddingLeft: 40 }}
@@ -989,12 +1172,19 @@ export default class TravelMP2 extends Component {
                                 style={{ paddingLeft: 10 }}
                                 color="red"
                                 size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
                             ></Icon>
 
                             <Icon name="angle-double-right"
                                 style={{ paddingLeft: 10 }}
                                 color="red"
-                                size={25}></Icon>
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                                ></Icon>
 
                             <Icon name="comment-dots"
                                 style={{ paddingLeft: 40 }}

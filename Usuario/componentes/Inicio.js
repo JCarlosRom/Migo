@@ -55,7 +55,7 @@ export default class Inicio extends Component {
         console.log(Flag);
 
 
-        if (Flag==true) {
+        if (Flag =="terminarViaje") {
 
             this.setState({
                 showModalPay:true
@@ -66,6 +66,10 @@ export default class Inicio extends Component {
                 this.setState({
                     showModalCancel: true
                 })
+            }else{
+                if (Flag =="CancelarServicioUsuario"){
+                    alert("Viaje cancelado por el chófer");
+                }
             }
         }
 
@@ -97,32 +101,35 @@ export default class Inicio extends Component {
     setPropina(tipoPropina){
         if(tipoPropina==1){
             this.setState({
-                tarifaFinal: keys.Tarifa+0,
+                tarifaFinal: keys.Tarifa,
                 Propina: tipoPropina
             })
         }else{
             if(tipoPropina==2){
 
                 this.setState({
-                    tarifaFinal: keys.Tarifa + 6,
+                    tarifaFinal: parseInt(keys.Tarifa + keys.Tarifa * .10),
                     Propina: tipoPropina
                 })
             }else{
                 if(tipoPropina==3){
                     this.setState({
-                        tarifaFinal: keys.Tarifa + 8,
+                        tarifaFinal: parseInt(keys.Tarifa + keys.Tarifa * .15),
                         Propina: tipoPropina
                     })
                 }else{
                     if(tipoPropina==4){
                         this.setState({
-                            tarifaFinal: keys.Tarifa + 11,
+                            tarifaFinal: parseInt(keys.Tarifa+ keys.Tarifa + .20),
                             Propina: tipoPropina
                         })
                     }
                 }
             }
         }
+
+        console.log("Tarifa final",this.state.tarifaFinal);
+        console.log("Propina", this.state.Propina);
     }
 
     detallesCosto(){
@@ -219,21 +226,21 @@ export default class Inicio extends Component {
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title="$6.00"
+                                        title={"$"+String( parseInt(keys.Tarifa*.1))+".00"}
                                         color={(this.state.Propina == 2) ? "#32CD32" : "#DCDCDC" }
                                         onPress={() => this.setPropina(2)}
                                     ></Button>
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title="$8.00"
+                                        title={"$"+String(parseInt(keys.Tarifa * .15))+".00"}
                                         color={(this.state.Propina == 3) ? "#32CD32" : "#DCDCDC"}
                                         onPress={() => this.setPropina(3)}
                                     ></Button>
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title="$11.00"
+                                        title={"$"+String(parseInt(keys.Tarifa * .2))+".00"}
                                         color={(this.state.Propina == 4) ? "#32CD32" : "#DCDCDC"}
                                         onPress={() => this.setPropina(4)}
                                     ></Button>

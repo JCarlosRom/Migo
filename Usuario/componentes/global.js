@@ -41,7 +41,7 @@ export default keys={
      
 
     },
-    Tarifa:55,
+    Tarifa:0,
     Paradas: null, 
     // Punteros
     flag: null,
@@ -49,7 +49,7 @@ export default keys={
     data_driver_response: null,
     addressInput:"",
     Chat: [],
-    urlSocket: 'http://192.168.0.13:3001',
-    // urlSocket: 'http://35.203.42.33:3001/',
+    // urlSocket: 'http://192.168.0.13:3001',
+    urlSocket: 'http://35.203.42.33:3001/',
 
 }

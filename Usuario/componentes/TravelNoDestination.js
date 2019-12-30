@@ -42,7 +42,7 @@ export default class TravelNoDestination extends Component {
             Pay: false,
             Onway: false,
             showModalCancel: false,
-            showModalCancelAcept: false,
+            showModalLlegada:false,
             location: null,
 
             distance: 0,
@@ -80,23 +80,46 @@ export default class TravelNoDestination extends Component {
 
         };
 
+        // Aqui se acepta el recorrido
+        keys.socket.on('recorrido_id_usuario', num => {
+            console.log('Llego respuesta: ', num);
+            // this.state.id_recorrido = num;
+            // this.setState({
+
+            // });
+            keys.id_servicio = num.servicio;
+            keys.id_recorrido = num.recorrdio;
+
+            console.log("idServicio", keys.id_servicio);
+            console.log("idRecorrido", keys.id_recorrido);
+
+            alert('EL conductor acepto tu solicitud, espera a tu chofer ');
+            // Desactivar animación 
+
+        });
+
         keys.socket.on("setPrimeraParada1Usuario", (num) => {
 
             this.setPrimeraParada1Usuario(num);
 
         })
-    
-        // Aqui se acepta el recorrido
-        keys.socket.on('recorrido_id_usuario', num => {
-            // console.log('Llego respuesta: ', num);
-            this.state.id_recorrido = num;
-            this.setState({
 
+        keys.socket.on("puntoEncuentroUsuario",()=>{
+            this.setState({
+                showModalLlegada:true
+            })
+        } )
+
+        keys.socket.on("cancelViajeUsuario", num => {
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicioUsuario" } })],
+                key: undefined
             });
-            alert('EL conductor acepto tu solicitud, espera a tu chofer ');
-            // Desactivar animación 
-            this.fleet_usuario_chofer();
-        });
+
+            this.props.navigation.dispatch(resetAction);
+        })
+   
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
             console.log('conductor_sendInfo');
@@ -166,7 +189,7 @@ export default class TravelNoDestination extends Component {
 
             const resetAction = StackActions.reset({
                 index: 0,
-                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: true } })],
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "terminarViaje" } })],
                 key: undefined
             });
 
@@ -232,6 +255,7 @@ export default class TravelNoDestination extends Component {
                 routeParada1: false,
                 ConductorMapDirection:false,
                 routeChoferDestino: true,
+      
             })
 
         }else{
@@ -316,7 +340,7 @@ export default class TravelNoDestination extends Component {
                         Express_Estandar: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: element["out_costo_viaje"],
+                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
                         }
                      
                     })
@@ -327,7 +351,7 @@ export default class TravelNoDestination extends Component {
                         Express_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: element["out_costo_viaje"],
+                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
                         }
                     })
                 }
@@ -338,7 +362,7 @@ export default class TravelNoDestination extends Component {
                         Pool_Estandar: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: element["out_costo_viaje"],
+                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
                         }
                     })
                 }
@@ -349,7 +373,7 @@ export default class TravelNoDestination extends Component {
                         Pool_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: element["out_costo_viaje"],
+                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
                         } 
                     })
                 }
@@ -552,6 +576,26 @@ export default class TravelNoDestination extends Component {
 
     } 
 
+    cancelarServicio() {
+        this.setState({
+
+            showModalCancel: false,
+            showModalCancelAcept: true
+
+        })
+
+        keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
+
+
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
  
     render() {
         return (
@@ -561,31 +605,30 @@ export default class TravelNoDestination extends Component {
 
                     {/* Modal para la cancelación del servicio */}
 
-                   
-                    <View > 
+                    <View >
 
                         <Modal
                             isVisible={this.state.showModalCancel}
 
-                        >   
-                            <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                                 <View>
                                     <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
                                     <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
                                     <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
                                     <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
 
                                 </View>
                                 <View style={{
                                     flexDirection: "row",
-                                    paddingTop:5,
-                                    marginBottom:5
-                                
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
                                 }}>
-                                    <View style={{ flex:2 }}></View>
-                                    <View style={{ flex:1, paddingRight:5 }}>
+                                    <View style={{ flex: 2 }}></View>
+                                    <View style={{ flex: 1, paddingRight: 5 }}>
                                         <Button
                                             title="No"
                                             onPress={() => this.setState({
@@ -594,67 +637,68 @@ export default class TravelNoDestination extends Component {
 
 
                                         ></Button>
-                                      
+
                                     </View>
 
-                                    <View style={{ flex:1, paddingLeft:5 }}>
+                                    <View style={{ flex: 1, paddingLeft: 5 }}>
 
                                         <Button
                                             title="Si"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: true
-                                            })}
+                                            onPress={() => this.cancelarServicio()}
                                         ></Button>
 
-                                   
+
                                     </View>
                                     <View style={{ flex: 2 }}></View>
                                 </View>
                             </View>
 
-        
+
                         </Modal>
 
                     </View>
 
                     {/* Modal para aceptar la cancelación del servicio  */}
-
                     <View>
 
                         <Modal
-                            isVisible={this.state.showModalCancelAcept}
-                     
+                            isVisible={this.state.showModalLlegada}
+
                         >
-                            <View style={{ marginTop: 22, backgroundColor:"#fff"}}>
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                                 <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Llegada</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>El conductor ha llegado al punto de partida</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solo te esperará 7 minutos</Text>
+                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>¡Ve hacía ahí! De lo contrario, se te cobrará tarifa</Text>
+                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
 
                                 </View>
                                 <View style={{
                                     flexDirection: "row",
-                                    paddingTop: 10,
-                                    paddingBottom: 10,
-                                    paddingLeft: 20,
-                                    backgroundColor: "#fff",
-                                    alignSelf: "center"
-                                }}>
+                                    paddingTop: 5,
+                                    marginBottom: 5
 
-                                    <View style={{ marginRight: 10, width: 120 }}>
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
 
                                         <Button
                                             title="Ok"
                                             onPress={() => this.setState({
-                                                showModalCancel: false,
-                                                showModalCancelAcept: false
+                                                showModalLlegada: false
                                             })}
                                         ></Button>
+
+
                                     </View>
-
-
+                                    <View style={{ flex: 2 }}></View>
                                 </View>
                             </View>
+
+
                         </Modal>
 
                     </View>

@@ -46,6 +46,8 @@ export default class Home extends Component {
     
             // this.state.datos_solicitud = num;
 
+            console.log("Datos Solicitud",num);
+
             if(num!=null){
     
                 keys.datos_usuario={
@@ -66,6 +68,9 @@ export default class Home extends Component {
                         Parada1: num.Paradas[0],
                         Parada2: num.Paradas[1],
                         Parada3: num.Paradas[2],
+                        Distancia: num.Distancia, 
+                        Tiempo: num.Tiempo,
+
                         // Distancia: num.Distancia, 
                         // Tiempo: num.Tiempo
                     }
@@ -164,6 +169,34 @@ export default class Home extends Component {
     }
 
     async componentWillMount() {
+
+        Flag = this.props.navigation.getParam('Flag', false);
+
+        console.log(Flag);
+
+
+        if (Flag == "CancelarServicio") {
+
+            alert("Viaje cancelado por usuario");
+
+            this.setState({
+                stateConductor: keys.stateConductor
+            })
+
+        }else{
+            if (Flag =="finalizarViaje"){
+                this.setState({
+                    stateConductor: keys.stateConductor
+                })
+            }else{
+                if (Flag =="CancelarServicioChofer"){
+                    alert("El viaje se ha cancelado correctamente")
+                }
+                this.setState({
+                    stateConductor: keys.stateConductor
+                })
+            }
+        }
 
 
 
