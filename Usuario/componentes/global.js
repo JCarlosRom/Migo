@@ -43,13 +43,15 @@ export default keys={
     },
     Tarifa:0,
     Paradas: null, 
+    typePay:1,
     // Punteros
     flag: null,
     type: "",
     data_driver_response: null,
     addressInput:"",
     Chat: [],
-    // urlSocket: 'http://192.168.0.13:3001',
-    urlSocket: 'http://35.203.42.33:3001/',
+    HoraServicio:null,
+    urlSocket: 'http://192.168.0.13:3001',
+    // urlSocket: 'http://35.203.42.33:3001/',
 
 }

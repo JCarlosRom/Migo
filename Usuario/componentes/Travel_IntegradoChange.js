@@ -13,7 +13,7 @@ import keys from "./global";
 import * as Permissions from 'expo-permissions';
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
-export default class Travel_Integrado extends Component {
+export default class Travel_IntegradoChange extends Component {
    
 
     constructor(props) {
@@ -138,19 +138,14 @@ export default class Travel_Integrado extends Component {
         
         });
         // Recepción de la información del chofer cuando se acepta la solicitud
-        keys.socket.on('conductor_sendInfo', num => {
-            console.log('conductor_sendInfo');
-
-            var d = new Date(); // get current date
-            d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
-            keys.HoraServicio= d.toLocaleTimeString()
-
-            console.log("Hora",keys.HoraServicio);
+        keys.socket.on('conductor_sendInfoChange', num => {
+            console.log('conductor_sendInfo2');
+  
 
             this.setState({
                 showBackButton:false,
                 showModalAcept: true,
-                Descripcion: "El chofer ha aceptado tu solicitud"
+                Descripcion: "Direcciones actualizadas"
             })
 
 
@@ -195,6 +190,7 @@ export default class Travel_Integrado extends Component {
         // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
 
+            
    
             this.setState({
                 positionChofer:{
@@ -203,7 +199,7 @@ export default class Travel_Integrado extends Component {
                 }
             })
 
-            // console.log("USUARIO: Posición del chófer", this.state.positionChofer);
+
         
         });
     
@@ -331,50 +327,18 @@ export default class Travel_Integrado extends Component {
     
             res.data.datos.forEach(element => {
 
-                if(element["categoria_servicio"]==1){
+                if (element["categoria_servicio"] == keys.categoriaVehiculo){
                    
                     this.setState({
+
+                        infoVehicleTarifa: parseInt(element["out_costo_viaje"])
                        
-                        Express_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                     
                     })
                 }
-                if (element["categoria_servicio"] == 2) {
-                    
-                    this.setState({
-                        Express_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                    })
-                }
+             
 
-                if (element["categoria_servicio"] == 3) {
-                    
-                    this.setState({
-                        Pool_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                    })
-                }
 
-                if (element["categoria_servicio"] == 4) {
-                   
-                    this.setState({
-                        Pool_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        } 
-                    })
-                }
+          
             });
         } catch (e) {
             console.log(e);
@@ -387,26 +351,32 @@ export default class Travel_Integrado extends Component {
     }
 
     generarSolicitud = () => {
+
+
+
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
         datos_usuario = keys.datos_usuario;
         infoTravel= keys.travelInfo;
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
+        id_chofer_socket= keys.id_chofer_socket;
         Tarifa = this.state.infoVehicleTarifa;
         Distancia= this.state.distance,
         Tiempo= this.state.duration
         
         keys.Tarifa= Tarifa; 
 
-        keys.socket.emit('usuario_solicitud', {
+        keys.socket.emit('changeDestino', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
             datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
             id_usuario_socket: keys.id_usuario_socket, categoriaVehiculo:keys.categoriaVehiculo, 
             tipoVehiculo: keys.tipoVehiculo, tipoServicio: keys.tipoServicio, Tarifa: Tarifa,
-            Distancia:Distancia, Tiempo:Tiempo, 
+            Distancia: Distancia, Tiempo: Tiempo, id_chofer_socket: id_chofer_socket
        
         });
+
+        keys.socket.removeAllListeners("conductor_sendInfo");
     }
     
     findCurrentLocationAsync = async () => {
@@ -430,13 +400,6 @@ export default class Travel_Integrado extends Component {
 
     async componentWillMount() {
 
-        Change = this.props.navigation.getParam('change', false);
-
-        if(Change ==true){
-            this.setState({
-                Change:true
-            })
-        }
 
         console.log("Travel Integrado");
 
@@ -514,71 +477,7 @@ export default class Travel_Integrado extends Component {
 
     }
     
-    showInfoVehicle(typeVehicle){
-
-        var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
-    
-    
-        if(typeVehicle=="Express Estandar"){
-            this.setState({
-                infoVehicleTipo: "Express Estandar",
-                infoVehicleLlegada: d.toLocaleTimeString(),
-                infoVehicleTarifa: this.state.Express_Estandar.out_costo_viaje
-            })
-            // Express
-            keys.tipoServicio = 1;
-            // Estandar
-            keys.tipoVehiculo = 1;
-
-
-        }else{
-            if(typeVehicle=="Express Lujo"){
-                this.setState({
-                    infoVehicleTipo: "Express Lujo",
-                    infoVehicleLlegada: d.toLocaleTimeString(),
-                    infoVehicleTarifa: this.state.Express_Lujo.out_costo_viaje
-                })
-
-                // Express
-                keys.tipoServicio = 1;
-                // Lujo
-                keys.tipoVehiculo = 2;
-            }else{
-                if(typeVehicle=="Pool Estandar"){
-                    this.setState({
-                        infoVehicleTipo: "Pool Estandar",
-                        infoVehicleLlegada: d.toLocaleTimeString(),
-                        infoVehicleTarifa: this.state.Pool_Estandar.out_costo_viaje
-                    })
-
-                    // Pool
-                    keys.tipoServicio = 2;
-                    // Estandar
-                    keys.tipoVehiculo = 1;
-
-                }else{
-                    if(typeVehicle=="Pool Lujo"){
-                        this.setState({
-                            infoVehicleTipo: "Pool Lujo",
-                            infoVehicleLlegada: d.toLocaleTimeString(),
-                            infoVehicleTarifa: Pool_Lujo.out_costo_viaje
-                        })
-
-                        // Pool
-                        keys.tipoServicio = 2;
-                        // Lujo
-                        keys.tipoVehiculo = 2;
-                    }
-                }
-            }
-        }
-
-        this.setState({
-            showEstimations: true,
-            Home: false
-        })
-    }
+  
 
 
     Chat() {
@@ -609,20 +508,19 @@ export default class Travel_Integrado extends Component {
         console.log("Hora Actual", horaActual);
         console.log("Hora Servicio", keys.HoraServicio);
 
-        if(horaActual<keys.HoraServicio){
+        if (horaActual < keys.HoraServicio) {
 
             keys.Chat=[];
     
             this.setState({
                 
                 showModalCancel: false,
-            
     
                 
             })
     
             keys.socket.emit("cancelaUsuario", { id: keys.id_servicio })
-
+    
             keys.socket.emit('cancelViajeUsuario',{id_chofer_socket: keys.id_chofer_socket});
     
     
@@ -633,11 +531,12 @@ export default class Travel_Integrado extends Component {
             });
     
             this.props.navigation.dispatch(resetAction);
+
         }else{
             this.setState({
-                showModalCancel:false,
-                showModal:true, 
-                Descripcion:"No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
+                showModalCancel: false,
+                showModal: true,
+                Descripcion: "No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
             })
         }
 
@@ -693,22 +592,7 @@ export default class Travel_Integrado extends Component {
                         </Modal>
 
                     </View>
-                    {this.state.showBackButton?
-                    
-                        <View style={styles.area}>
-                            <View style={{ flex: 1 }}>
-                                <Icon
-                                    name="arrow-left"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.props.navigation.navigate("Home")}
-                                ></Icon>
-                            </View>
-
-                        </View>
-                    :
-                        null
-                    }
+                
                     {this.state.showTimeChofer ?
                         <View style={{ flexDirection:"row", backgroundColor: "#fff"}}>
                             <View style={{ flex: 1, backgroundColor: "#EFEEEC" }}></View>
@@ -1088,317 +972,27 @@ export default class Travel_Integrado extends Component {
                         null
                     }
 
-               
-
-                    {this.state.showEstimations?
-                        <View>
-
-                            <View style={styles.areawrow}>
-                            
-                                <Icon name="car-side" color="#ff8834" size={30} style={{ alignSelf: "center", paddingTop:5 }}></Icon>
-                            
-                            </View>
-
-                        
-
-                            <View style={styles.area}>
-                        
-                                <View>
-                                    <Text>{this.state.infoVehicleTipo} <Icon name="info-circle" color="#ff8834" size={18}
-                                    onPress={() => this.props.navigation.navigate("DesgloseTarifa")}
-                                    ></Icon> </Text>
-                                    <Text> {this.state.infoVehicleLlegada}</Text>
-                                </View>
-
-                                <View style={{paddingLeft:120}}>
-                                    <Text> MX$ {this.state.infoVehicleTarifa}</Text>
-                                </View>
-                            
-                            </View>
-                
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" :"credit-card"} size={30} onPress={() => this.showPay() }></Icon>
-
-                                <Text color="#ff8834" style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashpay? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
-                                
-                                <Icon color="#ff8834" style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.showPay()}></Icon>
-
-                            </View>
-                            {!this.state.Pay?
-                            
-                                <View >
-                                    <Button title={"Confirmar ",this.state.infoVehicleTipo }
-                                        style={{ width: '100%' }}
-                                        type="outline" 
-                                        onPress={()=>this.generarSolicitud()}
-                                        ></Button>
-                                </View>
-                            :
-                                null
-                            }
-                            
-                    
-                        </View>
-                        
-                    :
-                        null
-                    }
-
-                    {this.state.Home?
-
-
-
-                    <View>
-
-                        <View style={styles.area}>
-                            <Text style={{fontWeight:"bold", fontSize:16}}>{
-                                this.state.isNextVehicles?
-                                    "YiMi Express"
-                                :
-                                "YiMi Pool"
-                            }</Text>
-                        </View>
-                     
-                        <View style={styles.area}>
-
-                            {this.state.isNextVehicles ?
-                                null
-                                :
-                                    <Icon name="chevron-left"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        isNextVehicles: !this.state.isNextVehicles
-                                    })}
-                                ></Icon>
-                            }
-                            
-                            <View style={{paddingLeft:30}}> 
-                                <Icon name="car-side"
-                                    color="#ff8834"
-                                    size={25}
-                                    style={{alignSelf:"center"}}
-                                    onPress={()=>this.showInfoVehicle(this.state.isNextVehicles?"Express Estandar": "Pool Estandar")}
-                                ></Icon>
-                                <Text
-                                style={{ alignSelf: "center",
-                                fontSize: 12 }}
-                                >{
-                                    this.state.isNextVehicles?
-                                        this.state.Express_Estandar.nombre_categoria
-                                    :
-                                        this.state.Pool_Estandar.nombre_categoria
-                                    
-                                    }</Text>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                >Aprox MX ${
-                                    this.state.isNextVehicles ?
-                                        this.state.Express_Estandar.out_costo_viaje
-                                        :
-                                        this.state.Pool_Estandar.out_costo_viaje
-
-                                }</Text>
-                            </View>
-                            <View style={{ paddingLeft: 35 }}>
-                                <Icon name="car-side"
-                                    color="#ff8834"
-                                    onPress={() => this.showInfoVehicle(this.state.isNextVehicles ? "Express Lujo" : "Pool Lujo")}
-                                    size={25}
-                                    style={{ alignSelf: "center" }}
-                                ></Icon>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                    >{
-                                        this.state.isNextVehicles ?
-                                            this.state.Express_Lujo.nombre_categoria
-                                            :
-                                            this.state.Pool_Lujo.nombre_categoria
-
-                                        }</Text>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                    >Aprox MX ${
-                                            this.state.isNextVehicles ?
-                                                this.state.Express_Lujo.out_costo_viaje
-                                                :
-                                                this.state.Pool_Lujo.out_costo_viaje
-
-                                        }</Text>
-                            </View>
-                            <View style={
-                                {
-                                    paddingLeft:30,
-                                    paddingTop:12
-                                }
-                            }>
-
-                            {this.state.isNextVehicles ?
-                              
-                                <Icon name="chevron-right"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        isNextVehicles: !this.state.isNextVehicles
-                                    })}
-                                ></Icon>
-                                :
-                                null
-                            }
-                             
-                            </View>
-                        </View>
-                        
-
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" : "credit-card"} size={30} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })
-
-                                }></Icon>
-                                <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashPay ? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
-                                <Icon color="#ff8834"  style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })}></Icon>
-                            </View>
-                       
-                            
-                    
-                    </View>
-                    :
-                        null
-                    }
-
-
-                    {this.state.Pay?
-                        <View>
-                            <View style={styles.area}>
-                                <Text style={{fontSize:16, fontWeight:"bold"}}> Método de pago</Text>
-
-                                {this.state.showEstimations?
-                                
-                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
-                                :
-                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
-                                }
-
-                                
-                            </View>
-
-                            <View style={styles.area}>
-
-                                <View style={{flex:1}}>
-
-                                    <Icon color="#ff8834" name="money-bill-alt" size={25} ></Icon>
-
-                                </View>
-
-                                <View style={{flex:4}}>
-
-                                    <Text>Efectivo</Text>
-
-                                </View>
-
-                                
-                                <View style={{flex:1}}>
-
-                                    <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
-                                        cashPay: true,
-                                        creditPay: false
-                                    })}></Icon>
-
-
-                                </View>
-
-
-
-                            </View>
-
-
-
-                            <View style={styles.area}>
-
-                                <View style={{flex:1}}>
-
-                                    <Icon color="#ff8834" name="credit-card" size={25} ></Icon>
-
-                                </View>
-
-                                <View style={{flex:4}}>
-                                
-                                <Text color="#ff8834">Tarjeta de crédito / débito </Text>
-
-                                </View>
-
-                                <View style={{flex:1}}>
-                                    <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
-                                        cashPay: false,
-                                        creditPay: true
-                                    })}></Icon>
-
-                                </View>
-
-                            
-                            </View>
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name="cc-visa" size={25} ></Icon>
-
-                                <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
-
-                                <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 45 }} onPress={() => this.setState({
-                                    cashPay: false,
-                                    creditPay: true
-                                })}></Icon>
-
-
-                            </View>
-
-                            <View style={styles.area}>
-                                <Text>Agregar método de pago</Text>
-                            </View>
-
-                        </View>
-                    :
-                        null
-                    }
-
-                    {this.state.Onway?
+                    {this.state.Onway ?
                         <View>
                             <View styles={styles.area}>
                                 <Icon color="#ff8834" name="chevron-up"
-                                style={{alignSelf:"center", paddingTop:5}}
-                                size={30}
-                                    onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_Integrado", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino})}
-                              
+                                    style={{ alignSelf: "center", paddingTop: 5 }}
+                                    size={30}
+                                    onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_Integrado", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino })}
+
                                 ></Icon>
 
                             </View>
                             <View styles={styles.area}>
-                                <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
+                                <Text style={{ fontWeight: "bold", fontSize: 14, alignSelf: "center" }}>Tu conductor está en camino, espera un momento</Text>
                             </View>
                             <View
-                            style={
-                                {
-                                    backgroundColor:"black",
-                                }}
+                                style={
+                                    {
+                                        backgroundColor: "black",
+                                    }}
                             >
-                                <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf:"center"}}>Verifica la matricula y los detalles del auto</Text>
+                                <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf: "center" }}>Verifica la matricula y los detalles del auto</Text>
                             </View>
 
                             <View style={styles.area}>
@@ -1410,49 +1004,54 @@ export default class Travel_Integrado extends Component {
                                     style={{ width: 50, height: 50 }}
                                     source={require("./../assets/Auto.png")}
                                 ></Image>
-                                <View style={{paddingLeft:120}}>
+                                <View style={{ paddingLeft: 120 }}>
                                     <Text>{keys.datos_vehiculo.modelo}</Text>
-                                    <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
+                                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>{keys.datos_vehiculo.Matricula}</Text>
                                     <Button color="#ff8834" title="Cancelar"
                                         onPress={() => this.setState({
-                                            showModalCancel:true
+                                            showModalCancel: true
                                         })}
                                     ></Button>
 
                                 </View>
                             </View>
-                        
-                            <View style={{ alignSelf: "center", backgroundColor:"white" }}>
+
+                            <View style={{ alignSelf: "center", backgroundColor: "white" }}>
                                 <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
                             </View>
 
                             <View style={styles.area}>
                                 <Icon color="#ff8834" name="phone" size={30}></Icon>
-                                <View style={{paddingLeft:10}}></View>
+                                <View style={{ paddingLeft: 10 }}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"
                                     style={{ paddingLeft: 40 }}
                                     size={25}
                                     onPress={() => this.Chat()}
                                 ></Icon>
-                                  
+
                             </View>
 
-                
+
 
 
                         </View>
 
-                
-                    :
-                        null
+
+                        :
+                        
+                        <View style={{ backgroundColor: "#fff", paddingTop:50}}>
+                            <Button title="Confirmar"
+                                style={{ width: '100%' }}
+                                type="outline"
+                                onPress={() => this.generarSolicitud()}
+                            ></Button>
+                        </View>
                     }
-                 
-                    
-                 
 
-                
 
+
+               
                 </View>
             
 
@@ -1466,7 +1065,7 @@ const styles = StyleSheet.create({
     container: {
 
         backgroundColor: "#f0f4f7",
-        paddingBottom: 50
+
     },
  
 
@@ -1491,6 +1090,7 @@ const styles = StyleSheet.create({
         width: 400,
         justifyContent: 'flex-end',
         alignItems: 'center',
+        backgroundColor: "#fff"
     },
     map: {
         ...StyleSheet.absoluteFillObject,

@@ -11,7 +11,7 @@ export default class viajeFinalizado extends Component {
 
 
     constructor(props) {
-        keys.socket.on('isConnected', () => { })
+        // keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
             id_usuario: null,
@@ -130,13 +130,13 @@ export default class viajeFinalizado extends Component {
 
                         <View style={{ alignSelf: "center", width:280 }}>
 
-                            <Button title="Empezar el próximo viaje"></Button>
+                            <Button color="#ff8834" title="Empezar el próximo viaje"></Button>
 
                         </View>
 
                         <View style={{ alignSelf: "center", paddingTop: 10, width: 280}}>
 
-                            <Button title="No disponible"></Button>
+                            <Button color="#ff8834" title="No disponible"></Button>
 
                         </View>
 
@@ -147,7 +147,7 @@ export default class viajeFinalizado extends Component {
 
                         <View style={{ alignSelf: "center", width: 280 }}>
 
-                            <Button title="Finalizar el viaje" onPress={() => this.finalizarViaje()}></Button>
+                            <Button color="#ff8834" title="Finalizar el viaje" onPress={() => this.finalizarViaje()}></Button>
 
                         </View>
 

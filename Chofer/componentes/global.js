@@ -51,11 +51,13 @@ export default keys={
     GOOGLE_MAPS_APIKEY : 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY',
     Tarifa: 0,
     Peaje:0,
+    HoraServicio:null,
     intervalBroadcastCoordinates:null,
     intervalUpdateChoferCoordinates: null,
     Chat: [],
-    // socketUrl:'http://192.168.0.13:3001',
-    socketUrl:'http://35.203.42.33:3001/'
+    travelType: true,
+    socketUrl:'http://192.168.0.13:3001',
+    // socketUrl:'http://35.203.42.33:3001/'
     
 }
 

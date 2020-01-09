@@ -14,6 +14,8 @@ export default class Inicio extends Component {
 
     constructor(props) {
 
+        
+
         if (keys.socket == null) {
 
             keys.socket = SocketIOClient(keys.urlSocket);
@@ -33,7 +35,8 @@ export default class Inicio extends Component {
             Flete: false,
             Taxi: true,
             showModalPay:false,
-            showModalCancel:false,
+            showModal:false,
+            Description:"",
             tarifaFinal:0,
             Propina:1
         };
@@ -49,6 +52,8 @@ export default class Inicio extends Component {
 
 
     async componentWillMount () {
+
+        keys.Chat = [];
         
         Flag = this.props.navigation.getParam('Flag', false);
 
@@ -68,7 +73,13 @@ export default class Inicio extends Component {
                 })
             }else{
                 if (Flag =="CancelarServicioUsuario"){
-                    alert("Viaje cancelado por el chófer");
+
+                    this.setState({
+                        showModal: true,
+                        Description: "Viaje cancelado por el chófer"
+                    })
+                
+                 
                 }
             }
         }
@@ -142,10 +153,83 @@ export default class Inicio extends Component {
         this.props.navigation.dispatch(resetAction);
     }
 
+    confirmarPago(){
+        
+        keys.socket.emit("generar_transaccion",{
+            id_chofer_socket: keys.id_chofer_socket,
+            id_usuario_socket: keys.id_usuario_socket,
+            in_telefono_dispositivo: keys.datos_usuario.numeroTelefono,
+            in_forma_pago: 1,
+            in_importe: keys.Tarifa,
+            in_id_chofer: keys.datos_chofer.idChofer,
+            in_id_recorrido: keys.id_recorrido,
+            in_id_servicio: keys.id_servicio
+
+        })
+
+        this.setState({
+            showModalPay:false
+        })
+
+        keys.socket.on("TransacciónSatisfactoria", (num) =>{
+
+            this.setState({
+                showModal:true,
+                Description: "Pago realizado correctamente"
+            })
+
+        
+        })
+
+    }
+
     render() {
 
         return (
             <View>
+
+                <View>
+
+                    <Modal
+                        isVisible={this.state.showModal}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+           
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Description}</Text>
+                             
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        color="#ff8834"
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
 
                 <View  >
                     {/* Modal de cobro final */}
@@ -264,11 +348,11 @@ export default class Inicio extends Component {
                             <View style={{ paddingLeft: 20, marginBottom:40 }}>
                                 <View style={{ alignSelf: "center", paddingLeft: 10, paddingRight: 10, width: "100%" }}>
                                    <Button
-                                   style={{width:"100%"}}
-                                   title="Confirmar pago"
-                                   onPress={()=>this.setState({
-                                    showModalPay:false
-                                   })}></Button>
+                                    style={{width:"100%"}}
+                                    title="Confirmar pago"
+                                    color="#ff8834"
+
+                                   onPress={()=>this.confirmarPago()}></Button>
                                 </View>
                             </View>
 
@@ -305,6 +389,7 @@ export default class Inicio extends Component {
 
                                     <Button
                                         title="Ok"
+                                        color="#ff8834"
                                         onPress={() => this.setState({
                                             showModalCancel: false,
                                           
@@ -393,30 +478,35 @@ export default class Inicio extends Component {
                     </View>
                     <View style={{ flex: 1 }}></View>
                 </View>
-                <View style={styles.containerMap}>
+                {this.state.myPosition.latitude!=0 && this.state.myPosition.longituden !=0?
+                    <View style={styles.containerMap}>
 
-                  
                     
-                    <MapView
+                        
+                            <MapView
 
-                        style={styles.map}
-                        region={{
-                            latitude: this.state.myPosition.latitude,
-                            longitude: this.state.myPosition.longitude,
-                            latitudeDelta: 0.0105,
-                            longitudeDelta: 0.0105
-                        }}
+                                style={styles.map}
+                                region={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                    longitudeDelta: 0.060,
+                                    latitudeDelta: 0.060
+                                }}
 
-                        showsUserLocation={true}
-                        followsUserLocation={true}
-                        showsMyLocationButton={false}
+                                showsUserLocation={true}
+                                followsUserLocation={true}
+                                showsMyLocationButton={false}
 
 
-                    >
-                    </MapView>
-                  
-                
-                </View>
+                            >
+                            </MapView>
+                    
+                    
+                    
+                    </View>
+                    :
+                        null
+                    }
             </View>
         );
 

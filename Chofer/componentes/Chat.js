@@ -32,8 +32,7 @@ export default class Chat extends Component {
         keys.socket.on('chat_chofer', (num) => {
 
 
-            console.log("chat_chofer", num)
-
+            // console.log("chat_chofer", num)
           
             keys.Chat.push(num.Mensaje);
 
@@ -57,7 +56,9 @@ export default class Chat extends Component {
         this.setState({
             Chat:keys.Chat
         })
+        
 
+        console.log("Chat",this.state.Chat);
       
         
     }

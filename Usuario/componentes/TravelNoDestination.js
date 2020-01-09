@@ -35,7 +35,7 @@ export default class TravelNoDestination extends Component {
 
             },
 
-
+            showBackButton: true,
             Home: true,
             showEstimations: false,
             helperPay: false,
@@ -43,8 +43,13 @@ export default class TravelNoDestination extends Component {
             Onway: false,
             showModalCancel: false,
             showModalLlegada:false,
+            showModalAcept:false, 
+            showModal: false,
+            Descripcion:"",
+            DescripcionAcept:"",
+            showTimeChofer: false,
             location: null,
-
+            timeChofer:0,
             distance: 0,
             duration: 0,
 
@@ -80,6 +85,21 @@ export default class TravelNoDestination extends Component {
 
         };
 
+        // Chat de Usuario
+        keys.socket.on('chat_usuario', (num) => {
+
+            console.log("chat_usuario", num)
+
+            // keys.Chat.push(num.Mensaje);
+
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+
+        })
+
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
             console.log('Llego respuesta: ', num);
@@ -93,7 +113,12 @@ export default class TravelNoDestination extends Component {
             console.log("idServicio", keys.id_servicio);
             console.log("idRecorrido", keys.id_recorrido);
 
-            alert('EL conductor acepto tu solicitud, espera a tu chofer ');
+            this.setState({
+                showModal: true,
+                Descripcion: "EL conductor acepto tu solicitud, espera a tu chofer ",
+            })
+
+
             // Desactivar animación 
 
         });
@@ -106,11 +131,15 @@ export default class TravelNoDestination extends Component {
 
         keys.socket.on("puntoEncuentroUsuario",()=>{
             this.setState({
-                showModalLlegada:true
+                showModalLlegada:true,
+                showTimeChofer: false
             })
         } )
 
         keys.socket.on("cancelViajeUsuario", num => {
+
+            keys.Chat = [];
+
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicioUsuario" } })],
@@ -123,6 +152,12 @@ export default class TravelNoDestination extends Component {
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
             console.log('conductor_sendInfo');
+
+            this.setState({
+                showBackButton: false,
+                showModalAcept: true,
+                DescripcionAcept: "El chofer ha aceptado tu solicitud",
+            })
 
             keys.datos_chofer={
                 idChofer: num.datos_chofer.idChofer,
@@ -154,7 +189,8 @@ export default class TravelNoDestination extends Component {
                 Onway: true,
                 ConductorMapDirection:true,
                 showEstimations: false,
-                Home: false
+                Home: false,
+                showTimeChofer: true
             })
 
       
@@ -180,11 +216,17 @@ export default class TravelNoDestination extends Component {
 
         // Socket para hacer el tracking del chofer
         keys.socket.on('ConductorDisponible', num => {
-            alert(num.Msg);
+            this.setState({
+                showModal: true,
+                Descripcion: num.Msg,
+            })
+      
         });
 
         // Socket para terminar el viaje
         keys.socket.on('terminarViajeUsuario', num => {
+
+            keys.Chat = [];
            
 
             const resetAction = StackActions.reset({
@@ -199,7 +241,12 @@ export default class TravelNoDestination extends Component {
 
         keys.socket.on('statusChofer', num => {
 
-            alert(num.Msg);
+            this.setState({
+                showModal: true,
+                Descripcion: num.Msg,
+            })
+
+         
 
             setTimeout(() => {
                 if (num.Msg == "Solicitud rechazada por conductor, buscando otro conductor"){
@@ -266,19 +313,19 @@ export default class TravelNoDestination extends Component {
 
     }
 
-    fleet_usuario_chofer = () => {
-        let timer_2 = setInterval(() => {
-            this.findCurrentLocationAsync();
-            if(this.state.location!=null){
+    // fleet_usuario_chofer = () => {
+    //     let timer_2 = setInterval(() => {
+    //         this.findCurrentLocationAsync();
+    //         if(this.state.location!=null){
 
-                keys.socket.emit('room_usuario_chofer', 
-                    {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
-                        coordenadas_usuario: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude } });
-            }
+    //             keys.socket.emit('room_usuario_chofer', 
+    //                 {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
+    //                     coordenadas_usuario: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude } });
+    //         }
 
-        }, 5000);
-        this.setState({ timer_2 });
-    }
+    //     }, 5000);
+    //     this.setState({ timer_2 });
+    // }
 
   
 
@@ -380,7 +427,11 @@ export default class TravelNoDestination extends Component {
             });
         } catch (e) {
             console.log(e);
-            alert("Servicio no disponible, Intente más tarde", "Error");
+            this.setState({
+                showModal: true,
+                Descripcion: "Servicio no disponible, Intente más tarde",
+            })
+         
         }
     }
 
@@ -442,8 +493,8 @@ export default class TravelNoDestination extends Component {
             region: {
                 latitude: primeraParada[0]["latitude"],
                 longitude: primeraParada[0]["longitude"],
-                longitudeDelta: 0.0105,
-                latitudeDelta: 0.0105
+                longitudeDelta: 0.060,
+                latitudeDelta: 0.060
 
             },
 
@@ -476,7 +527,9 @@ export default class TravelNoDestination extends Component {
 
 
     static navigationOptions = {
-        title: "Viaje"
+        title: "Viaje",
+        headerLeft: null
+
     };
 
 
@@ -577,12 +630,17 @@ export default class TravelNoDestination extends Component {
     } 
 
     cancelarServicio() {
+
+        keys.Chat =[];
+
         this.setState({
 
             showModalCancel: false,
             showModalCancelAcept: true
 
         })
+
+        keys.socket.emit("cancelaUsuario", { id: keys.id_servicio })
 
         keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
 
@@ -602,6 +660,127 @@ export default class TravelNoDestination extends Component {
 
             <ScrollView>
                 <View style={styles.container}>
+
+
+
+                    {this.state.showBackButton ?
+
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <Icon
+                                    name="arrow-left"
+                                    color="#ff8834"
+                                    size={25}
+                                    onPress={() => this.props.navigation.navigate("Home")}
+                                ></Icon>
+                            </View>
+
+                        </View>
+                        :
+                        null
+                    }
+
+                    {this.state.showTimeChofer ?
+                        <View style={{ flexDirection: "row", backgroundColor: "#fff" }}>
+                            <View style={{ flex: 1, backgroundColor: "#EFEEEC" }}></View>
+                            <View style={{ backgroundColor: "black", flex: 3, height: 20 }}>
+                                <Text style={{ color: "white" }}>Llegada: {this.state.timeChofer} Minuto(s)</Text>
+                            </View>
+                            <View style={{ flex: 3, backgroundColor: "#EFEEEC" }}></View>
+                        </View>
+
+                        :
+                        null
+                    }
+
+                    <View>
+                        {/* Modal para mensajes */}
+                        <Modal
+                            isVisible={this.state.showModal}
+
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                                <View>
+
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                        <Button
+                                            title="Ok"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
+                                            onPress={() => this.setState({
+                                                showModal: false
+                                            })}
+                                        ></Button>
+
+
+                                    </View>
+                                    <View style={{ flex: 2 }}></View>
+                                </View>
+                            </View>
+
+
+                        </Modal>
+
+                    </View>
+                    {/* Modal de aceptación del chofer */}
+                    <View>
+
+                        <Modal
+                            isVisible={this.state.showModalAcept}
+
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                                <View>
+
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.DescripcionAcept}</Text>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                        <Button
+                                            title="Ok"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
+                                            onPress={() => this.setState({
+                                                showModalAcept: false
+                                            })}
+                                        ></Button>
+
+
+                                    </View>
+                                    <View style={{ flex: 2 }}></View>
+                                </View>
+                            </View>
+
+
+                        </Modal>
+
+                    </View>
+
 
                     {/* Modal para la cancelación del servicio */}
 
@@ -631,6 +810,9 @@ export default class TravelNoDestination extends Component {
                                     <View style={{ flex: 1, paddingRight: 5 }}>
                                         <Button
                                             title="No"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
                                             onPress={() => this.setState({
                                                 showModalCancel: false
                                             })}
@@ -644,6 +826,9 @@ export default class TravelNoDestination extends Component {
 
                                         <Button
                                             title="Si"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
                                             onPress={() => this.cancelarServicio()}
                                         ></Button>
 
@@ -687,6 +872,9 @@ export default class TravelNoDestination extends Component {
 
                                         <Button
                                             title="Ok"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
                                             onPress={() => this.setState({
                                                 showModalLlegada: false
                                             })}
@@ -767,7 +955,9 @@ export default class TravelNoDestination extends Component {
                                     null
                                 }
                             
-                                {this.state.ConductorMapDirection ?
+                                {this.state.ConductorMapDirection && this.state.positionChofer.latitude != 0
+                                && this.state.positionChofer.longitude != 0 && this.state.myPosition.latitude != 0
+                                && this.state.myPosition.longitude != 0?
                                     <MapViewDirections
 
                                         origin={{
@@ -785,6 +975,7 @@ export default class TravelNoDestination extends Component {
                                         onReady={result => {
 
                                             this.setState({
+                                                timeChofer: parseInt(result.duration),
                                                 distance: parseInt(result.distance),
                                                 duration: parseInt(result.duration)
 
@@ -804,7 +995,9 @@ export default class TravelNoDestination extends Component {
                                 {
                                     this.state.Paradas!=null?
 
-                                        this.state.routeParada1?
+                                        this.state.routeParada1 && this.state.myPosition.latitude != 0 
+                                            && this.state.myPosition.longitude != 0 && this.state.Paradas[0]["latitude"] != 0
+                                            && this.state.Paradas[0]["longitude"] != 0 ?
             
                                             <MapViewDirections
             
@@ -851,7 +1044,9 @@ export default class TravelNoDestination extends Component {
                                 {
                                     this.state.Paradas != null ?
 
-                                        this.state.routeChoferDestino ?
+                                        this.state.routeChoferDestino && this.state.positionChofer.latitude != 0
+                                            && this.state.positionChofer.longitude != 0 && this.state.Paradas[0]["latitude"] !=0
+                                            && this.state.Paradas[0]["longitude"] != 0 ?
 
                                             <MapViewDirections
 
@@ -1194,7 +1389,7 @@ export default class TravelNoDestination extends Component {
                                 <Icon color="#ff8834" name="chevron-up"
                                 style={{alignSelf:"center", paddingTop:5}}
                                 size={30}
-                                onPress={() => this.props.navigation.navigate("InfoTravel")}
+                                    onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_SinDestino", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino })}
                               
                                 ></Icon>
 
@@ -1274,7 +1469,6 @@ export default class TravelNoDestination extends Component {
 
 const styles = StyleSheet.create({
     container: {
-        paddingTop: 20,
         backgroundColor: "#f0f4f7",
         paddingBottom: 50
     },

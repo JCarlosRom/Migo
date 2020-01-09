@@ -1,5 +1,7 @@
 import React, { Component } from "react";
+import Modal from "react-native-modal";
 import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
+import { Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import BottomNavigation, {
@@ -16,10 +18,13 @@ import keys from './global';
 export default class Home extends Component {
 
     state = {
-    errorMessage: null,
-    location: null,
-    nuevaSolicitud: false,
-    
+        errorMessage: null,
+        location: null,
+        nuevaSolicitud: false,
+        travelType:keys.travelType,
+        showModal:false,
+        Description:""
+        
    
 
     };
@@ -38,6 +43,18 @@ export default class Home extends Component {
 
 
         keys.socket.on('isConnected', () => { })
+
+
+        keys.socket.on("TransacciónSatisfactoria", (num) => {
+
+            console.log("Transaccion Satisfactoria")
+
+            this.setState({
+                showModal: true,
+                Description: "Pago realizado correctamente"
+            })
+
+        })
   
         console.log('APP CONDUCTOR');
 
@@ -93,33 +110,33 @@ export default class Home extends Component {
 
                 keys.Tarifa = num.Tarifa;
 
+                keys.socket.emit("popChofer", { id_chofer_socket: keys.id_chofer_socket,});
+
                 
-
-              
-
                 // console.log("Socket del chofer", keys.id_chofer_socket)
 
 
 
                 clearInterval(this.state.timer);
+                clearInterval(keys.timerCoordenadas);
 
                 if (keys.type == "Unico" ) {
 
-                    this.props.navigation.navigate("Travel_Integrado");
+                    this.props.navigation.navigate("Travel_Integrado", { Flag: "Acept" });
 
                 } else {
 
                     if(keys.type=="Multiple"){
                         
-                        this.props.navigation.navigate("TravelMP");
+                        this.props.navigation.navigate("TravelMP", { Flag: "Acept" });
 
                     }else{
                        
                         if(keys.type=="Multiple 2 paradas"){
-                            this.props.navigation.navigate("TravelMP2");
+                            this.props.navigation.navigate("TravelMP2", { Flag: "Acept" });
                         }else{
                             if(keys.type=="SinDestino"){
-                                this.props.navigation.navigate("TravelNoDestination");
+                                this.props.navigation.navigate("TravelNoDestination", {Flag:"Acept"});
                             }
                         }
                         
@@ -127,16 +144,6 @@ export default class Home extends Component {
 
 
                 }
-
-
-
-
-             
-
-
-            
-                // console.log("Te llegó solicitud");
-                alert('Te llego una solicitud');
 
             }
             
@@ -152,6 +159,14 @@ export default class Home extends Component {
 
 
 
+    }
+
+    setTravel(){
+        keys.travelType = !keys.travelInfo
+
+        this.setState({
+            travelType: !this.state.travelType
+        })
     }
 
     // Función para transmitir las coordenadas de chofer a usuario
@@ -170,16 +185,55 @@ export default class Home extends Component {
 
     async componentWillMount() {
 
+        keys.Chat=[]
+
         Flag = this.props.navigation.getParam('Flag', false);
 
         console.log(Flag);
 
+        if(Flag!=false){
+
+            if (keys.id_chofer != null) {
+
+                let timerCoordenadas = setInterval(() => {
+
+                    this.findCurrentLocationAsync();
+
+                    if (this.state.location != null) {
+
+
+                        this.findCurrentLocationAsync();
+                        keys.socket.emit('coordenadas', {
+                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                        });
+
+
+
+                    }
+
+                }, 10000);
+                keys.timerCoordenadas = timerCoordenadas;
+
+            } else {
+
+                this.setState({
+                    showModal: true,
+                    Description: "Ingrese un id para poder acceder a buscar pasajeros"
+                })
+
+          
+            }
+        }
+
 
         if (Flag == "CancelarServicio") {
 
-            alert("Viaje cancelado por usuario");
-
+     
+            
             this.setState({
+                showModal: true,
+                Description: "Viaje cancelado por usuario",
                 stateConductor: keys.stateConductor
             })
 
@@ -190,11 +244,22 @@ export default class Home extends Component {
                 })
             }else{
                 if (Flag =="CancelarServicioChofer"){
-                    alert("El viaje se ha cancelado correctamente")
+                   
+                    this.setState({
+                        showModal: true,
+                        Description: "El viaje se ha cancelado correctamente",
+                        stateConductor: keys.stateConductor
+                    })
+                }else{
+                    if(Flag=="CancelarServicioAutomatico"){
+                        
+                        this.setState({
+                            showModal: true,
+                            Description: "Viaje cancelado",
+                            stateConductor: keys.stateConductor
+                        })
+                    }
                 }
-                this.setState({
-                    stateConductor: keys.stateConductor
-                })
             }
         }
 
@@ -277,11 +342,29 @@ export default class Home extends Component {
         this.setState({
             stateConductor: keys.stateConductor
         })
-      
+        
+        console.log(keys.stateConductor)
+
+        console.log(keys.id_chofer)
 
         if(keys.stateConductor==true){
 
             if(keys.id_chofer!=null){
+
+                this.findCurrentLocationAsync();
+
+                if (this.state.location != null) {
+
+
+                    this.findCurrentLocationAsync();
+                    keys.socket.emit('coordenadas', {
+                        coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                        datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                    });
+
+
+
+                }
     
                 let timerCoordenadas = setInterval(() => {
                     
@@ -304,7 +387,13 @@ export default class Home extends Component {
                 keys.timerCoordenadas = timerCoordenadas;
 
             }else{
-                alert("Ingrese un id para poder acceder a buscar pasajeros")
+
+
+                this.setState({
+                    showModal: true,
+                    Description: "Ingrese un id para poder acceder a buscar pasajeros",
+                })
+     
             }
 
         }else{
@@ -338,6 +427,49 @@ export default class Home extends Component {
         return (
         <ScrollView contentContainerStyle={styles.contentContainer}>
           <View style={styles.container}>
+                    <View>
+
+                        <Modal
+                            isVisible={this.state.showModal}
+
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                                <View>
+
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Description}</Text>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                        <Button
+                                            title="Ok"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
+                                            onPress={() => this.setState({
+                                                showModal: false
+                                            })}
+                                        ></Button>
+
+
+                                    </View>
+                                    <View style={{ flex: 2 }}></View>
+                                </View>
+                            </View>
+
+
+                        </Modal>
+
+                    </View>
               <View style={styles.area}>
                   <View>
                     <Switch 
@@ -383,16 +515,16 @@ export default class Home extends Component {
                             
                                         latitude: this.state.myPosition.latitude,
                                         longitude: this.state.myPosition.longitude,
-                                        latitudeDelta: 0.0105,
-                                        longitudeDelta: 0.0105,
+                                          longitudeDelta: 0.060,
+                                          latitudeDelta: 0.060
                                     }
                                   :
                                      {
                             
                                         latitude: 19.14391,
                                         longitude: -103.3297,
-                                        latitudeDelta: 0.0105,
-                                        longitudeDelta: 0.0105,
+                                          longitudeDelta: 0.060,
+                                          latitudeDelta: 0.060
                                     }
                                   
                               }
@@ -457,11 +589,11 @@ export default class Home extends Component {
                         }>
                             <Text>Ver todas</Text>
                             <Icon name="chevron-right"
-                            onPress={() => this.props.navigation.navigate("Notificaciones",
-                            {
-                                id_chofer:this.state.id_chofer,
-                                stateConductor:this.state.stateConductor
-                            })} 
+                            // onPress={() => this.props.navigation.navigate("Notificaciones",
+                            // {
+                            //     id_chofer:this.state.id_chofer,
+                            //     stateConductor:this.state.stateConductor
+                            // })} 
                             size={15}
                             style={
                                 {
@@ -472,6 +604,15 @@ export default class Home extends Component {
                             ></Icon>
                         </View>
 
+                    </View>
+                    <View style={styles.area}>
+                        <View style={{ flex: 1 }}>
+                            <Switch
+                                value={this.state.travelType}
+                                onChange={() => this.setTravel()}
+                            />
+                        </View>
+                       
                     </View>
                     <View
                         style={

@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, FlatList, TouchableHighlight } from "react-nati
 import { Divider, CheckBox, Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
+import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
@@ -57,9 +58,9 @@ export default class Home extends Component {
             flagDestino:"",
             direccion:null,
             coordinatesPuntoPartida:null,
-        
-           
-            checked: false
+            checked: false,
+            showModal:false, 
+            Descripcion:""
 
 
 
@@ -151,10 +152,24 @@ export default class Home extends Component {
      
         if (showNewArrival == true) {
 
-            this.setState({
-                showButtonsDelete: false,
-                showButtonPlaces: true
-            })
+            if (this.state.showButtonPlaces == true && this.state.showButtonsDelete==false){
+
+                const resetAction = StackActions.reset({
+                    index: 0,
+                    actions: [NavigationActions.navigate({ routeName: 'Home', params: { Address: this.state.myPosition.addressInput } })],
+                    key: undefined
+                });
+
+                this.props.navigation.dispatch(resetAction);
+
+            }else{
+
+                this.setState({
+                    showButtonsDelete: false,
+                    showButtonPlaces: true
+                })
+            }
+
         }
     }
 
@@ -176,7 +191,11 @@ export default class Home extends Component {
     
                     // console.log(this.state.place1)
                 }else{
-                    alert("Número de parada ya asignada");
+                    this.setState({
+                        showModal: true,
+                        Descripcion: "Número de parada ya asignada"
+                    })
+    
                 }
 
 
@@ -193,7 +212,11 @@ export default class Home extends Component {
                         // console.log(this.state.place2)
 
                     }else{
-                        alert("Número de parada ya asignada");
+                        this.setState({
+                            showModal: true,
+                            Descripcion: "Número de parada ya asignada"
+                        })
+                
                     }
 
 
@@ -211,7 +234,11 @@ export default class Home extends Component {
                             // console.log(this.state.place3)
 
                         }else{
-                            alert("Número de parada ya asignada");
+                            this.setState({
+                                showModal: true,
+                                Descripcion: "Número de parada ya asignada"
+                            })
+                         
                         }
 
                     }
@@ -291,7 +318,11 @@ export default class Home extends Component {
 
         } catch (e) {
             console.log(e);
-            alert("No hay conexión al web service", "Error");
+            this.setState({
+                showModal: true,
+                Descripcion: "Servicio no disponible, Intente más tarde"
+            })
+           
         }
 
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -592,10 +623,19 @@ export default class Home extends Component {
                 // console.log(DestinoCords);
                 
                 if(puntoPartida.length==0 ){
-                    alert("Favor de agregar un punto de partida correcto");
+                    this.setState({
+                        showModal:true,
+                        Descripcion: "Favor de agregar un punto de partida correcto"
+                    })
+                 
                 }else{
                     if (DestinoCords[0]["latitude"] == null || DestinoCords[0]["longitude"] == null) {
-                        alert("Favor de agregar un destino correcto");
+                        
+                        this.setState({
+                            showModal: true,
+                            Descripcion: "Favor de agregar un destino correcto"
+                        })
+                   
                     }else{
     
                         keys.travelInfo.puntoPartida = this.state.myPosition;
@@ -613,7 +653,12 @@ export default class Home extends Component {
 
         }else{
 
-            alert("Favor de ingresar un punto de partida válido");
+            this.setState({
+                showModal: true,
+                Descripcion: "Favor de ingresar un punto de partida válido"
+            })
+
+         
 
         }
     }
@@ -627,7 +672,11 @@ export default class Home extends Component {
 
 
         if (keys.categoriaVehiculo == null) {
-            alert("Favor de seleccionar un tipo de vehículo en configurar lugar en el mapa");
+            this.setState({
+                showModal: true,
+                Descripcion: "Favor de seleccionar un tipo de vehículo en configurar lugar en el mapa"
+            })
+
         } else {
 
             if (this.state.myPosition.addressInput != "" && this.state.destination4 == "" && this.state.showNewArrival == false && this.state.showNewArrival2 == false){
@@ -642,7 +691,11 @@ export default class Home extends Component {
                 if(this.state.showNewArrival==false){
         
                     if(this.state.destination4==""){
-                        alert("Favor de agregar un destino");
+                        this.setState({
+                            showModal: true,
+                            Descripcion: "Favor de agregar un destino"
+                        })
+                    
                     }else{
         
                     
@@ -661,31 +714,59 @@ export default class Home extends Component {
                 }else{
         
                         if(this.state.myPosition.addressInput=="" ){
-                            alert("Favor de agregar un punto de partida");
+                            this.setState({
+                                showModal: true,
+                                Descripcion: "Favor de agregar un punto de partida"
+                            })
+                 
                         }else{
                             if(this.state.destination2==""){
-                            
-                                alert("favor de agregar la parada 1")
+
+                                this.setState({
+                                    showModal: true,
+                                    Descripcion: "favor de agregar la parada 1"
+                                })
+                               
                             }else{
                                 if(this.state.showNewArrival2){
         
                                     if(this.state.destination3==""){
-                                            alert("Favor de agregar la parada 2");
+                                        this.setState({
+                                            showModal: true,
+                                            Descripcion: "Favor de agregar la parada 2"
+                                        })
+                                        
                                     }else{
                                         if(this.state.destination4==""){
-                                            alert("Favor de agregar un destino")
+                                            this.setState({
+                                                showModal: true,
+                                                Descripcion: "Favor de agregar un destino"
+                                            })
+                                          
                                         }else{
         
                                             if(this.state.place1==""){
-                                                alert("Favor de asignar número de parada a la parada 1")
+                                                this.setState({
+                                                    showModal: true,
+                                                    Descripcion: "Favor de asignar número de parada a la parada 1"
+                                                })
+                                      
                                             }else{
         
                                     
                                                 if(this.state.place2==""){
-                                                    alert("Favor de asignar número de parada a la parada 2")
+                                                    this.setState({
+                                                        showModal: true,
+                                                        Descripcion: "Favor de asignar número de parada a la parada 2"
+                                                    })
+                                       
                                                 }else{
                                                     if(this.state.place3==""){
-                                                        alert("Favor de asignar número de parada a la parada 3")
+                                                        this.setState({
+                                                            showModal: true,
+                                                            Descripcion: "Favor de asignar número de parada a la parada 3"
+                                                        })
+                                                     
                                                     }else{
         
                                                         keys.travelInfo.puntoPartida = this.state.myPosition;
@@ -720,10 +801,18 @@ export default class Home extends Component {
                                 }else{
         
                                     if(this.state.place1==""){
-                                        alert("Favor de asignar número de parada a la parada 1")
+                                        this.setState({
+                                            showModal: true,
+                                            Descripcion: "Favor de asignar número de parada a la parada 1"
+                                        })
+                                      
                                     }else{
                                         if(this.state.place3==""){
-                                            alert("Favor de asignar número de parada a la parada 2 ")
+                                            this.setState({
+                                                showModal: true,
+                                                Descripcion: "Favor de asignar número de parada a la parada 2 "
+                                            })
+                                      
                                         }else{
                                             
                                             if(this.state.destination4!=""){
@@ -747,8 +836,12 @@ export default class Home extends Component {
                     
                                                 this.props.navigation.navigate("Travel_MP2");
                 
-                                            }else{
-                                                alert("¡Favor de agregar un destino!")
+                                            } else {
+                                                this.setState({
+                                                    showModal: true,
+                                                    Descripcion: "¡Favor de agregar un destino!"
+                                                })
+                                      
                                             }
                                         }
                                     }
@@ -771,56 +864,63 @@ export default class Home extends Component {
     }
     
     reinitializeComponents = () => {
-        this.setState({
-            myPosition: {
-                address: null,
-                addressInput: null,
-                latitude: null,
-                longitude: null
-            },
-            // Arrivals
-            showNewArrival: false,
-            showNewArrival2: false,
-            // Change options below screen
-            showViewOptions: true,
-            // Delete buttons delete 
-            showButtonsDelete: true,
-            //  State to show the position to arrival 
-            showPositionArrival: false,
-            // Hide or show button retweet
-            showButtonPlaces: true,
-            // Position of arrivals 
-            place3: "",
-            place2: "",
-            place1: "",
-            showFavoritePlaces: false,
-            Destinos: null,
-            destination2: "",
-            destination3: "",
-            destination4: "",
-            hit: "",
-            type: "",
-            predictions: [],
-            latitude: 0,
-            longitude: 0,
-            showListdestination: false,
-            showListdestination2: false,
-            showListdestination3: false,
-            showListdestination4: false,
-            flagDestino: "",
-            direccion: null,
-            coordinatesPuntoPartida: null,
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Inicio'})],
+            key: undefined
+        });
 
-
-            checked: false
-
-        })
+        this.props.navigation.dispatch(resetAction);
     }
 
     render() {
 
         return (
             <ScrollView style={styles.container}>
+                <View>
+
+                    <Modal
+                        isVisible={this.state.showModal}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+                
                 {/* Barra de herramientas*/}
 
                 <View
@@ -993,7 +1093,7 @@ export default class Home extends Component {
                                         }
 
                                        
-                                        // onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
+                                        onChangeText={destination2 => this.autocompleteGoogle2(destination2)}
                                         onFocus={()=>this.setplaceArrival("Place 1")}
                                     />
 
@@ -1096,7 +1196,7 @@ export default class Home extends Component {
         
         
                                         onFocus={() => this.setplaceArrival("Place 2")}
-                                        // onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
+                                        onChangeText={destination3 => this.autocompleteGoogle3(destination3)}
                                     />
                                     : 
 
@@ -1191,7 +1291,7 @@ export default class Home extends Component {
                                     }
 
                                     onFocus={() => this.setplaceArrival("Place 3")}
-                                    // onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
+                                    onChangeText={destination4 => this.autocompleteGoogle4(destination4)}
                                 />
                                 :
 
