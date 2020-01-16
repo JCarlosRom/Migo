@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard } from "react-native";
-import { Input } from "react-native-elements";
+import { Input, Button } from "react-native-elements";
 import keys from "./global";
 import Icon from "react-native-vector-icons/FontAwesome5";
 
@@ -15,7 +15,8 @@ export default class Chat extends Component {
             Chat:[],
             Mensaje: "",
             onFocus: false,
-            initChat: true
+            initChat: true,
+            Atajo: true
         };
         this._keyboardDidShow = this._keyboardDidShow.bind(this);
         this._keyboardDidHide = this._keyboardDidHide.bind(this);
@@ -73,7 +74,12 @@ export default class Chat extends Component {
         title: "Chat"
     };
 
-    sendMessage() {
+    sendMessage(Mensaje) {
+
+        this.setState({
+            Atajo: false
+            
+        })
 
         if (this.state.initChat == true) {
             this.setState({
@@ -81,26 +87,62 @@ export default class Chat extends Component {
             })
         }
 
-        var infoMessage = {
-            Usuario: "Usuario",
-            nombreUsuario: keys.datos_usuario.nombreUsuario,
-            Mensaje: this.state.Mensaje
+
+        if(Mensaje==""){
+        
+        
+            var infoMessage = {
+                Usuario: "Usuario",
+                nombreUsuario: keys.datos_usuario.nombreUsuario,
+                Mensaje: this.state.Mensaje
+            }
+    
+            this.setState({
+                Mensaje: ""
+            })
+    
+            keys.socket.emit('room_usuario_chofer_chat',{
+                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+                infoMessage: infoMessage
+            });
+    
+            keys.Chat.push(infoMessage);
+    
+            this.setState({
+                Chat: keys.Chat
+            })
+        }else{
+         
+
+
+            var infoMessage = {
+                Usuario: "Usuario",
+                nombreUsuario: keys.datos_usuario.nombreUsuario,
+                Mensaje: Mensaje
+            }
+
+            this.setState({
+                Mensaje: ""
+            })
+
+            keys.socket.emit('room_usuario_chofer_chat',{
+                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+                infoMessage: infoMessage
+            });
+
+            keys.Chat.push(infoMessage);
+
+            this.setState({
+                Chat: keys.Chat
+            })
         }
 
-        this.setState({
-            Mensaje: ""
-        })
+        console.log(infoMessage)
 
-        keys.socket.emit('room_usuario_chofer_chat',{
-            id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
-            infoMessage: infoMessage
-        });
+        
 
-        keys.Chat.push(infoMessage);
 
-        this.setState({
-            Chat: keys.Chat
-        })
+      
 
     }
 
@@ -119,7 +161,7 @@ export default class Chat extends Component {
                         </View>
                         <View style={{ flex: 2, alignContent: "center" }}>
                             <Icon
-                                name="phone"
+                                name = "phone" onPress={()=>this.callPhoneFunction()}
                                 color="#ff8834"
                                 size={30}
                             ></Icon>
@@ -197,7 +239,48 @@ export default class Chat extends Component {
 
                 </View>
 
-                <View style={{ flex: this.state.onFocus ? 2 : 1 }}>
+                <View style={{ flex: this.state.Atajo ? this.state.onFocus ? 3 : 2 : this.state.onFocus ? 2 : 1 }}>
+
+                    {this.state.Atajo?
+             
+                        <View style={styles.area}>
+                            <View style={{flex:1}}>
+                                <Button title="Estoy aquí"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834",
+                                    }}
+                                    titleStyle={{ fontSize: 9 }}
+                                    onPress={() => this.sendMessage("Estoy aquí")}
+                                ></Button>
+                            </View>
+                            <View style={{flex:1}}></View>
+                            <View style={{ flex: 1 }}>
+                                <Button title="Llego enseguida"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834",
+                                      
+                                    }}
+                                    titleStyle={{ fontSize: 9 }}
+                                    onPress={()=>this.sendMessage("Llego Enseguida")}
+                                ></Button>
+                            </View>
+                            <View style={{ flex: 1 }}></View>
+                            <View style={{ flex: 1 }}>
+                                <Button title="Te estoy buscando"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834",
+                                        
+                                    }}
+                                    titleStyle={{ fontSize: 9 }}
+                                    onPress={() => this.sendMessage("Te estoy buscando")}
+                                ></Button>
+                            </View>
+
+                        </View>
+                    
+                    :
+                        null
+                    }
 
                     <View style={styles.area}>
 
@@ -210,7 +293,7 @@ export default class Chat extends Component {
                             rightIcon={
                                 <Icon
                                     name="reply"
-                                    onPress={()=>this.sendMessage()}
+                                    onPress={()=>this.sendMessage("")}
                                     size={24}
                                     color="#ff8834"
                                 />

@@ -11,6 +11,7 @@ import * as Location from "expo-location";
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
 
 
 
@@ -96,45 +97,7 @@ export default class TravelMP2Change extends Component {
                 showTimeChofer: false
             })
             
-            clearInterval(this.state.timer_2);
-
-            this.findCurrentLocationAsync();
-
-            if (this.state.location != null) {
-                console.log(this.state.location);
-
-                this.setState({
-                    myPosition: {
-                        latitude: this.state.location.coords.latitude,
-                        longitude: this.state.location.coords.longitude
-                    }
-                })
-
-                console.log(this.state.myPosition);
-            }
-
-            let timer_coordenadasUsuario = setInterval(() => {
-
-                this.findCurrentLocationAsync();
-
-                if (this.state.location != null) {
-                    console.log(this.state.location);
-
-                    this.setState({
-                        myPosition:{
-                            latitude: this.state.location.coords.latitude,
-                            longitude: this.state.location.coords.longitude
-                        }
-                    })
-
-                    console.log(this.state.myPosition);
-                }
-
-            }, 10000);
-
-            this.setState({
-                timer_coordenadasUsuario
-            })
+         
     
         })
 
@@ -206,7 +169,8 @@ export default class TravelMP2Change extends Component {
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo={
@@ -259,7 +223,8 @@ export default class TravelMP2Change extends Component {
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo = {
@@ -361,6 +326,15 @@ export default class TravelMP2Change extends Component {
         });
     }
 
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
+
+        call(args).catch(console.error)
+    }
+
 
     async getTarifas() {
         try {
@@ -453,22 +427,6 @@ export default class TravelMP2Change extends Component {
     }
  
 
-    // fleet_usuario_chofer = () => {
-    //     let timer_2 = setInterval(() => {
-    //         this.findCurrentLocationAsync();
-    //         if(this.state.location!=null){
-
-    //             keys.socket.emit('room_usuario_chofer', 
-    //                 {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
-    //                     coordenadas_usuario: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude } });
-    //         }
-
-    //     }, 10000);
-    //     this.setState({ timer_2 });
-    // }
-
-  
-
     showPay(){
         if(this.state.showEstimations==true){
 
@@ -522,7 +480,7 @@ export default class TravelMP2Change extends Component {
         Distancia = this.state.distance,
             Tiempo = this.state.duration
 
-        keys.Tarifa = Tarifa;
+        keys.Tarifa.Total = Tarifa;
 
         keys.socket.emit('changeDestino', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud,
@@ -1201,7 +1159,7 @@ export default class TravelMP2Change extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

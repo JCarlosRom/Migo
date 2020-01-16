@@ -10,6 +10,7 @@ import { StackActions, NavigationEvents, NavigationActions } from 'react-navigat
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
+import call from 'react-native-phone-call';
 
 export default class changeDestinoView extends Component {
 

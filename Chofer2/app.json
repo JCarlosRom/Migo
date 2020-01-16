@@ -24,10 +24,10 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.kiotrack.chofer"
+      "bundleIdentifier": "com.kiotrack.chofer2"
     },
     "android": {
-      "package": "com.kiotrack.chofer",
+      "package": "com.kiotrack.chofer2",
       "publishBundlePath": "android\\app\\src\\main\\assets\\shell-app.bundle",
       "publishManifestPath": "android\\app\\src\\main\\assets\\shell-app-manifest.json"
     },

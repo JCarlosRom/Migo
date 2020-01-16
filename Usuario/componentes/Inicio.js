@@ -7,12 +7,15 @@ import keys from "./global";
 import MapView from 'react-native-maps';
 import { StackActions, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
+import * as Permissions from 'expo-permissions';
 
 
 export default class Inicio extends Component {
 
 
     constructor(props) {
+
+  
 
         
 
@@ -22,7 +25,6 @@ export default class Inicio extends Component {
             
 
         }
-
 
 
         super(props);
@@ -38,7 +40,8 @@ export default class Inicio extends Component {
             showModal:false,
             Description:"",
             tarifaFinal:0,
-            Propina:1
+            Propina:1,
+            showModalCancel:false
         };
 
 
@@ -84,23 +87,27 @@ export default class Inicio extends Component {
             }
         }
 
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permission to access location was denied',
+            });
+        }
 
-        const myLocation = await Location.getCurrentPositionAsync({});
-        latitude = myLocation.coords.latitude;
-        longitude = myLocation.coords.longitude;
+        let location = await Location.getCurrentPositionAsync({});
 
 
         this.setState({
             myPosition: {
-
-                latitude: latitude,
-                longitude: longitude
-
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
             },
-            tarifaFinal:keys.Tarifa
-       
+            tarifaFinal:keys.Tarifa.Total
 
         });
+
+
+      
 
      
 
@@ -112,28 +119,33 @@ export default class Inicio extends Component {
     setPropina(tipoPropina){
         if(tipoPropina==1){
             this.setState({
-                tarifaFinal: keys.Tarifa,
+                tarifaFinal: keys.Tarifa.Total,
                 Propina: tipoPropina
             })
+            
         }else{
             if(tipoPropina==2){
-
+                
                 this.setState({
-                    tarifaFinal: parseInt(keys.Tarifa + keys.Tarifa * .10),
+                    tarifaFinal: parseInt(keys.Tarifa.Total + keys.Tarifa.Total * .10),
                     Propina: tipoPropina
                 })
+                keys.Tarifa.Propina = parseInt(keys.Tarifa.Total * .10);
             }else{
                 if(tipoPropina==3){
                     this.setState({
-                        tarifaFinal: parseInt(keys.Tarifa + keys.Tarifa * .15),
+                        tarifaFinal: parseInt(keys.Tarifa.Total + keys.Tarifa.Total * .15),
                         Propina: tipoPropina
                     })
+                    keys.Tarifa.Propina = parseInt(keys.Tarifa.Total * .15);
+                    
                 }else{
                     if(tipoPropina==4){
                         this.setState({
-                            tarifaFinal: parseInt(keys.Tarifa+ keys.Tarifa + .20),
+                            tarifaFinal: parseInt(keys.Tarifa.Total+ keys.Tarifa.Total * .20),
                             Propina: tipoPropina
                         })
+                        keys.Tarifa.Propina = parseInt(keys.Tarifa.Total * .20);
                     }
                 }
             }
@@ -153,33 +165,67 @@ export default class Inicio extends Component {
         this.props.navigation.dispatch(resetAction);
     }
 
+
+    detallesCancelacion() {
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'DetalleCancelacion' })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+    }
+
     confirmarPago(){
-        
-        keys.socket.emit("generar_transaccion",{
-            id_chofer_socket: keys.id_chofer_socket,
-            id_usuario_socket: keys.id_usuario_socket,
-            in_telefono_dispositivo: keys.datos_usuario.numeroTelefono,
-            in_forma_pago: 1,
-            in_importe: keys.Tarifa,
-            in_id_chofer: keys.datos_chofer.idChofer,
-            in_id_recorrido: keys.id_recorrido,
-            in_id_servicio: keys.id_servicio
 
-        })
+        if(this.state.tarifaFinal!=0){
 
-        this.setState({
-            showModalPay:false
-        })
-
-        keys.socket.on("TransacciónSatisfactoria", (num) =>{
-
-            this.setState({
-                showModal:true,
-                Description: "Pago realizado correctamente"
+    
+            keys.Tarifa.Total = keys.Tarifa.Total + keys.Tarifa.Propína;
+    
+            keys.socket.emit("generar_transaccion",{
+                id_chofer_socket: keys.id_chofer_socket,
+                id_usuario_socket: keys.id_usuario_socket,
+                in_telefono_dispositivo: keys.datos_usuario.numeroTelefono,
+                in_forma_pago: 1,
+                in_importe: keys.Tarifa.Total,
+                in_id_chofer: keys.datos_chofer.idChofer,
+                in_id_recorrido: keys.id_recorrido,
+                in_id_servicio: keys.id_servicio
+    
             })
 
-        
-        })
+
+            keys.Tarifa = {
+                Solicitud: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porMinuto: 0,
+                porKilometro: 0,
+                recargosEstimados: 0,
+                Gob: 0,
+                Peaje: 0,
+                Propína: 0,
+                Total: 0,
+                tarifa_cancelacion: 0
+
+            }
+    
+            this.setState({
+                showModalPay:false
+            })
+    
+            keys.socket.on("TransacciónSatisfactoria", (num) =>{
+    
+                this.setState({
+                    showModal:true,
+                    Description: "Pago realizado correctamente"
+                })
+    
+            
+            })
+        }
+
 
     }
 
@@ -243,7 +289,7 @@ export default class Inicio extends Component {
                             <View>
                                 <Text style={{ fontWeight: "bold", fontSize: 16, marginLeft:10 }}>Pagar al conductor</Text>
                                 <View style={{paddingTop:20}}>
-                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10 }}>MX${keys.Tarifa}</Text>
+                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10 }}>MX${keys.Tarifa.Total}</Text>
                                     <Text onPress={() => this.detallesCosto()} style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, color:"blue" }}>Detalles del costo</Text>
                                 </View>
 
@@ -310,21 +356,21 @@ export default class Inicio extends Component {
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title={"$"+String( parseInt(keys.Tarifa*.1))+".00"}
+                                        title={"$"+String( parseInt(keys.Tarifa.Total*.1))+".00"}
                                         color={(this.state.Propina == 2) ? "#32CD32" : "#DCDCDC" }
                                         onPress={() => this.setPropina(2)}
                                     ></Button>
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title={"$"+String(parseInt(keys.Tarifa * .15))+".00"}
+                                        title={"$"+String(parseInt(keys.Tarifa.Total * .15))+".00"}
                                         color={(this.state.Propina == 3) ? "#32CD32" : "#DCDCDC"}
                                         onPress={() => this.setPropina(3)}
                                     ></Button>
                                 </View>
                                 <View style={{ flex: 1.5 }}>
                                     <Button
-                                        title={"$"+String(parseInt(keys.Tarifa * .2))+".00"}
+                                        title={"$"+String(parseInt(keys.Tarifa.Total * .2))+".00"}
                                         color={(this.state.Propina == 4) ? "#32CD32" : "#DCDCDC"}
                                         onPress={() => this.setPropina(4)}
                                     ></Button>
@@ -366,40 +412,57 @@ export default class Inicio extends Component {
 
                 <View>
 
+                    {/* Modal de cobro final */}
                     <Modal
+
                         isVisible={this.state.showModalCancel}
+
 
                     >
                         <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
                             <View>
-                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>CANCELACIÓN REALIZADA</Text>
-                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>Se canceló su servicio de taxi</Text>
-
-                            </View>
-                            <View style={{
-                                flexDirection: "row",
-                                paddingTop: 10,
-                                paddingBottom: 10,
-                                paddingLeft: 20,
-                                backgroundColor: "#fff",
-                                alignSelf: "center"
-                            }}>
-
-                                <View style={{ marginRight: 10, width: 120 }}>
-
-                                    <Button
-                                        title="Ok"
-                                        color="#ff8834"
-                                        onPress={() => this.setState({
-                                            showModalCancel: false,
-                                          
-                                        })}
-                                    ></Button>
+                                <Text style={{ fontWeight: "bold", fontSize: 16, marginLeft: 10 }}>Pagar</Text>
+                                <View style={{ paddingTop: 20 }}>
+                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10 }}>MX${keys.Tarifa.tarifa_cancelacion}</Text>
+                                    <Text onPress={() => this.detallesCancelacion()} style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, color: "blue" }}>Desglose de Tarifa de cancelación</Text>
                                 </View>
 
-
                             </View>
+
+                            <View style={styles.area}>
+                                <View style={{flex:3}}>
+                                    <Text style={{color:"red"}}>*Solo Tarjeta de Crédito / Débito</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.area}>
+                                <View style={{ flex: 3 }}>
+                                    <Text >Método de pago</Text>
+                                </View>
+                                <View style={{flex:1}}></View>
+                                <View style={{ flex: 2 }}>
+                                    <Text>****1234</Text>
+                                </View>
+                            </View>
+                    
+
+                            <View style={{ paddingLeft: 20, marginBottom: 40, marginTop:20 }}>
+                                <View style={{ alignSelf: "center", paddingLeft: 10, paddingRight: 10, width: "100%" }}>
+                                    <Button
+                                        style={{ width: "100%" }}
+                                        title="Confirmar pago"
+                                        color="#ff8834"
+
+                                        onPress={() => this.setState({
+                                            showModalCancel:false
+                                        })}></Button>
+                                </View>
+                            </View>
+
+
                         </View>
+
+
                     </Modal>
 
                 </View>

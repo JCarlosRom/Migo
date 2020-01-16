@@ -11,6 +11,7 @@ import * as Location from "expo-location";
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
 
 
 
@@ -455,7 +456,7 @@ export default class TravelMPChange extends Component {
         Distancia = this.state.distance,
             Tiempo = this.state.duration
 
-        keys.Tarifa = Tarifa;
+        keys.Tarifa.Total = Tarifa;
 
         keys.socket.emit('changeDestino', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud,
@@ -1321,7 +1322,7 @@ export default class TravelMPChange extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

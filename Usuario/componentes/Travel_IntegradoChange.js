@@ -11,6 +11,7 @@ import { StackActions, NavigationActions } from 'react-navigation';
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_IntegradoChange extends Component {
@@ -153,7 +154,8 @@ export default class Travel_IntegradoChange extends Component {
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo={
@@ -273,7 +275,14 @@ export default class Travel_IntegradoChange extends Component {
         });
     }
 
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
 
+        call(args).catch(console.error)
+    }
   
 
     showPay(){
@@ -365,7 +374,7 @@ export default class Travel_IntegradoChange extends Component {
         Distancia= this.state.distance,
         Tiempo= this.state.duration
         
-        keys.Tarifa= Tarifa; 
+        keys.Tarifa.Total= Tarifa; 
 
         keys.socket.emit('changeDestino', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
@@ -1021,7 +1030,7 @@ export default class Travel_IntegradoChange extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30} onPress={()=>this.callPhoneFunction()}></Icon>
                                 <View style={{ paddingLeft: 10 }}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Button, Image, Switch, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Image, Switch, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { Button } from "react-native-elements";
 import { StackActions, NavigationActions } from 'react-navigation';
 
 
@@ -11,6 +12,7 @@ export default class viajeFinalizado extends Component {
 
 
     constructor(props) {
+        // keys.socket.on('isConnected', () => { })
         super(props);
         this.state = {
             id_usuario: null,
@@ -36,7 +38,7 @@ export default class viajeFinalizado extends Component {
 
         const resetAction = StackActions.reset({
             index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Address: this.state.location } })],
+            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "finalizarViaje" } })],
             key: undefined
         });
 
@@ -61,7 +63,7 @@ export default class viajeFinalizado extends Component {
                         <View>
                             <Switch
                                 value={keys.stateConductor}
-                                onChange={() => this.conectChofer()}
+                     
                             />
                         </View>
                         <View>
@@ -75,6 +77,7 @@ export default class viajeFinalizado extends Component {
                             }
                         }>
                             <Icon name="question-circle"
+                                color="#ff8834"
                                 size={30}></Icon>
                         </View>
                         <View style={
@@ -84,6 +87,7 @@ export default class viajeFinalizado extends Component {
                             }
                         }>
                             <Icon name="cog"
+                                color="#ff8834"
                                 size={30}></Icon>
                         </View>
                     </View>
@@ -119,7 +123,7 @@ export default class viajeFinalizado extends Component {
                                     <Text>Calificar</Text>
                                 </View>
                                 <View style={{paddingLeft:10}}>
-                                    <Icon name="chevron-right" size={15} style={{ marginTop: 3 }}></Icon>
+                                    <Icon name="chevron-right" size={15} style={{ marginTop: 3 }} color="#ff8834"></Icon>
                                 </View>
                             </View>
                         </View>
@@ -129,13 +133,17 @@ export default class viajeFinalizado extends Component {
 
                         <View style={{ alignSelf: "center", width:280 }}>
 
-                            <Button title="Empezar el próximo viaje"></Button>
+                            <Button buttonStyle={{
+                                backgroundColor: "#ff8834"
+                            }} title="Empezar el próximo viaje"></Button>
 
                         </View>
 
                         <View style={{ alignSelf: "center", paddingTop: 10, width: 280}}>
 
-                            <Button title="No disponible"></Button>
+                            <Button buttonStyle={{
+                                backgroundColor: "#ff8834"
+                            }} title="No disponible"></Button>
 
                         </View>
 
@@ -146,7 +154,9 @@ export default class viajeFinalizado extends Component {
 
                         <View style={{ alignSelf: "center", width: 280 }}>
 
-                            <Button title="Finalizar el viaje" onPress={() => this.finalizarViaje()}></Button>
+                            <Button buttonStyle={{
+                                backgroundColor: "#ff8834"
+                            }} title="Finalizar el viaje" onPress={() => this.finalizarViaje()}></Button>
 
                         </View>
 

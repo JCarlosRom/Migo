@@ -11,6 +11,7 @@ import { StackActions, NavigationActions } from 'react-navigation';
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class TravelNoDestination extends Component {
@@ -56,23 +57,52 @@ export default class TravelNoDestination extends Component {
             Express_Estandar: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             Express_Lujo: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             Pool_Estandar: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             Pool_Lujo: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
+      
             isNextVehicles: true,
             routeParada1: false,
             routeChoferDestino: false,
@@ -80,10 +110,32 @@ export default class TravelNoDestination extends Component {
             creditPay: false,
             infoVehicleTipo: "",
             infoVehicleLlegada: "",
-            infoVehicleTarifa: 0,
             timer_coordenadasUsuario: null,
+            Vehicles: null,
+            showVehicles: true
 
         };
+
+        if (keys.categoriaVehiculo == null && keys.tipoVehiculo == null) {
+
+            this.getVehicles(1, 1);
+
+        } else {
+
+            this.getVehicles(keys.categoriaVehiculo, keys.tipoVehiculo);
+
+        }
+        // Socket para escuchar el socket de vehículo
+        keys.socket.on('vehiclesGet', (num) => {
+
+            this.setState({
+                Vehicles: num
+            })
+
+            // console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
+
+
+        })
 
         // Chat de Usuario
         keys.socket.on('chat_usuario', (num) => {
@@ -153,17 +205,24 @@ export default class TravelNoDestination extends Component {
         keys.socket.on('conductor_sendInfo', num => {
             console.log('conductor_sendInfo');
 
+            clearInterval(this.timer_Vehicles);
+
+            clearInterval(this.timer_VehiclesConsult);
+
+
             this.setState({
                 showBackButton: false,
                 showModalAcept: true,
                 DescripcionAcept: "El chofer ha aceptado tu solicitud",
+                showVehicles: false
             })
 
             keys.datos_chofer={
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo={
@@ -209,7 +268,7 @@ export default class TravelNoDestination extends Component {
                 }
             })
 
-            console.log("USUARIO: Posición del chófer", this.state.positionChofer);
+ 
         
         });
     
@@ -270,6 +329,47 @@ export default class TravelNoDestination extends Component {
         });
     }
 
+    async getVehicles(categoriaVehiculo, tipoVehiculo) {
+
+
+
+        clearInterval(this.timer_Vehicles);
+
+        clearInterval(this.timer_VehiclesConsult);
+
+        keys.socket.emit('vehiclesConsult', {
+            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+        });
+
+        this.timer_VehiclesConsult = setInterval(() => {
+
+            keys.socket.emit('vehiclesConsult', {
+                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+            });
+
+
+        }, 10000);
+
+        keys.categoriaVehiculo = categoriaVehiculo;
+
+        keys.tipoVehiculo = tipoVehiculo;
+
+        console.log("Categoria vehiculo get");
+        console.log(keys.categoriaVehiculo);
+        console.log("Tipo Vehiculo Get");
+        console.log(keys.tipoVehiculo);
+
+    }
+
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
+
+        call(args).catch(console.error)
+    }
+
     async setPrimeraParada1Usuario(num) {
 
         console.log("num", num);
@@ -307,26 +407,14 @@ export default class TravelNoDestination extends Component {
 
         }else{
             if (num.Flag=="Tarifa"){
-                keys.Tarifa= num.Info;
+                keys.Tarifa.Total= num.Info;
             }
         }
 
     }
 
-    // fleet_usuario_chofer = () => {
-    //     let timer_2 = setInterval(() => {
-    //         this.findCurrentLocationAsync();
-    //         if(this.state.location!=null){
 
-    //             keys.socket.emit('room_usuario_chofer', 
-    //                 {id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket, 
-    //                     coordenadas_usuario: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude } });
-    //         }
-
-    //     }, 5000);
-    //     this.setState({ timer_2 });
-    // }
-
+    
   
 
     showPay(){
@@ -370,8 +458,9 @@ export default class TravelNoDestination extends Component {
 
     async getTarifas(){
         try {
-            console.log(this.state.distance);
-            console.log(this.state.duration);
+            console.log("Distancia",this.state.distance);
+            console.log("Duración",this.state.duration);
+            console.log("Categoria",keys.categoriaVehiculo)
             //console.log(this.props.switchValue);
             const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
@@ -379,52 +468,27 @@ export default class TravelNoDestination extends Component {
             });
     
             res.data.datos.forEach(element => {
+                if (element["categoria_servicio"] == keys.categoriaVehiculo) {
+                    keys.Tarifa = {
+                        Solicitud: element["cuota_solicitud"],
+                        tarifaBase: parseInt(element["tarifa_base"]),
+                        tarifaMinima: parseInt(element["tarifa_minima"]),
+                        porMinuto: parseInt(element["tiempo"]),
+                        porKilometro: parseInt(element["distancia"]),
+                        Gob: element["cuota_gob"],
+                        Total: parseInt(element["out_costo_viaje"]),
+                        tarifa_cancelacion: element["tarifa_cancelacion"]
 
-                if(element["categoria_servicio"]==1){
-                   
-                    this.setState({
-                       
-                        Express_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                     
-                    })
-                }
-                if (element["categoria_servicio"] == 2) {
-                    
-                    this.setState({
-                        Express_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                    })
-                }
+                    }
 
-                if (element["categoria_servicio"] == 3) {
-                    
-                    this.setState({
-                        Pool_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        }
-                    })
-                }
 
-                if (element["categoria_servicio"] == 4) {
-                   
-                    this.setState({
-                        Pool_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        } 
-                    })
+
+
+
                 }
             });
+
+            
         } catch (e) {
             console.log(e);
             this.setState({
@@ -436,17 +500,20 @@ export default class TravelNoDestination extends Component {
     }
 
     generarSolicitud = () => {
+
+    
+
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
         datos_usuario = keys.datos_usuario;
         infoTravel= keys.travelInfo;
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
-        Tarifa = this.state.infoVehicleTarifa;
+        Tarifa = keys.Tarifa.Total;
         Distancia= this.state.distance,
         Tiempo= this.state.duration
         
-        keys.Tarifa= Tarifa; 
+ 
 
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
@@ -607,6 +674,8 @@ export default class TravelNoDestination extends Component {
             showEstimations: true,
             Home: false
         })
+
+        this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
     }
 
 
@@ -640,10 +709,9 @@ export default class TravelNoDestination extends Component {
 
         })
 
-        keys.socket.emit("cancelaUsuario", { id: keys.id_servicio })
+        keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
 
         keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
-
 
         const resetAction = StackActions.reset({
             index: 0,
@@ -671,7 +739,11 @@ export default class TravelNoDestination extends Component {
                                     name="arrow-left"
                                     color="#ff8834"
                                     size={25}
-                                    onPress={() => this.props.navigation.navigate("Home")}
+                                    onPress={() => {
+                                        clearInterval(this.timer_Vehicles);
+                                        clearInterval(this.timer_VehiclesConsult);
+                                        this.props.navigation.navigate("Home")
+                                    }}
                                 ></Icon>
                             </View>
 
@@ -910,6 +982,32 @@ export default class TravelNoDestination extends Component {
                                 showsUserLocation={true}
                                 showsMyLocationButton={true}
                             >
+
+                                {this.state.Vehicles != null && this.state.showVehicles ?
+
+
+                                    this.state.Vehicles.map(marker => (
+
+                                        <Marker
+                                            key={"key"}
+                                            coordinate={{
+                                                latitude: marker.latitud,
+                                                longitude: marker.longitud
+                                            }}
+
+                                        >
+                                            <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" : "car-side"} size={20} color="orange"></Icon>
+
+                                        </Marker>
+                                    ))
+
+
+                                    :
+                                    null
+
+                                }
+
+
                                 <Marker
                                     coordinate={{
                                         latitude: this.state.myPosition.latitude,
@@ -919,6 +1017,8 @@ export default class TravelNoDestination extends Component {
                                 >
                                     <Icon name="map-pin" size={20} color="green"></Icon>
                                 </Marker>
+
+                                
 
                                 {
                                     this.state.Paradas!=null?
@@ -1432,7 +1532,7 @@ export default class TravelNoDestination extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

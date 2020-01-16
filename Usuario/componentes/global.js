@@ -29,7 +29,8 @@ export default keys={
         idChofer: null,
         nombreChofer: null,
         Estrellas: null,
-        Reconocimientos: null
+        Reconocimientos: null,
+        Telefono: null 
 
     },
     // Información de viajes 
@@ -41,7 +42,20 @@ export default keys={
      
 
     },
-    Tarifa:0,
+    Tarifa:{
+        Solicitud: 0,
+        tarifaBase: 0, 
+        tarifaMinima:0,
+        porMinuto: 0,
+        porKilometro: 0, 
+        recargosEstimados: 0,
+        Gob:0,
+        Peaje: 0,
+        Propina:0,
+        Total:0,
+        tarifa_cancelacion: 0
+         
+    },
     Paradas: null, 
     typePay:1,
     // Punteros
@@ -51,7 +65,7 @@ export default keys={
     addressInput:"",
     Chat: [],
     HoraServicio:null,
-    urlSocket: 'http://192.168.0.13:3001',
-    // urlSocket: 'http://35.203.42.33:3001/',
+    // urlSocket: 'http://192.168.1.161:3001',
+    urlSocket: 'http://35.203.42.33:3001/',
 
 }

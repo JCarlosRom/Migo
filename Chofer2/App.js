@@ -10,10 +10,9 @@ import HomeTravel from "./componentes/Home";
 import TravelMP from "./componentes/TravelMP";
 import TravelMP2 from "./componentes/TravelMP2";
 import Travel_Integrado from "./componentes/Travel_Integrado";
-import Travel_NoDestination from "./componentes/TravelNoDestination";
+import TravelNoDestination from "./componentes/TravelNoDestination";
 import Pago from "./componentes/Pago";
 import viajeFinalizado from "./componentes/viajeFinalizado";
-import Travel_Waze from './componentes/Travel_Waze'
 import Notificaciones from  './componentes/Notificaciones';
 import Chat from './componentes/Chat';
 import ViewSetUbication from './componentes/ViewSetUbication';
@@ -34,17 +33,14 @@ const MainStack = createStackNavigator({
   TravelMP2: {
     screen: TravelMP2
   },
-  Travel_NoDestination:{
-    screen:Travel_NoDestination
+  TravelNoDestination:{
+    screen:TravelNoDestination
   },
   Pago:{
     screen:Pago
   },
   viajeFinalizado:{
     screen:viajeFinalizado
-  },
-  Travel_Waze:{
-    screen:Travel_Waze
   },
   Notificaciones:{
     screen:Notificaciones
