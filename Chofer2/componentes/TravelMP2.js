@@ -50,7 +50,8 @@ export default class TravelMP2 extends Component {
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             showModal:false, 
-            Description: ""
+            Description: "",
+            infoVehicleLlegada:0
      
     
 
@@ -190,6 +191,8 @@ export default class TravelMP2 extends Component {
             }
 
         });
+
+        keys.socket.removeAllListeners("chat_chofer");
 
         keys.socket.on('chat_chofer', (num) => {
 
@@ -1240,7 +1243,7 @@ export default class TravelMP2 extends Component {
 
                             <View style={styles.area}>
 
-                            <Text style={{marginLeft:5}}> Contacta al usuario si llegas después de las 21:11</Text>
+                    <Text style={{marginLeft:5}}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
 
 
                             </View>

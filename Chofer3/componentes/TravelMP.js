@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Image,View, Text, StyleSheet, Switch, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
 import Modal from "react-native-modal";
 import { Button  } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -7,18 +7,16 @@ import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove P
 import axios from 'axios';
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
-import getDirections from 'react-native-google-maps-directions';
 import { showLocation } from 'react-native-map-link'
+import getDirections from 'react-native-google-maps-directions';
 import keys from './global';
 import * as Location from "expo-location";
 import * as Permissions from 'expo-permissions';
 import call from 'react-native-phone-call'
 
-export default class TravelMP2 extends Component {
+export default class TravelMP extends Component {
     constructor(props) {
-
-        keys.socket.on('isConnected', () => {})
-        
+        keys.socket.on('isConnected', () => { })
         super(props);
          this.state = {
             id_usuario: "2",
@@ -49,9 +47,10 @@ export default class TravelMP2 extends Component {
              },
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
-            showModal:false, 
-            Description: ""
-     
+            showModal:false,
+            Descripcion:"",
+            infoVehicleLlegada:0
+        
     
 
         };
@@ -108,13 +107,6 @@ export default class TravelMP2 extends Component {
                 keys.id_chofer_socket = keys.socket.id;
 
                 keys.Tarifa = num.Tarifa;
-
-
-
-
-                // console.log("Socket del chofer", keys.id_chofer_socket)
-
-
 
                 clearInterval(this.state.timer);
                 clearInterval(keys.timerCoordenadas);
@@ -191,12 +183,13 @@ export default class TravelMP2 extends Component {
 
         });
 
+        keys.socket.removeAllListeners("chat_chofer");
+
         keys.socket.on('chat_chofer', (num) => {
 
             console.log("chat_chofer", num)
 
             keys.Chat.push(num.Mensaje);
-
 
             this.setState({
                 showModal: true,
@@ -204,13 +197,14 @@ export default class TravelMP2 extends Component {
             })
 
 
+
         })
 
         keys.socket.on('cancelViajeChofer', () => {
 
-            clearInterval(keys.intervalBroadcastCoordinates);
+            keys.Chat=[];
 
-            keys.Chat = [];
+            clearInterval(keys.intervalBroadcastCoordinates);
 
             const resetAction = StackActions.reset({
                 index: 0,
@@ -221,7 +215,8 @@ export default class TravelMP2 extends Component {
             this.props.navigation.dispatch(resetAction);
 
         })
- 
+
+      
         
     };
 
@@ -234,7 +229,8 @@ export default class TravelMP2 extends Component {
         call(args).catch(console.error)
     }
 
-    componentDidMount() {
+    
+    componentDidMount(){
 
         Flag = this.props.navigation.getParam('Flag', false);
         console.log(Flag)
@@ -311,21 +307,12 @@ export default class TravelMP2 extends Component {
         }
 
     }
-    
-    
 
 
 
     async componentWillMount() {
-        
-        Flag = this.props.navigation.getParam('Flag', false);
 
-        if (Flag == "Acept") {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te ha llegado una solicitud"
-            })
-        }
+      
 
         // Check my current position
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -380,7 +367,6 @@ export default class TravelMP2 extends Component {
 
         } catch (e) {
             console.log(e);
-
             this.setState({
                 showModal: true,
                 Descripcion: "Servicio no disponible, Intente más tarde"
@@ -405,14 +391,12 @@ export default class TravelMP2 extends Component {
         
         
     }
-
-    
     
     // Función para aceptar el viaje
     aceptViaje() {
 
         var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
+        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
         keys.HoraServicio = d.toLocaleTimeString()
 
         console.log("Hora", keys.HoraServicio);
@@ -437,10 +421,10 @@ export default class TravelMP2 extends Component {
             tiempo_viaje_destino: keys.travelInfo.Tiempo,
             latitud_usuario: keys.positionUser.usuario_latitud,
             longitud_usuario: keys.positionUser.usuario_longitud,
-            latitud_usuario_destino: keys.travelInfo.Parada2.latitude,
-            longitud_usuario_destino: keys.travelInfo.Parada2.longitude,
+            latitud_usuario_destino: keys.travelInfo.Parada1.latitude,
+            longitud_usuario_destino: keys.travelInfo.Parada1.longitude,
             geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
-            geocoder_destino: keys.travelInfo.Parada2.Direccion,
+            geocoder_destino: keys.travelInfo.Parada3.Direccion,
             id_usuario: keys.datos_usuario.id_usuario,
             id_unidad: keys.datos_vehiculo.id_unidad,
             id_conductor: keys.datos_vehiculo.id_chofer
@@ -531,23 +515,23 @@ export default class TravelMP2 extends Component {
             longitude: 0
         }
 
-        if(this.state.aceptViaje==true){
+        if (this.state.aceptViaje == true) {
 
             coordinates = {
                 latitude: this.state.positionUser.latitude,
                 longitude: this.state.positionUser.longitude
             }
-            
+
         }
 
-        if(this.state.Travel==true && this.state.routeParada2==false){
-            coordinates={
+        if (this.state.Travel == true && this.state.routeParada2 == false) {
+            coordinates = {
                 latitude: keys.travelInfo.Parada1.latitude,
                 longitude: keys.travelInfo.Parada1.longitude,
             }
         }
-        
-        if (this.state.routeParada2==true){
+
+        if (this.state.routeParada2 == true) {
             coordinates = {
                 latitude: keys.travelInfo.Parada2.latitude,
                 longitude: keys.travelInfo.Parada2.longitude,
@@ -555,7 +539,14 @@ export default class TravelMP2 extends Component {
         }
 
 
-        if (keys.travelType == true) {
+        if (this.state.routeParada3 == true) {
+            coordinates = {
+                latitude: keys.travelInfo.Parada3.latitude,
+                longitude: keys.travelInfo.Parada3.longitude,
+            }
+        }
+
+        if (keys.travelType == true){
 
             const data = {
                 source: {
@@ -576,13 +567,13 @@ export default class TravelMP2 extends Component {
                         value: "navigate"       // this instantly initializes navigation using the given travel mode
                     }
                 ],
-
-
+                
+              
             }
 
             getDirections(data)
 
-        } else {
+        }else{
             // Waze
             showLocation({
                 latitude: coordinates.latitude,
@@ -599,11 +590,9 @@ export default class TravelMP2 extends Component {
                 // app: 'uber'  // optionally specify specific app to use
             })
         }
-            
-       
 
 
-
+   
 
     }
 
@@ -611,8 +600,6 @@ export default class TravelMP2 extends Component {
         title: "Viaje",
         headerLeft: null
     };
-
-  
 
     puntoEncuentro(){
         this.setState({
@@ -641,7 +628,8 @@ export default class TravelMP2 extends Component {
 
         clearInterval(keys.intervalBroadcastCoordinates);
 
-        keys.Chat = [];
+        keys.Chat =[]
+
         this.props.navigation.navigate("Pago");
 
    
@@ -658,26 +646,26 @@ export default class TravelMP2 extends Component {
         console.log("Hora Servicio", keys.HoraServicio);
 
         if (horaActual < keys.HoraServicio) {
-
-            keys.Chat = []
-
+    
+            keys.Chat=[]
+    
             clearInterval(keys.intervalBroadcastCoordinates);
 
             keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
-
+    
             keys.socket.emit("cancelViajeChofer", {
                 id_socket_usuario: keys.id_usuario_socket
             });
-
+    
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
                 key: undefined
             });
-
+    
             this.props.navigation.dispatch(resetAction);
 
-        } else {
+        }else{
             this.setState({
                 showModalCancel: false,
                 showModal: true,
@@ -685,7 +673,6 @@ export default class TravelMP2 extends Component {
             })
         }
     }
-
     onRegionChange = async region => {
 
 
@@ -701,6 +688,7 @@ export default class TravelMP2 extends Component {
             routeInitial: false,
             routeParada1: true,
             routeParada2: false,
+            routeParada2: false
         })
 
 
@@ -722,7 +710,7 @@ export default class TravelMP2 extends Component {
             routeInitial: false,
             routeParada1: false,
             routeParada2: true,
- 
+            routeParada3: false
         })
 
            // Socket de segunda parada
@@ -731,12 +719,37 @@ export default class TravelMP2 extends Component {
         });
     }
 
+    terceraParada(){
+
+
+        Paradas = [];
+
+
+        Paradas.push(keys.travelInfo.Parada3)
+
+        this.setState({
+            Paradas
+        })
+
+        this.state.routeParada2 = false;
+        this.state.routeParada3 = true;
+
+
+        // Socket de tercera parada
+        keys.socket.emit("terceraParada", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
+
+    }
+
     Chat() {
 
         keys.socket.removeAllListeners("chat_chofer");
         this.props.navigation.navigate("Chat")
     }
 
+ 
+  
 
     render() {
         return (
@@ -790,7 +803,7 @@ export default class TravelMP2 extends Component {
 
                         <Modal
                             isVisible={this.state.showModalCancel}
-                        
+                            // isVisible={true}
 
                         >
                             <View style={styles.area}>
@@ -923,7 +936,7 @@ export default class TravelMP2 extends Component {
                                     ></Button>
 
                                 </View>
-                            </View>
+                            </View>               
 
 
                         </Modal>
@@ -948,8 +961,8 @@ export default class TravelMP2 extends Component {
                             }
                         }>
                             <Icon name="question-circle"
-                                size={30}
-                                color="#ff8834"></Icon>
+                                color="#ff8834"
+                                size={30}></Icon>
                         </View>
                         <View style={
                             {
@@ -958,8 +971,8 @@ export default class TravelMP2 extends Component {
                             }
                         }>
                             <Icon name="cog"
-                                size={30}
-                                color="#ff8834"></Icon>
+                                color="#ff8834"
+                                size={30}></Icon>
                         </View>
                     </View>
                     {/* Barra superior de punto de encuentro  */}
@@ -1000,7 +1013,7 @@ export default class TravelMP2 extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <Text style={{ marginLeft: 10 }}>
-                                    {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1==true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2==true) ? keys.travelInfo.Parada2.Direccion  : "Test" }
+                                    {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1==true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2==true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3==true) ? keys.travelInfo.Parada3.Direccion : "Test" }
                                 </Text>
                             </View>
                         </View>
@@ -1019,7 +1032,7 @@ export default class TravelMP2 extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : "Test"}</Text>
+                                    <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3 == true) ? keys.travelInfo.Parada3.Direccion : "Test"}</Text>
                                     <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
@@ -1036,7 +1049,8 @@ export default class TravelMP2 extends Component {
     
                         </View>
                     <View style={styles.containerMap}>
-                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null?
+                        
+                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
 
                         <MapView
 
@@ -1105,8 +1119,9 @@ export default class TravelMP2 extends Component {
                         
                  
                         {/* Primer Parada */}
-                            {this.state.routeInitial && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude != 0 
-                                && this.state.myPosition.latitude != 0 & this.state.myPosition.longitude != 0 ?
+                        {this.state.routeInitial && this.state.myPosition.latitude!=0 && this.state.positionUser.longitude !=0
+                        && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude !=0?
+                        
                             <MapViewDirections
 
 
@@ -1142,8 +1157,8 @@ export default class TravelMP2 extends Component {
                             null
                         }
                         
-                      { this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude !=0
-                      && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude != 0 ?
+                      { this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                      && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude !=0?
 
                             <MapViewDirections
                                 origin={{
@@ -1173,8 +1188,8 @@ export default class TravelMP2 extends Component {
                             null
                       }
                       {
-                        this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
-                        && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0 ?
+                        this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude !=0
+                        && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0?
 
                                 <MapViewDirections
                                     origin={{
@@ -1195,8 +1210,6 @@ export default class TravelMP2 extends Component {
 
                                         })
 
-                                    
-
 
 
                                     }}
@@ -1208,7 +1221,39 @@ export default class TravelMP2 extends Component {
                     
                      
 
-                     
+                        {
+                        this.state.routeParada3==true && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                        && keys.travelInfo.Parada3.latitude != 0 && keys.travelInfo.Parada3.longitude != 0?
+
+
+                            <MapViewDirections
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                destination={{
+                                    latitude: keys.travelInfo.Parada3.latitude,
+                                    longitude: keys.travelInfo.Parada3.longitude,
+                                }}
+                                apikey={keys.GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="green"
+                                onReady={result => {
+                                    this.setState({
+                                        distance: parseInt(result.distance),
+                                        duration: parseInt(result.duration)
+
+                                    })
+
+
+
+                                }}
+
+                            />
+                    
+                        :
+                            null
+                        }
                                 
                                 
                     </MapView>
@@ -1225,8 +1270,8 @@ export default class TravelMP2 extends Component {
 
                                     <Icon name="exclamation-circle"
                                         size={30}
-                                        onPress={()=>this.alert()} 
-                                        color="#ff8834"  
+                                        color="#ff8834"
+                                        onPress={()=>this.alert()}    
                                     ></Icon>
 
                                 </View>
@@ -1240,7 +1285,7 @@ export default class TravelMP2 extends Component {
 
                             <View style={styles.area}>
 
-                            <Text style={{marginLeft:5}}> Contacta al usuario si llegas después de las 21:11</Text>
+                            <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
 
 
                             </View>
@@ -1538,7 +1583,7 @@ export default class TravelMP2 extends Component {
                         {this.state.routeInitial?
                             <View style={styles.area}>
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
                                 <View style={
                                     {
                                         paddingLeft: 90
@@ -1566,7 +1611,7 @@ export default class TravelMP2 extends Component {
                         {this.state.routeParada1 ?
                             <View style={styles.area}>
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
                                 <View style={
                                     {
                                         paddingLeft: 90
@@ -1591,11 +1636,42 @@ export default class TravelMP2 extends Component {
                             null
                         }
 
-
                         {this.state.routeParada2 ?
                             <View style={styles.area}>
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
+                                <View style={
+                                    {
+                                        paddingLeft: 90
+                                    }
+                                }>
+
+
+                                    <Button
+
+                                        title={"Ir a tercera parada" }
+                                        type="clear"
+                                        onPress={() =>
+                                            
+                                            this.terceraParada()
+
+                                        }
+                                    />
+
+
+                                </View>
+
+
+                            </View>
+
+                            :
+                            null
+                        }
+
+                        {this.state.routeParada3 ?
+                            <View style={styles.area}>
+
+                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
                                 <View style={
                                     {
                                         paddingLeft: 90

@@ -351,7 +351,7 @@ export default class Travel extends Component {
     }
 
     
-    async getVehicles(categoriaVehiculo, tipoVehiculo ) {
+    async getVehicles(categoriaVehiculo, tipoVehiculo  ) {
         
  
 

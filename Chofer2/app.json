@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Chofer2",
-    "slug": "Chofer2",
+    "name": "Chofer",
+    "slug": "Chofer",
     "privacy": "public",
     "sdkVersion": "34.0.0",
     "platforms": [
@@ -24,10 +24,10 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.kiotrack.chofer2"
+      "bundleIdentifier": "com.kiotrack.chofer"
     },
     "android": {
-      "package": "com.kiotrack.chofer2",
+      "package": "com.kiotrack.chofer",
       "publishBundlePath": "android\\app\\src\\main\\assets\\shell-app.bundle",
       "publishManifestPath": "android\\app\\src\\main\\assets\\shell-app-manifest.json"
     },

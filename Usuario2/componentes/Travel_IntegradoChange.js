@@ -11,6 +11,7 @@ import { StackActions, NavigationActions } from 'react-navigation';
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_IntegradoChange extends Component {
@@ -72,6 +73,15 @@ export default class Travel_IntegradoChange extends Component {
                 categoria_servicio: 0,
                 nombre_categoria: "",
                 out_costo_viaje: 0
+            },
+            infoVehicleTarifa: {
+                Tarifa: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
             },
             isNextVehicles: true,
             routeParada1: true,
@@ -153,7 +163,8 @@ export default class Travel_IntegradoChange extends Component {
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo={
@@ -273,7 +284,14 @@ export default class Travel_IntegradoChange extends Component {
         });
     }
 
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
 
+        call(args).catch(console.error)
+    }
   
 
     showPay(){
@@ -327,18 +345,95 @@ export default class Travel_IntegradoChange extends Component {
     
             res.data.datos.forEach(element => {
 
-                if (element["categoria_servicio"] == keys.categoriaVehiculo){
-                   
-                    this.setState({
+                if(keys.tipoVehiculo==1 && keys.tipoServicio==1){
 
-                        infoVehicleTarifa: parseInt(element["out_costo_viaje"])
+                    if (element["categoria_servicio"] == 1){
                        
-                    })
+                        this.setState({
+                            infoVehicleTarifa: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                Tarifa: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                            },
+                        })
+                    }
+                }else{
+                    if(keys.tipoVehiculo==2 && keys.tipoServicio==1){
+                        if (element["categoria_servicio"] == 2) {
+
+                            this.setState({
+                                infoVehicleTarifa: {
+                                    categoria_servicio: element["categoria_servicio"],
+                                    nombre_categoria: element["nombre_categoria"],
+                                    Tarifa: parseInt(element["out_costo_viaje"]),
+                                    tarifaBase: parseInt(element["tarifa_base"]),
+                                    tarifaMinima: parseInt(element["tarifa_minima"]),
+                                    porKilometro: parseInt(element["distancia"]),
+                                    porMinuto: parseInt(element["tiempo"]),
+                                    Gob: element["cuota_gob"],
+                                    Solicitud: element["cuota_solicitud"],
+                                    tarifa_cancelacion: element["tarifa_cancelacion"]
+
+                                   
+                                },
+                            })
+                        }
+                    }else{
+                        if(keys.tipoVehiculo==1 && keys.tipoServicio==2){
+                            if (element["categoria_servicio"] == 3) {
+
+                                this.setState({
+                                    infoVehicleTarifa: {
+                                        categoria_servicio: element["categoria_servicio"],
+                                        nombre_categoria: element["nombre_categoria"],
+                                        Tarifa: parseInt(element["out_costo_viaje"]),
+                                        tarifaBase: parseInt(element["tarifa_base"]),
+                                        tarifaMinima: parseInt(element["tarifa_minima"]),
+                                        porKilometro: parseInt(element["distancia"]),
+                                        porMinuto: parseInt(element["tiempo"]),
+                                        Gob: element["cuota_gob"],
+                                        Solicitud: element["cuota_solicitud"],
+                                        tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                    },
+                                })
+                            }
+                        }else{
+                            if(keys.tipoVehiculo==2 && keys.tipoServicio==2){
+                                if (element["categoria_servicio"] == 4) {
+
+                                    this.setState({
+                                        infoVehicleTarifa: {
+                                            categoria_servicio: element["categoria_servicio"],
+                                            nombre_categoria: element["nombre_categoria"],
+                                            Tarifa: parseInt(element["out_costo_viaje"]),
+                                            tarifaBase: parseInt(element["tarifa_base"]),
+                                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                                            porKilometro: parseInt(element["distancia"]),
+                                            porMinuto: parseInt(element["tiempo"]),
+                                            Gob: element["cuota_gob"],
+                                            Solicitud: element["cuota_solicitud"],
+                                            tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                        },
+                                    })
+                            }}
+                        }
+                    }
                 }
+
              
-
-
-          
             });
         } catch (e) {
             console.log(e);
@@ -352,6 +447,15 @@ export default class Travel_IntegradoChange extends Component {
 
     generarSolicitud = () => {
 
+        keys.Tarifa.Total = this.state.infoVehicleTarifa.Tarifa;
+        keys.Tarifa.tarifaBase = this.state.infoVehicleTarifa.tarifaBase;
+        keys.Tarifa.tarifaMinima = this.state.infoVehicleTarifa.tarifaMinima;
+        keys.Tarifa.porMinuto = this.state.infoVehicleTarifa.porMinuto;
+        keys.Tarifa.porKilometro = this.state.infoVehicleTarifa.porKilometro;
+        keys.Tarifa.Solicitud = this.state.infoVehicleTarifa.Solicitud;
+        keys.Tarifa.Gob = this.state.infoVehicleTarifa.Gob;
+        keys.Tarifa.tarifa_cancelacion = this.state.infoVehicleTarifa.tarifa_cancelacion;
+
 
 
         usuario_latitud = this.state.myPosition.latitude;
@@ -361,11 +465,11 @@ export default class Travel_IntegradoChange extends Component {
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
         id_chofer_socket= keys.id_chofer_socket;
-        Tarifa = this.state.infoVehicleTarifa;
-        Distancia= this.state.distance,
+        Tarifa = keys.Tarifa.Total;
+        Distancia= this.state.distance
         Tiempo= this.state.duration
         
-        keys.Tarifa= Tarifa; 
+ 
 
         keys.socket.emit('changeDestino', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
@@ -1021,7 +1125,7 @@ export default class Travel_IntegradoChange extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30} onPress={()=>this.callPhoneFunction()}></Icon>
                                 <View style={{ paddingLeft: 10 }}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

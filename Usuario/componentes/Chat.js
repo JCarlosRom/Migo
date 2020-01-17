@@ -39,7 +39,8 @@ export default class Chat extends Component {
     componentDidMount() {        
         if(keys.Chat.length>0){
             this.setState({
-                initChat:false
+                initChat:false,
+                Atajo:false
             })
         }
 

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Usuario2",
-    "slug": "Usuario2",
+    "name": "usuario",
+    "slug": "Usuario",
     "privacy": "public",
     "sdkVersion": "34.0.0",
     "platforms": [
@@ -27,7 +27,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.kiotrack.usuario2",
+      "package": "com.kiotrack.usuario",
       "publishBundlePath": "android\\app\\src\\main\\assets\\shell-app.bundle",
       "publishManifestPath": "android\\app\\src\\main\\assets\\shell-app-manifest.json"
     },

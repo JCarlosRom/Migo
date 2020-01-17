@@ -139,7 +139,7 @@ export default class TravelMP extends Component {
 
         } else {
 
-            this.getVehicles(keys.categoriaVehiculo, keys.tipoVehiculo);
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio);
 
         }
         // Socket para escuchar el socket de vehículo
@@ -153,13 +153,13 @@ export default class TravelMP extends Component {
 
 
         })
-
+        keys.socket.removeAllListeners("chat_usuario");
         // Chat de Usuario
         keys.socket.on('chat_usuario', (num) => {
 
             console.log("chat_usuario", num)
 
-            // keys.Chat.push(num.Mensaje);
+            keys.Chat.push(num.Mensaje);
 
             this.setState({
                 showModal: true,
@@ -385,7 +385,7 @@ export default class TravelMP extends Component {
         });
     }
 
-    async getVehicles(categoriaVehiculo, tipoVehiculo) {
+    async getVehicles(tipoVehiculo, tipoServicio) {
 
 
 
@@ -393,20 +393,20 @@ export default class TravelMP extends Component {
 
         clearInterval(this.timer_VehiclesConsult);
 
-        keys.socket.emit('vehiclesConsult', {
-            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+        keys.socket.emit('vehiclesConsultTravel', {
+            tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
         });
 
         this.timer_VehiclesConsult = setInterval(() => {
 
-            keys.socket.emit('vehiclesConsult', {
-                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+            keys.socket.emit('vehiclesConsultTravel', {
+                tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
             });
 
 
         }, 10000);
 
-        keys.categoriaVehiculo = categoriaVehiculo;
+        keys.tipoServicio = tipoServicio;
 
         keys.tipoVehiculo = tipoVehiculo;
 
@@ -813,12 +813,12 @@ export default class TravelMP extends Component {
                     tarifa_cancelacion: this.state.Express_Estandar.tarifa_cancelacion
                 },
             })
-            // Express
-            keys.tipoServicio = 1;
             // Estandar
             keys.tipoVehiculo = 1;
+            // Express
+            keys.tipoServicio = 1;
 
-            this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
 
 
         } else {
@@ -841,12 +841,12 @@ export default class TravelMP extends Component {
 
 
 
-                // Express
-                keys.tipoServicio = 1;
                 // Lujo
                 keys.tipoVehiculo = 2;
+                // Express
+                keys.tipoServicio = 1;
 
-                this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
+                this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
             } else {
                 if (typeVehicle == "Pool Estandar") {
                     this.setState({
@@ -865,12 +865,12 @@ export default class TravelMP extends Component {
 
                     })
 
-                    // Pool
-                    keys.tipoServicio = 2;
                     // Estandar
                     keys.tipoVehiculo = 1;
+                    // Pool
+                    keys.tipoServicio = 2;
 
-                    this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
+                    this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
 
                 } else {
                     if (typeVehicle == "Pool Lujo") {
@@ -890,12 +890,12 @@ export default class TravelMP extends Component {
 
                         })
 
-                        // Pool
-                        keys.tipoServicio = 2;
                         // Lujo
                         keys.tipoVehiculo = 2;
+                        // Pool
+                        keys.tipoServicio = 2;
 
-                        this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
+                        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
                     }
                 }
             }

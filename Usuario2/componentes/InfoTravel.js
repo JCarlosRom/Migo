@@ -1,11 +1,10 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
-import { Button } from "react-native-elements";
+import { View, Text, StyleSheet, Button, ScrollView, Image } from "react-native";
 import { StackActions, NavigationActions } from 'react-navigation';
 import Icon from "react-native-vector-icons/FontAwesome5";
 import keys from "./global";
 import Modal from "react-native-modal";
-
+import call from 'react-native-phone-call'
 
 
 
@@ -32,7 +31,14 @@ export default class InfoTravel extends Component {
     //  GOOGLE_MAPS_APIKEY = '…';
 
 
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
 
+        call(args).catch(console.error)
+    }
 
 
     async componentWillMount() {
@@ -311,9 +317,7 @@ export default class InfoTravel extends Component {
                     </View>
                     <View style={{flex:1}}></View>
                     <View style={{flex:2, marginRight:5}}>
-                        <Button title="Ayuda" buttonStyle={{
-                            backgroundColor: "#ff8834"
-                        }}></Button>
+                        <Button title="Ayuda" color="#ff8834"></Button>
                     </View>
                 </View>
                 <View
@@ -347,7 +351,7 @@ export default class InfoTravel extends Component {
                 </View>
 
                 <View style={styles.area}>
-                    <Icon name="phone" color="#ff8834" size={30}></Icon>
+                    <Icon name = "phone" onPress={()=>this.callPhoneFunction()} color="#ff8834" size={30} onPress={()=>this.callPhoneFunction()}></Icon>
                     <View style={{ paddingLeft: 10 }}></View>
                     <Icon name="comment-dots"
                         color="#ff8834"

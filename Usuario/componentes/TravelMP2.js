@@ -134,9 +134,25 @@ export default class Travel_Integrado extends Component {
 
         } else {
 
-            this.getVehicles(keys.categoriaVehiculo, keys.tipoVehiculo);
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio);
 
         }
+
+        keys.socket.removeAllListeners("chat_usuario");
+        // Chat de Usuario
+        keys.socket.on('chat_usuario', (num) => {
+
+            console.log("chat_usuario", num)
+
+            keys.Chat.push(num.Mensaje);
+
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+
+        })
         // Socket para escuchar el socket de vehículo
         keys.socket.on('vehiclesGet', (num) => {
 
@@ -345,7 +361,7 @@ export default class Travel_Integrado extends Component {
         });
     }
 
-    async getVehicles(categoriaVehiculo, tipoVehiculo) {
+    async getVehicles(tipoVehiculo, tipoServicio) {
 
 
 
@@ -353,20 +369,20 @@ export default class Travel_Integrado extends Component {
 
         clearInterval(this.timer_VehiclesConsult);
 
-        keys.socket.emit('vehiclesConsult', {
-            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+        keys.socket.emit('vehiclesConsultTravel', {
+            tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
         });
 
         this.timer_VehiclesConsult = setInterval(() => {
 
-            keys.socket.emit('vehiclesConsult', {
-                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+            keys.socket.emit('vehiclesConsultTravel', {
+                tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
             });
 
 
         }, 10000);
 
-        keys.categoriaVehiculo = categoriaVehiculo;
+        keys.tipoServicio = tipoServicio;
 
         keys.tipoVehiculo = tipoVehiculo;
 

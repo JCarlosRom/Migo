@@ -13,7 +13,7 @@ export default keys={
         correoElectronico: "15460810@itcolima.edu.mx"
 
     },
-    categoriaVehiculo:null,
+    categoriaVehiculo:1,
     tipoVehiculo:null, 
     tipoServicio:null,
     // Chofer
@@ -58,6 +58,7 @@ export default keys={
     },
     Paradas: null, 
     typePay:1,
+    typePropina:1,
     // Punteros
     flag: null,
     type: "",
@@ -65,7 +66,7 @@ export default keys={
     addressInput:"",
     Chat: [],
     HoraServicio:null,
-    // urlSocket: 'http://192.168.1.161:3001',
-    urlSocket: 'http://35.203.42.33:3001/',
+    urlSocket: 'http://192.168.0.13:3001', 
+    // urlSocket: 'http://35.203.42.33:3001/',
 
 }

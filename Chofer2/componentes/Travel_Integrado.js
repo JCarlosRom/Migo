@@ -59,6 +59,7 @@ export default class Travel_Integrado extends Component {
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             infoVehicleLlegada: null,
+            durationVehicule:0, 
             DistanceVehicle: null,
             destination: null,
             predictions: [],
@@ -221,6 +222,8 @@ export default class Travel_Integrado extends Component {
 
         });
 
+        keys.socket.removeAllListeners("chat_chofer");
+
         
         keys.socket.on('chat_chofer', (num) => {
 
@@ -312,7 +315,7 @@ export default class Travel_Integrado extends Component {
     aceptViaje(){
 
         var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
+        d.setHours(d.getHours(), d.getMinutes() + this.state.durationVehicule, 0, 0);
         keys.HoraServicio = d.toLocaleTimeString()
 
         console.log("Hora", keys.HoraServicio);
@@ -1250,7 +1253,8 @@ export default class Travel_Integrado extends Component {
 
                                             this.setState({
                                                 distance: parseInt(result.distance),
-                                                duration: parseInt(result.duration)
+                                                duration: parseInt(result.duration), 
+                                                durationVehicule: parseInt(result.duration)
                                             })
 
 

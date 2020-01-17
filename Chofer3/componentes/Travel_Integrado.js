@@ -4,18 +4,20 @@ import Modal from "react-native-modal";
 import { Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import { showLocation } from 'react-native-map-link'
 import * as Location from "expo-location";
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
-import { showLocation } from 'react-native-map-link'
 import getDirections from 'react-native-google-maps-directions';
 import * as Permissions from 'expo-permissions';
 import axios from 'axios';
 import call from 'react-native-phone-call'
 
-export default class TravelNoDestination extends Component {
+export default class Travel_Integrado extends Component {
     constructor(props) {
+
         keys.socket.on('isConnected', () => { })
+     
         super(props);
         this.state = {
             id_usuario: "2",
@@ -24,7 +26,7 @@ export default class TravelNoDestination extends Component {
             initravel: false,
             Travel: false,
             mapDirectionVehiclePartida: true,
-            mapDirectionPartidaDestino: false,
+            mapDirectionPartidaDestino:false,
             showInputAddress: false,
             positionUser: {
                 latitude: 0,
@@ -41,7 +43,7 @@ export default class TravelNoDestination extends Component {
             myPosition: {
                 latitude: 0,
                 longitude: 0
-            },
+            }, 
             region: {
                 latitude: 0,
                 longitude: 0,
@@ -53,55 +55,194 @@ export default class TravelNoDestination extends Component {
             duration: 0,
             categoriaVehiculo: 1,
             Tarifa: 0,
-            timer_2: null,
+            timer_2:null,
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             infoVehicleLlegada: null,
+            durationVehicule:0, 
             DistanceVehicle: null,
-            destination: "",
+            destination: null,
             predictions: [],
             showListdestination: false,
+            showModalCancel:false,
             showModal:false,
             Descripcion:""
-       
+            
         };
+
+        // Socket para escuchar nueva solicitud de usuario a conductor y guardado de información 
+        keys.socket.on('changeDestinoChofer', num => {
+
+            clearInterval(keys.intervalBroadcastCoordinates);
+            // this.state.datos_solicitud = num;
+
+            console.log("Datos Solicitud", num);
+
+            if (num != null) {
+
+                keys.datos_usuario = {
+                    id_usuario: num.datos_usuario.id_usuario,
+                    nombreUsuario: num.datos_usuario.nombreUsuario,
+                    CURP: num.datos_usuario.CURP,
+                    numeroTelefono: num.datos_usuario.numeroTelefono,
+                    correoElectronico: num.datos_usuario.correoElectronico
+                }
+
+                keys.type = num.type;
+
+                if (keys.type != "SinDestino") {
+
+
+                    keys.travelInfo = {
+                        puntoPartida: num.infoTravel.puntoPartida,
+                        Parada1: num.Paradas[0],
+                        Parada2: num.Paradas[1],
+                        Parada3: num.Paradas[2],
+                        Distancia: num.Distancia,
+                        Tiempo: num.Tiempo,
+
+                        // Distancia: num.Distancia, 
+                        // Tiempo: num.Tiempo
+                    }
+
+                } else {
+                    keys.travelInfo = {
+                        puntoPartida: num.infoTravel.puntoPartida,
+                    }
+                }
+
+
+                keys.positionUser = {
+                    latitude: num.usuario_latitud,
+                    longitude: num.usuario_longitud
+                }
+
+                keys.id_usuario_socket = num.id_usuario_socket
+
+                keys.id_chofer_socket = keys.socket.id;
+
+                keys.Tarifa = num.Tarifa;
+
+            
+
+
+                // console.log("Socket del chofer", keys.id_chofer_socket)
+
+
+
+                clearInterval(this.state.timer);
+                clearInterval(keys.timerCoordenadas);
+
+                keys.socket.emit('chofer_accept_requestChange', {
+                    id_usuario_socket: keys.id_usuario_socket,
+                    id_chofer_socket: keys.id_chofer_socket,
+                    datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
+                    positionChofer: this.state.myPosition,
+                    // tiempoLlegada: d.toLocaleTimeString(
+
+                });
+
+                if (keys.type == "Unico") {
+
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'Travel_Integrado', params: { Flag: "changeDestino" } })],
+                        key: undefined
+                    });
+
+                    this.props.navigation.dispatch(resetAction);
+
+           
+
+                } else {
+
+                    if (keys.type == "Multiple") {
+
+                        const resetAction = StackActions.reset({
+                            index: 0,
+                            actions: [NavigationActions.navigate({ routeName: 'TravelMP', params: { Flag: "changeDestino" } })],
+                            key: undefined
+                        });
+
+                        this.props.navigation.dispatch(resetAction);
+
+               
+
+                    } else {
+
+                        if (keys.type == "Multiple 2 paradas") {
+
+                            const resetAction = StackActions.reset({
+                                index: 0,
+                                actions: [NavigationActions.navigate({ routeName: 'TravelMP2', params: { Flag: "changeDestino" } })],
+                                key: undefined
+                            });
+
+                            this.props.navigation.dispatch(resetAction);
+          
+                        } else {
+
+                            
+                            if (keys.type == "SinDestino") {
+
+                                const resetAction = StackActions.reset({
+                                    index: 0,
+                                    actions: [NavigationActions.navigate({ routeName: 'TravelNoDestination', params: { Flag: "changeDestino" } })],
+                                    key: undefined
+                                });
+
+                                this.props.navigation.dispatch(resetAction);
+
+                            }
+                        }
+
+                    }
+
+
+                }
+
+            }
+
+        });
 
         keys.socket.on('recorrido_id_conductor', num => {
             console.log('Llego respuesta: ', num);
 
-            keys.id_servicio = num.servicio;
-            keys.id_recorrido = num.recorrdio;
+            keys.id_servicio = num.servicio; 
+            keys.id_recorrido = num.recorrdio; 
 
-            console.log("idServicio", keys.id_servicio);
+            console.log("idServicio",keys.id_servicio);
             console.log("idRecorrido", keys.id_recorrido);
             // this.state.id_recorrido = num;
             // this.setState({
 
             // });
-        
-       
+            // alert('EL conductor acepto tu solicitud, espera a tu chofer ');
             // Desactivar animación 
 
         });
 
+        keys.socket.removeAllListeners("chat_chofer");
 
+        
         keys.socket.on('chat_chofer', (num) => {
 
-            console.log("chat_chofer", num)
 
             keys.Chat.push(num.Mensaje);
 
             this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje"
+                showModal:true,
+                Descripcion:"Te llegó un mensaje"
             })
+
+          
 
         })
 
         keys.socket.on('cancelViajeChofer', () => {
 
-            keys.Chat = [];
-
+            console.log("cancelViajeChofer");
+            
             clearInterval(keys.intervalBroadcastCoordinates);
 
             const resetAction = StackActions.reset({
@@ -112,39 +253,83 @@ export default class TravelNoDestination extends Component {
 
             this.props.navigation.dispatch(resetAction);
 
-        })
-
-
-
-
-
-
+         })
+      
     }
 
-    callPhoneFunction() {
+    callPhoneFunction(){
         const args = {
-            number: keys.datos_usuario.numeroTelefono, // String value with the number to call
+            number: keys.datos_usuario.numeroTelefono , // String value with the number to call
             prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
         }
 
         call(args).catch(console.error)
     }
 
- 
+    async getTarifas() {
+        try {
+            console.log(this.state.distance);
+            console.log(this.state.duration);
+            //console.log(this.props.switchValue);
+            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+                distancia_km: this.state.distance,
+                tiempo_min: this.state.duration
+            });
+
+            res.data.datos.forEach(element => {
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 1) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+
+                 
+                }
+                if (keys.datos_vehiculo.categoriaVehiculo == 2) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+
+                }
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 3) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+                }
+
+                if (keys.datos_vehiculo.categoriaVehiculo == 4) {
+
+                    keys.Tarifa = element["out_costo_viaje"];
+                }
+            });
+        } catch (e) {
+            console.log(e);
+
+            this.setState({
+                showModal: true,
+                Descripcion: "Servicio no disponible, Intente más tarde"
+            })
+
+         
+        }
+    }
     // Función para aceptar el viaje
-    aceptViaje() {
+    aceptViaje(){
 
         var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
+        d.setHours(d.getHours(), d.getMinutes() + this.state.durationVehicule, 0, 0);
+        keys.HoraServicio = d.toLocaleTimeString()
 
+        console.log("Hora", keys.HoraServicio);
+        
 
         clearInterval(this.state.intervaltimerAceptViaje);
-
+        
         keys.socket.emit('chofer_accept_request', {
             id_usuario_socket: keys.id_usuario_socket,
             id_chofer_socket: keys.id_chofer_socket,
             datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
-            positionChofer: this.state.myPosition
+            positionChofer: this.state.myPosition,
+            // tiempoLlegada: d.toLocaleTimeString(
+
         });
 
         // console.log("id_conductor_socket", keys.id_chofer_socket);
@@ -161,24 +346,24 @@ export default class TravelNoDestination extends Component {
         // console.log("id_unidad", keys.datos_vehiculo.id_unidad);
         // console.log("id_conductor", keys.id_chofer);
 
-        // keys.socket.emit('generar_servicio', {
-        //     id_conductor_socket: keys.id_chofer_socket,
-        //     id_usuario_socket: keys.id_usuario_socket,
-        //     distancia_destino_usuario: keys.travelInfo.Distancia,
-        //     tiempo_viaje_destino: keys.travelInfo.Tiempo,
-        //     latitud_usuario: this.state.positionUser.latitude,
-        //     longitud_usuario: this.state.positionUser.longitude,
-        //     latitud_usuario_destino: this.state.parada1.latitude,
-        //     longitud_usuario_destino: this.state.parada1.longitude,
-        //     geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
-        //     geocoder_destino: keys.travelInfo.Parada1,
-        //     id_usuario: keys.datos_usuario.id_usuario,
-        //     id_unidad: keys.datos_vehiculo.id_unidad,
-        //     id_conductor: keys.datos_vehiculo.id_chofer
-        // })
+        keys.socket.emit('generar_servicio',{
+            id_conductor_socket: keys.id_chofer_socket,
+            id_usuario_socket: keys.id_usuario_socket,
+            distancia_destino_usuario: keys.travelInfo.Distancia,
+            tiempo_viaje_destino: keys.travelInfo.Tiempo,
+            latitud_usuario: keys.positionUser.usuario_latitud,
+            longitud_usuario: keys.positionUser.usuario_longitud,
+            latitud_usuario_destino: this.state.parada1.latitude,
+            longitud_usuario_destino: this.state.parada1.longitude,
+            geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
+            geocoder_destino: keys.travelInfo.Parada1.Direccion,
+            id_usuario: keys.datos_usuario.id_usuario,
+            id_unidad: keys.datos_vehiculo.id_unidad,
+            id_conductor: keys.datos_vehiculo.id_chofer
+        })
 
         this.fleet_chofer_usuario();
-
+       
 
         this.setState({
             HomeTravel: false,
@@ -194,11 +379,10 @@ export default class TravelNoDestination extends Component {
     fleet_chofer_usuario = () => {
         // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
         let intervalBroadcastCoordinates = setInterval(() => {
-            console.log("room_chofer_usuario TND")
             this.findCurrentLocationAsync();
             if (this.state.location != null && keys.id_usuario_socket != undefined) {
 
-
+            
                 this.setState({
                     myPosition: {
                         latitude: this.state.location.coords.latitude,
@@ -206,18 +390,18 @@ export default class TravelNoDestination extends Component {
                     },
 
                 })
-
+                
                 keys.socket.emit('room_chofer_usuario',
                     {
                         id_socket_usuario: keys.id_usuario_socket, id_socket_chofer: keys.id_chofer_socket,
-                        coordenadas_chofer: { latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude }
+                        coordenadas_chofer: {latitude:this.state.location.coords.latitude, longitude:this.state.location.coords.longitude}
                     });
 
             }
 
         }, 5000);
         keys.intervalBroadcastCoordinates = intervalBroadcastCoordinates;
-
+      
     }
 
     // Función global para conseguir la posición del dispositivo 
@@ -235,9 +419,9 @@ export default class TravelNoDestination extends Component {
     };
 
 
+   
 
-
-    async componentDidMount() {
+    async componentDidMount(){
 
         const location = await Location.getCurrentPositionAsync({});
         latitude = location.coords.latitude;
@@ -252,134 +436,158 @@ export default class TravelNoDestination extends Component {
 
             },
         })
-    }
 
-    async componentWillMount() {
+      
         // Bloque para asignar markers y trazos de rutas
+
         Flag = this.props.navigation.getParam('Flag', false);
+        console.log(Flag)
+        
+        if (Flag =="Acept"){
+            let intervaltimerAceptViaje = setInterval(() => {
+
+                this.setState({ intervaltimerAceptViaje });
+
+                console.log(this.state.intervaltimerAceptViaje);
+
+                if (this.state.timerAceptViaje == 0) {
+
+                    clearInterval(this.state.intervaltimerAceptViaje);
+                    // Socket para quitar al chófer de la cola
+                    keys.socket.emit('popChofer', {
+                        id_chofer_socket: keys.id_chofer_socket,
+                        id_usuario_socket: keys.id_usuario_socket, Msg: "Solicitud rechazada por conductor, buscando otro conductor"
+                    });
+
+                    let timerCoordenadas = setInterval(() => {
+
+                        this.findCurrentLocationAsync();
+
+                        if (this.state.location != null) {
+
+
+                            this.findCurrentLocationAsync();
+                            keys.socket.emit('coordenadas', {
+                                coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
+                                datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
+                            });
+
+
+
+
+
+                        }
+
+                    }, 5000);
+                    keys.timerCoordenadas = timerCoordenadas;
+
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioAutomatico" } })],
+                        key: undefined
+                    });
+
+                    this.props.navigation.dispatch(resetAction);
+
+
+
+
+                } else {
+
+                    this.setState({
+                        timerAceptViaje: this.state.timerAceptViaje - 1
+                    })
+                }
+
+
+            }, 1000);
+        }
 
         if (Flag == "Acept") {
             this.setState({
                 showModal: true,
                 Descripcion: "Te ha llegado una solicitud"
             })
+        } else {
+            if (Flag == "changeDestino") {
+                this.aceptViaje();
+            }
         }
 
+    }
 
-        let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+    
 
-
-        this.setState({
-            positionUser: {
-                latitude: usuarioPosition[0]["latitude"],
-                longitude: usuarioPosition[0]["longitude"]
-            }
-        })
-
-      
-
-        console.log(this.state.parada1);
+    async componentWillMount() {
 
 
-        const location = await Location.getCurrentPositionAsync({});
-        latitude = location.coords.latitude;
-        longitude = location.coords.longitude;
-
-
-        this.setState({
-            myPosition: {
-
-                latitude: latitude,
-                longitude: longitude
-
-            },
-
-        });
-
-        console.log("positionChofer", this.state.myPosition);
+       
+            let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
+   
+    
+            this.setState({
+                positionUser:{
+                    latitude: usuarioPosition[0]["latitude"],
+                    longitude: usuarioPosition[0]["longitude"]
+                }
+            })
 
 
 
-        // Bloque para la cuenta regresiva, ya sea para cancelación o aceptar el viaje 
+            this.setState({
+                parada1:{
+                    latitude: keys.travelInfo.Parada1.latitude,
+                    longitude: keys.travelInfo.Parada1.longitude
+                }
+            })
 
-        let intervaltimerAceptViaje = setInterval(() => {
+     
+    
 
-            this.setState({ intervaltimerAceptViaje });
+            console.log(this.state.parada1);
+    
+    
+            const location = await Location.getCurrentPositionAsync({});
+            latitude = location.coords.latitude;
+            longitude = location.coords.longitude;
+    
 
-            console.log(this.state.intervaltimerAceptViaje);
+            this.setState({
+                myPosition: {
+    
+                    latitude: latitude,
+                    longitude: longitude
+    
+                },
+              
+            });
 
-            if (this.state.timerAceptViaje == 0) {
+            console.log("positionChofer", this.state.myPosition);
+            
+        
 
-                clearInterval(this.state.intervaltimerAceptViaje);
-                // Socket para quitar al chófer de la cola
-                keys.socket.emit('popChofer', {
-                    id_chofer_socket: keys.id_chofer_socket,
-                    id_usuario_socket: keys.id_usuario_socket, Msg: "Solicitud rechazada por conductor, buscando otro conductor"
-                });
-
-                let timerCoordenadas = setInterval(() => {
-
-                    this.findCurrentLocationAsync();
-
-                    if (this.state.location != null) {
-
-
-                        this.findCurrentLocationAsync();
-                        keys.socket.emit('coordenadas', {
-                            coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
-                            datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
-                        });
-
-                        console.log("timerCoordenadas", keys.timerCoordenadas)
-
-
-
-                    }
-
-                }, 5000);
-                keys.timerCoordenadas = timerCoordenadas;
-
-
-                const resetAction = StackActions.reset({
-                    index: 0,
-                    actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioAutomatico" } })],
-                    key: undefined
-                });
-
-                this.props.navigation.dispatch(resetAction);
-
-               
-
-            } else {
-
-                this.setState({
-                    timerAceptViaje: this.state.timerAceptViaje - 1
-                })
-            }
-
-
-        }, 1000);
+   
 
 
 
     }
 
     Go = () => {
-
-        coordinates = {
-            latitude: 0,
-            longitude: 0
+        
+        coordinates ={
+            latitude:0,
+            longitude:0
         }
 
         if (this.state.aceptViaje == true) {
-            coordinates = {
-                latitude: this.state.positionUser.latitude,
-                longitude: this.state.positionUser.longitude,
-            }
+                coordinates={
+                    latitude: this.state.positionUser.latitude,
+                    longitude: this.state.positionUser.longitude,
+                }
 
-            console.log(coordinates);
-
-        } else {
+                console.log(coordinates);
+               
+        }else{
             if (this.state.Travel == true) {
 
                 coordinates = {
@@ -388,20 +596,20 @@ export default class TravelNoDestination extends Component {
                 }
 
 
-                console.log("punto de encuentro", coordinates);
-
+                console.log("punto de encuentro",coordinates);
+              
             }
         }
-
         // Google maps 
-        if (keys.travelType == true) {
+    
+        if (keys.travelType==true){
 
             const data = {
                 source: {
                     latitude: this.state.myPosition.latitude,
                     longitude: this.state.myPosition.longitude
                 },
-
+               
                 destination: {
                     latitude: coordinates.latitude,
                     longitude: coordinates.longitude
@@ -416,13 +624,13 @@ export default class TravelNoDestination extends Component {
                         value: "navigate"       // this instantly initializes navigation using the given travel mode
                     }
                 ],
-
-
+    
+    
             }
 
             getDirections(data)
 
-        } else {
+        }else{
             // Waze
             showLocation({
                 latitude: coordinates.latitude,
@@ -439,6 +647,9 @@ export default class TravelNoDestination extends Component {
                 // app: 'uber'  // optionally specify specific app to use
             })
         }
+
+
+       
     }
 
     static navigationOptions = {
@@ -447,241 +658,96 @@ export default class TravelNoDestination extends Component {
     };
     // Función para iniciar en el punto de encuentro
     puntoEncuentro() {
-
+        
 
         this.setState({
             HomeTravel: false,
             aceptViaje: false,
             initravel: true,
-            mapDirectionVehiclePartida: false,
-            showInputAddress: true
+            mapDirectionVehiclePartida:false,
+            mapDirectionPartidaDestino:true
+       
         })
-
-        if (keys.type != "SinDestino") {
-            this.setState({
-
-                mapDirectionPartidaDestino: true
-
-            });
-        }
+    
 
         // Socket de punto de encuentro, socket puntoEncuentroUsuario
-        keys.socket.emit("puntoEncuentro", {
+        keys.socket.emit("puntoEncuentro",{
             id_socket_usuario: keys.id_usuario_socket
         });
 
-
-
+        
+        
     }
 
 
 
-    Chat() {
+    Chat(){
 
         keys.socket.removeAllListeners("chat_chofer");
         this.props.navigation.navigate("Chat")
     }
     // Función para iniciar el viaje 
-    async iniciarViaje() {
+    async iniciarViaje(){
 
-        try {
+
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: false,
+            initravel: false,
+            Travel: true,
             
-            console.log("Destination 2", this.state.destination);
-    
-    
-            let Parada1 = await Location.geocodeAsync(this.state.destination);
-
-            console.log(Parada1);
-
-            if(Parada1.length==0){
-
-                this.setState({
-                    showModal: true,
-                    Descripcion: "Favor de agregar un destino correcto"
-                })
-                
-
-
-            }else{
-
-                this.setState({
-                    parada1: {
-                        latitude: Parada1[0]["latitude"],
-                        longitude: Parada1[0]["longitude"],
-                    },
-                })
-        
-        
-                Paradas = []
-        
-                Parada1Info = {
-                    latitude: Parada1[0]["latitude"], longitude: Parada1[0]["longitude"], Direccion: this.state.destination
-                }
-        
-                Paradas.push(Parada1Info)
-        
-                this.setState({
-        
-                    Paradas
-        
-                })
-        
-                keys.socket.emit('sendPrimeraParada1Chofer', {
-                    id_usuario_socket: keys.id_usuario_socket,
-                    info: Parada1Info,
-                    flag:"PrimeraParada"
-                });
-        
-        
-        
-                keys.Paradas = this.state.Paradas;
-        
-                keys.travelInfo.Parada1 = keys.Paradas[0];
-        
-                this.setState({
-                    showInputAddress: false,
-                    mapDirectionPartidaDestino: true,
-                    initravel:false,
-                    Travel:true
-        
-                });
-        
-                console.log("keys travel info",keys.travelInfo.Parada1);
-        
-             
-            }
-    
-        
-
-        } catch (error) {
-            console.log(error);
-           
-        }   
-
-
-
-        
-        
-     
-    }
-
-    async generarServicio(){
-
-        try {
-            console.log("categoria 1", keys.datos_vehiculo.categoriaVehiculo)
-            console.log("distance 1", this.state.distance);
-            console.log("tiempo 1", this.state.duration)
-
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
-                distancia_km: this.state.distance,
-                tiempo_min: this.state.duration
-            });
-
-            res.data.datos.forEach(element => {
-                
-                console.log(element)
-
-                if(element["categoria_servicio"]==keys.datos_vehiculo.categoriaVehiculo){
-
-                   
-                    keys.Tarifa = parseInt(element["out_costo_viaje"]);
             
-                }
-
-
-            });
-        } catch (e) {
-            console.log(e);
-
-            this.setState({
-                showModal: true,
-                Descripcion: "Servicio no disponible, Intente más tarde"
-            })
-
-
-        }
-
-
-
-
-        console.log("Distance", this.state.distance);
-        console.log("Duration", this.state.duration);
-        console.log("Id Chofer", keys.datos_chofer.idChofer);
-
-        console.log("Tarifa", keys.Tarifa);
-
-        keys.socket.emit('generar_servicio', {
-            id_conductor_socket: keys.id_chofer_socket,
-            id_usuario_socket: keys.id_usuario_socket,
-            distancia_destino_usuario: this.state.distance,
-            tiempo_viaje_destino: this.state.duration,
-            latitud_usuario: this.state.positionUser.latitude,
-            longitud_usuario: this.state.positionUser.longitude,
-            latitud_usuario_destino: this.state.parada1.latitude,
-            longitud_usuario_destino: this.state.parada1.longitude,
-            geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
-            geocoder_destino: keys.travelInfo.Parada1.Direccion,
-            id_usuario: keys.datos_usuario.id_usuario,
-            id_unidad: keys.datos_vehiculo.id_unidad,
-            id_conductor: keys.datos_chofer.idChofer
         })
 
-        if (keys.Tarifa != 0) {
 
-            this.setState({
-                HomeTravel: false,
-                aceptViaje: false,
-                initravel: false,
-                Travel: true
-
-            })
-        }
+        
     }
-
-
-
-
-
-  
     // Función para terminar el viaje 
-    terminarViaje() {
-
+    terminarViaje(){
         clearInterval(keys.intervalBroadcastCoordinates);
-
-        keys.Chat = [];
-
         this.props.navigation.navigate("viajeFinalizado");
 
-        keys.socket.emit('sendPrimeraParada1Chofer', {
-            id_usuario_socket: keys.id_usuario_socket,
-            info: keys.Tarifa,
-            flag: "Tarifa"
-        });
+        keys.socket.emit("terminarViajeChofer", { id_usuario_socket:keys.id_usuario_socket})
 
-        keys.socket.emit("terminarViajeChofer", { id_usuario_socket: keys.id_usuario_socket })
+        keys.Chat=[];
     }
+    // Función para cancelar el viaje
+    cancelViaje(){
 
-    // Función para cancelar viaje
-    cancelViaje() {
+        var d = new Date(); // get current date
+        d.setHours(d.getHours(), d.getMinutes(), 0, 0);
+        horaActual = d.toLocaleTimeString()
 
-        keys.Chat = [];
+        console.log("Hora Actual", horaActual);
+        console.log("Hora Servicio", keys.HoraServicio);
 
-        clearInterval(keys.intervalBroadcastCoordinates);
+        if(horaActual<keys.HoraServicio){
 
-        keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
+            clearInterval(keys.intervalBroadcastCoordinates);
+    
+            keys.Chat=[];
 
-        keys.socket.emit("cancelViajeChofer", {
-            id_socket_usuario: keys.id_usuario_socket
-        });
+            keys.socket.emit("cancelaConductor", { id: keys.id_servicio})
+    
+            keys.socket.emit("cancelViajeChofer",{
+                id_socket_usuario: keys.id_usuario_socket
+            });
+    
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
+                key: undefined
+            });
+    
+            this.props.navigation.dispatch(resetAction);
+        }else{
+            this.setState({
+                showModalCancel:false,
+                showModal:true,
+                Descripcion:"No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
+            })
+        }
 
-        const resetAction = StackActions.reset({
-            index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
-            key: undefined
-        });
-
-        this.props.navigation.dispatch(resetAction);
     }
     // Función para actualizar la región del mapa 
     onRegionChange = async region => {
@@ -695,7 +761,7 @@ export default class TravelNoDestination extends Component {
         });
 
 
-    }
+    } 
 
     autocompleteGoogle = async destination => {
         this.setState({
@@ -824,28 +890,27 @@ export default class TravelNoDestination extends Component {
 
                         <Modal
                             isVisible={this.state.showModalCancel}
-                        
-
+                         
                         >
                             <View style={styles.area}>
                                 <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
                             </View>
                             {/* Primer motivo */}
                             <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
+                                <View style={{flex:1}}>
                                     <View style={{ alignSelf: "center" }}>
 
                                         <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
                                             clienteNoPresento: true,
                                             clienteNoCancelacion: false,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: false,
+                                            direccionIncorrecta : false, 
+                                            noCobrarCliente: false, 
                                             Otro: false
                                         })}></Icon>
 
                                     </View>
                                 </View>
-                                <View style={{ flex: 5 }}>
+                                <View style={{flex:5}}>
                                     <Text> El cliente no se presentó</Text>
                                 </View>
                             </View>
@@ -891,7 +956,7 @@ export default class TravelNoDestination extends Component {
                             {/* Cuarto mótivo */}
                             <View style={styles.area}>
                                 <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
+                                    <View style={{alignSelf:"center"}}>
                                         <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
                                             clienteNoPresento: false,
                                             clienteNoCancelacion: false,
@@ -909,16 +974,16 @@ export default class TravelNoDestination extends Component {
                             {/* Quinto mótivo */}
                             <View style={styles.area}>
                                 <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
+                                    <View style={{alignSelf:"center"}}>
 
                                         <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
-                                            onPress={() => this.setState({
-                                                clienteNoPresento: false,
-                                                clienteNoCancelacion: false,
-                                                direccionIncorrecta: false,
-                                                noCobrarCliente: false,
-                                                Otro: true
-                                            })}></Icon>
+                                        onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: false,
+                                            Otro: true
+                                        })}></Icon>
                                     </View>
                                 </View>
                                 <View style={{ flex: 5 }}>
@@ -926,26 +991,26 @@ export default class TravelNoDestination extends Component {
                                 </View>
                             </View>
 
-
+                    
                             <View
-                                style={styles.area}>
-                                <View style={{ flex: 2 }}></View>
+                            style={styles.area}>
+                                <View style={{flex:2}}></View>
 
-                                <View style={{ flex: 2, marginBottom: 5, paddingRight: 5 }}>
-                                    <Button
+                                <View style={{ flex: 2, marginBottom:5, paddingRight:5 }}>
+                                    <Button 
                                         title="No Cancelar"
                                         buttonStyle={{
-                                            backgroundColor: "#ff8834"
+                                            backgroundColor:"#ff8834"
                                         }}
-                                        titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.setState({
-                                            showModalCancel: false
+                                        titleStyle={{  fontSize:12 }}
+                                        onPress={()=>this.setState({
+                                            showModalCancel:false
                                         })}
 
                                     ></Button>
-
+                             
                                 </View>
-                                <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
+                                <View style={{ flex: 2, marginBottom: 5, marginRight:5 }}>
 
                                     <Button
                                         title="Cancelar"
@@ -953,10 +1018,10 @@ export default class TravelNoDestination extends Component {
                                             backgroundColor: "#ff8834"
                                         }}
                                         titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.cancelViaje()}
-
+                                        onPress={()=>this.cancelViaje()}
+                                
                                     ></Button>
-
+                                  
                                 </View>
                             </View>
 
@@ -964,21 +1029,22 @@ export default class TravelNoDestination extends Component {
                         </Modal>
 
                     </View>
+
                     <View style={styles.area}>
-                        <View style={{ flex: 1 }}>
+                        <View style={{flex:1}}>
                             <Switch
                                 value={keys.stateConductor}
-                              
+                        
                             />
                         </View>
                         <View style={{ flex: 2 }}>
                             <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
                         </View>
-                        <View style={{ flex: 1 }}></View>
+                        <View style={{flex:1}}></View>
 
                         <View style={
                             {
-                                flex: 1,
+                                flex:1,
                                 paddingBottom: 5
                             }
                         }>
@@ -989,7 +1055,7 @@ export default class TravelNoDestination extends Component {
                         </View>
                         <View style={
                             {
-                                flex: 1,
+                                flex:1,
                                 paddingBottom: 5
                             }
                         }>
@@ -1095,15 +1161,15 @@ export default class TravelNoDestination extends Component {
                                 <Icon name="chevron-right" color="green" size={15}></Icon>
 
                                 <View style={{ width: 280 }}>
-                                    <Text style={{ marginLeft: 10 }}>{this.state.aceptViaje ? keys.travelInfo.puntoPartida.addressInput : keys.travelInfo.Parada1.Direccion}</Text>
+                                    <Text style={{ marginLeft: 10 }}>{this.state.aceptViaje? keys.travelInfo.puntoPartida.addressInput : keys.travelInfo.Parada1.Direccion}</Text>
                                     <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                                 </View>
                                 <View>
-                                    <Icon name="chevron-up" size={30} onPress={this.Go} color="#ff8834"></Icon>
+                                    <Icon name="chevron-up" size={30} color="#ff8834" onPress={this.Go}></Icon>
                                     <Text style={{ paddingLeft: 4 }}>Go</Text>
                                 </View>
                             </View>
-
+                          
                         </View>
                         :
                         null
@@ -1113,8 +1179,8 @@ export default class TravelNoDestination extends Component {
 
                 </View>
 
-                {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
-                
+                {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0 ?
+
                     <View style={styles.containerMap}>
                         <MapView
 
@@ -1122,8 +1188,8 @@ export default class TravelNoDestination extends Component {
                             region={{
                                 latitude: this.state.region.latitude,
                                 longitude: this.state.region.longitude,
-                                longitudeDelta: this.state.region.longitudeDelta,
-                                latitudeDelta: this.state.region.latitudeDelta
+                                latitudeDelta: this.state.region.latitudeDelta,
+                                longitudeDelta: this.state.region.longitudeDelta
                             }}
 
                             onRegionChangeComplete={this.onRegionChange}
@@ -1141,24 +1207,33 @@ export default class TravelNoDestination extends Component {
                                 }}
 
                             >
-                                <Icon color="#ff8834" name="car" size={20} ></Icon>
+                                <Icon color="#ff8834" name="car" size={20} ></Icon> 
                             </Marker>
 
                             {/* Ubicación del usuario */}
-                            <Marker
-                                coordinate={{
-                                    latitude: this.state.positionUser.latitude,
-                                    longitude: this.state.positionUser.longitude,
-                                }}
+                            {this.state.positionUser.latitude!=0 && this.state.positionUser.longitude ?
+                            
+                                <Marker
+                                    coordinate={{
+                                        latitude: this.state.positionUser.latitude,
+                                        longitude: this.state.positionUser.longitude,
+                                    }}
 
-                            >
-                                <Icon name="map-pin" size={20} color="green"></Icon>
-                            </Marker>
+                                >
+                                    <Icon name="map-pin" size={20} color="green"></Icon>
+                                </Marker>
+                        
+                            :
+                                null
+                            }
 
-                            {this.state.mapDirectionVehiclePartida && this.state.myPosition.latitude !=0
-                            && this.state.myPosition.longitude !=0 && this.state.positionUser.latitude !=0
-                            && this.state.positionUser.longitude !=0 ?
-
+                            {this.state.mapDirectionVehiclePartida
+                            && this.state.myPosition.latitude !=0
+                            && this.state.myPosition.longitude !=0
+                            && this.state.positionUser.latitude !=0
+                            && this.state.positionUser.longitude != 0 
+                            ?
+                            
                                 <MapViewDirections
 
 
@@ -1178,7 +1253,8 @@ export default class TravelNoDestination extends Component {
 
                                             this.setState({
                                                 distance: parseInt(result.distance),
-                                                duration: parseInt(result.duration)
+                                                duration: parseInt(result.duration), 
+                                                durationVehicule: parseInt(result.duration)
                                             })
 
 
@@ -1189,20 +1265,20 @@ export default class TravelNoDestination extends Component {
                                     }}
 
                                 />
-
-                                :
+                        
+                            :
                                 null
-
+                            
                             }
 
-                            {this.state.mapDirectionPartidaDestino && this.state.myPosition.latitude != 0
-                            && this.state.myPosition.longitude != 0 && this.state.parada1.latitude != 0
-                            && this.state.parada1.longitude != 0  ?
+                            {this.state.mapDirectionPartidaDestino && this.state.myPosition.latitude !=0
+                            && this.state.myPosition.longitude && this.state.parada1.latitude 
+                            && this.state.parada1.longitude ?
 
                                 <View>
                                     <MapViewDirections
-
-
+            
+            
                                         origin={{
                                             latitude: this.state.myPosition.latitude,
                                             longitude: this.state.myPosition.longitude,
@@ -1216,27 +1292,19 @@ export default class TravelNoDestination extends Component {
                                         strokeColor="blue"
                                         onReady={result => {
                                             if (result != null) {
-
+            
                                                 this.setState({
                                                     distance: parseInt(result.distance),
                                                     duration: parseInt(result.duration)
                                                 })
 
-                                                if(keys.Tarifa==0){
-                                                    this.generarServicio();
-                                                }
-
-                                                
-
-                                                
-
-                                
+                                        
                                             }
-
-
-
+            
+            
+            
                                         }}
-
+            
                                     />
 
                                     <Marker
@@ -1251,20 +1319,21 @@ export default class TravelNoDestination extends Component {
 
 
                                 </View>
-
-                                :
+        
+                            :
 
                                 null
-
+                                
                             }
                             {/* Ruta de chofer al punto de partida */}
 
-
+                        
 
                         </MapView>
                     </View>
                 :
                     null
+
                 }
                 {/* Barra inferior de punto de encuentro */}
                 {this.state.aceptViaje ?
@@ -1277,7 +1346,7 @@ export default class TravelNoDestination extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <View style={{ flex: 1 }}>
+                            <View style={{flex:1}}>
 
                                 <Image
                                     style={{ width: 50, height: 50 }}
@@ -1286,46 +1355,45 @@ export default class TravelNoDestination extends Component {
 
                             </View>
 
-                            <View style={{ flex: 2 }}>
+                            <View style={{flex:2}}>
 
                                 <Text>{keys.datos_usuario.nombreUsuario}</Text>
 
                             </View>
 
-                            <View style={{ flex: 1 }}>
+                            <View style={{flex:1}}>
 
                                 <Icon name="times"
                                     color="red"
                                     size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
+                                    onPress={()=>this.setState({
+                                        showModalCancel:true
                                     })}
                                 ></Icon>
                             </View>
 
-                            <View style={{ flex: 1 }}>
+                            <View style={{flex:1}}>
 
                                 <Icon name="comment-dots"
                                     size={25}
                                     color="#ff8834"
                                     onPress={() => this.Chat()}
                                 ></Icon>
-
+                           
                             </View>
 
-                            <View style={{ flex: 1 }}>
+                            <View style={{flex:1}}>
 
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                <Icon name = "phone" onPress={()=>this.callPhoneFunction()}
                                     size={25}
                                     color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
+                                    onPress={()=>this.callPhoneFunction()}
                                 ></Icon>
 
                             </View>
 
 
                         </View>
-
                         <View style={styles.area}>
 
                             <View style={{ paddingLeft: 120 }}>
@@ -1339,7 +1407,7 @@ export default class TravelNoDestination extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
+                            <Icon name="angle-double-right" color="#ff8834" size={20} style={{ paddingLeft: 10 }}></Icon>
                             <View style={
                                 {
                                     paddingLeft: 50
@@ -1368,7 +1436,7 @@ export default class TravelNoDestination extends Component {
                 {this.state.HomeTravel ?
                     <View style={styles.area}>
 
-                        <Icon name="angle-double-right" size={30} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
+                        <Icon name="angle-double-right" color="#ff8834" size={30} style={{ paddingLeft: 10 }}></Icon>
                         <View style={
                             {
                                 paddingLeft: 85
@@ -1468,7 +1536,7 @@ export default class TravelNoDestination extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 10 }}></Icon>
+                            <Icon color="#ff8834" color="#ff8834" name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 10 }}></Icon>
                             <View style={
                                 {
                                     paddingLeft: 110
@@ -1566,7 +1634,7 @@ export default class TravelNoDestination extends Component {
                         </View>
                         <View style={styles.area}>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
+                            <Icon name="angle-double-right" color="#ff8834" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
                             <View style={
                                 {
                                     paddingLeft: 90

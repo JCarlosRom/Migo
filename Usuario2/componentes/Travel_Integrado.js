@@ -11,6 +11,8 @@ import { StackActions, NavigationActions } from 'react-navigation';
 import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
+import call from 'react-native-phone-call'
+import SendSMS from 'react-native-sms'
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
 export default class Travel_Integrado extends Component {
@@ -56,22 +58,51 @@ export default class Travel_Integrado extends Component {
             Express_Estandar: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima:0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             Express_Lujo: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
+            
             },
             Pool_Estandar: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             Pool_Lujo: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
-                out_costo_viaje: 0
+                out_costo_viaje: 0,
+                tarifaBase: 0,
+                tarifaMinima: 0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+                tarifa_cancelacion: 0
             },
             isNextVehicles: true,
             routeParada1: true,
@@ -80,11 +111,44 @@ export default class Travel_Integrado extends Component {
             creditPay: false,
             infoVehicleTipo: "",
             infoVehicleLlegada: "",
-            infoVehicleTarifa: 0,
+            infoVehicleTarifa: {
+                Tarifa:0,
+                tarifaBase: 0,
+                tarifaMinima:0,
+                porKilometro: 0,
+                porMinuto: 0,
+                Gob: 0,
+                Solicitud: 0,
+            },
             timer_coordenadasUsuario: null,
-            Change:false
+            Change:false,
+            Vehicles: null,
+            showVehicles:true
 
         };
+
+        if (keys.categoriaVehiculo == null && keys.tipoVehiculo == null) {
+
+            this.getVehicles(1, 1);
+
+        } else {
+
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio);
+
+        }
+        // Socket para escuchar el socket de vehículo
+        keys.socket.on('vehiclesGet', (num) => {
+
+            this.setState({
+                Vehicles: num
+            })
+
+            // console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
+
+
+        })
+
+        keys.socket.removeAllListeners("chat_usuario");
 
  
         // Chat de Usuario
@@ -92,7 +156,7 @@ export default class Travel_Integrado extends Component {
 
             console.log("chat_usuario", num)
 
-            // keys.Chat.push(num.Mensaje);
+            keys.Chat.push(num.Mensaje);
 
             this.setState({
                 showModal: true,
@@ -141,6 +205,10 @@ export default class Travel_Integrado extends Component {
         keys.socket.on('conductor_sendInfo', num => {
             console.log('conductor_sendInfo');
 
+            clearInterval(this.timer_Vehicles);
+
+            clearInterval(this.timer_VehiclesConsult);
+
             var d = new Date(); // get current date
             d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
             keys.HoraServicio= d.toLocaleTimeString()
@@ -150,7 +218,8 @@ export default class Travel_Integrado extends Component {
             this.setState({
                 showBackButton:false,
                 showModalAcept: true,
-                Descripcion: "El chofer ha aceptado tu solicitud"
+                Descripcion: "El chofer ha aceptado tu solicitud",
+                showVehicles:false
             })
 
 
@@ -158,7 +227,8 @@ export default class Travel_Integrado extends Component {
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
-                Reconocimientos: num.datos_chofer.Reconocimientos
+                Reconocimientos: num.datos_chofer.Reconocimientos,
+                Telefono: num.datos_chofer.Telefono
             }
 
             keys.datos_vehiculo={
@@ -277,8 +347,47 @@ export default class Travel_Integrado extends Component {
         });
     }
 
+    async getVehicles(tipoVehiculo, tipoServicio) {
 
-  
+
+
+        clearInterval(this.timer_Vehicles);
+
+        clearInterval(this.timer_VehiclesConsult);
+
+        keys.socket.emit('vehiclesConsultTravel', {
+            tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
+        });
+
+        this.timer_VehiclesConsult = setInterval(() => {
+
+            keys.socket.emit('vehiclesConsultTravel', {
+                tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
+            });
+
+
+        }, 10000);
+
+        keys.tipoServicio = tipoServicio;
+
+        keys.tipoVehiculo = tipoVehiculo;
+
+        console.log("Categoria vehiculo get");
+        console.log(keys.categoriaVehiculo);
+        console.log("Tipo Vehiculo Get");
+        console.log(keys.tipoVehiculo);
+
+    }
+
+
+    callPhoneFunction() {
+        const args = {
+            number: keys.datos_chofer.Telefono, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
+
+        call(args).catch(console.error)
+    }
 
     showPay(){
         if(this.state.showEstimations==true){
@@ -339,43 +448,81 @@ export default class Travel_Integrado extends Component {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                            tarifaBase : parseInt(element["tarifa_base"]),
+                            tarifaMinima : parseInt(element["tarifa_minima"]),
+                            porKilometro : parseInt(element["distancia"]),
+                            porMinuto : parseInt(element["tiempo"]),
+                            Gob : element["cuota_gob"],
+                            Solicitud : element["cuota_solicitud"],
+                            tarifa_cancelacion: element["tarifa_cancelacion"]
                         }
+
+                    
                      
                     })
                 }
+
                 if (element["categoria_servicio"] == 2) {
-                    
+
                     this.setState({
                         Express_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                            tarifaBase: parseInt(element["tarifa_base"]),
+                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                            porKilometro: parseInt(element["distancia"]),
+                            porMinuto: parseInt(element["tiempo"]),
+                            Gob: element["cuota_gob"],
+                            Solicitud: element["cuota_solicitud"],
+                            tarifa_cancelacion: element["tarifa_cancelacion"]
                         }
                     })
                 }
 
                 if (element["categoria_servicio"] == 3) {
-                    
+
                     this.setState({
                         Pool_Estandar: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                            tarifaBase: parseInt(element["tarifa_base"]),
+                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                            porKilometro: parseInt(element["distancia"]),
+                            porMinuto: parseInt(element["tiempo"]),
+                            Gob: element["cuota_gob"],
+                            Solicitud: element["cuota_solicitud"],
+                            tarifa_cancelacion: element["tarifa_cancelacion"]
                         }
+
                     })
                 }
 
                 if (element["categoria_servicio"] == 4) {
-                   
+
                     this.setState({
                         Pool_Lujo: {
                             categoria_servicio: element["categoria_servicio"],
                             nombre_categoria: element["nombre_categoria"],
                             out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                        } 
+                            tarifaBase: parseInt(element["tarifa_base"]),
+                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                            porKilometro: parseInt(element["distancia"]),
+                            porMinuto: parseInt(element["tiempo"]),
+                            Gob: element["cuota_gob"],
+                            Solicitud: element["cuota_solicitud"],
+                            tarifa_cancelacion: element["tarifa_cancelacion"]
+                        }
                     })
+
+        
                 }
+
+                
+            
             });
+        
         } catch (e) {
             console.log(e);
             this.setState({
@@ -387,17 +534,30 @@ export default class Travel_Integrado extends Component {
     }
 
     generarSolicitud = () => {
+
+        keys.Tarifa.Total = this.state.infoVehicleTarifa.Tarifa;
+        keys.Tarifa.tarifaBase = this.state.infoVehicleTarifa.tarifaBase;
+        keys.Tarifa.tarifaMinima = this.state.infoVehicleTarifa.tarifaMinima;
+        keys.Tarifa.porMinuto = this.state.infoVehicleTarifa.porMinuto;
+        keys.Tarifa.porKilometro = this.state.infoVehicleTarifa.porKilometro;
+        keys.Tarifa.Solicitud = this.state.infoVehicleTarifa.Solicitud;
+        keys.Tarifa.Gob = this.state.infoVehicleTarifa.Gob;
+        keys.Tarifa.tarifa_cancelacion= this.state.infoVehicleTarifa.tarifa_cancelacion;
+
+        console.log("keys", keys.Tarifa)
+
+
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
         datos_usuario = keys.datos_usuario;
         infoTravel= keys.travelInfo;
         type= keys.type;
         keys.id_usuario_socket= keys.socket.id;
-        Tarifa = this.state.infoVehicleTarifa;
+        Tarifa = keys.Tarifa.Total
         Distancia= this.state.distance,
         Tiempo= this.state.duration
         
-        keys.Tarifa= Tarifa; 
+        
 
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
@@ -524,12 +684,31 @@ export default class Travel_Integrado extends Component {
             this.setState({
                 infoVehicleTipo: "Express Estandar",
                 infoVehicleLlegada: d.toLocaleTimeString(),
-                infoVehicleTarifa: this.state.Express_Estandar.out_costo_viaje
+             
+
             })
-            // Express
-            keys.tipoServicio = 1;
+            console.log(this.state.Express_Estandar)
+            console.log("------")
+            console.log(this.state.infoVehicleTarifa)
+
+            this.setState({
+                infoVehicleTarifa: {
+                    Tarifa: this.state.Express_Estandar.out_costo_viaje,
+                    tarifaBase: this.state.Express_Estandar.tarifaBase,
+                    tarifaMinima: this.state.Express_Estandar.tarifaMinima,
+                    porKilometro: this.state.Express_Estandar.porKilometro,
+                    porMinuto: this.state.Express_Estandar.porMinuto,
+                    Gob: this.state.Express_Estandar.Gob,
+                    Solicitud: this.state.Express_Estandar.Solicitud,
+                    tarifa_cancelacion: this.state.Express_Estandar.tarifa_cancelacion
+                },
+            })
             // Estandar
             keys.tipoVehiculo = 1;
+            // Express
+            keys.tipoServicio = 1;
+
+            this.getVehicles(keys.tipoVehiculo,keys.tipoServicio)
 
 
         }else{
@@ -537,42 +716,83 @@ export default class Travel_Integrado extends Component {
                 this.setState({
                     infoVehicleTipo: "Express Lujo",
                     infoVehicleLlegada: d.toLocaleTimeString(),
-                    infoVehicleTarifa: this.state.Express_Lujo.out_costo_viaje
+                    infoVehicleTarifa: {
+                        Tarifa: this.state.Express_Lujo.out_costo_viaje,
+                        tarifaBase: this.state.Express_Lujo.tarifaBase,
+                        tarifaMinima: this.state.Express_Lujo.tarifaMinima,
+                        porKilometro: this.state.Express_Lujo.porKilometro,
+                        porMinuto: this.state.Express_Lujo.porMinuto,
+                        Gob: this.state.Express_Lujo.Gob,
+                        Solicitud: this.state.Express_Lujo.Solicitud,
+                        tarifa_cancelacion: this.state.Express_Lujo.tarifa_cancelacion
+                    } 
+               
                 })
 
-                // Express
-                keys.tipoServicio = 1;
+               
+
                 // Lujo
                 keys.tipoVehiculo = 2;
+                // Express
+                keys.tipoServicio = 1;
+
+                this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
             }else{
                 if(typeVehicle=="Pool Estandar"){
                     this.setState({
                         infoVehicleTipo: "Pool Estandar",
                         infoVehicleLlegada: d.toLocaleTimeString(),
-                        infoVehicleTarifa: this.state.Pool_Estandar.out_costo_viaje
+                        infoVehicleTarifa: {
+                            Tarifa: this.state.Pool_Estandar.out_costo_viaje,
+                            tarifaBase: this.state.Pool_Estandar.tarifaBase,
+                            tarifaMinima: this.state.Pool_Estandar.tarifaMinima,
+                            porKilometro: this.state.Pool_Estandar.porKilometro,
+                            porMinuto: this.state.Pool_Estandar.porMinuto,
+                            Gob: this.state.Pool_Estandar.Gob,
+                            Solicitud: this.state.Pool_Estandar.Solicitud,
+                            tarifa_cancelacion: this.state.Pool_Estandar.tarifa_cancelacion
+                        } 
+                        
                     })
 
-                    // Pool
-                    keys.tipoServicio = 2;
                     // Estandar
                     keys.tipoVehiculo = 1;
+                    // Pool
+                    keys.tipoServicio = 2;
+
+                    this.getVehicles(keys.tipoVehiculo,keys.tipoServicio)
 
                 }else{
                     if(typeVehicle=="Pool Lujo"){
                         this.setState({
                             infoVehicleTipo: "Pool Lujo",
                             infoVehicleLlegada: d.toLocaleTimeString(),
-                            infoVehicleTarifa: Pool_Lujo.out_costo_viaje
+                            infoVehicleTarifa: {
+                                Tarifa: this.state.Pool_Lujo.out_costo_viaje,
+                                tarifaBase: this.state.Pool_Lujo.tarifaBase,
+                                tarifaMinima: this.state.Pool_Lujo.tarifaMinima,
+                                porKilometro: this.state.Pool_Lujo.porKilometro,
+                                porMinuto: this.state.Pool_Lujo.porMinuto,
+                                Gob: this.state.Pool_Lujo.Gob,
+                                Solicitud: this.state.Pool_Lujo.Solicitud,
+                                tarifa_cancelacion: this.state.Pool_Lujo.tarifa_cancelacion
+                            } 
+                         
                         })
 
-                        // Pool
-                        keys.tipoServicio = 2;
                         // Lujo
                         keys.tipoVehiculo = 2;
+                        // Pool
+                        keys.tipoServicio = 2;
+
+                        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
                     }
                 }
             }
         }
+
+        
+  
 
         this.setState({
             showEstimations: true,
@@ -620,11 +840,12 @@ export default class Travel_Integrado extends Component {
     
                 
             })
-    
-            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio })
 
-            keys.socket.emit('cancelViajeUsuario',{id_chofer_socket: keys.id_chofer_socket});
+            // this.sendSMS();
     
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+
+            keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
     
             const resetAction = StackActions.reset({
                 index: 0,
@@ -642,6 +863,22 @@ export default class Travel_Integrado extends Component {
         }
 
     }
+
+    // sendSMS() {
+
+    //     Descripcion = 'Pagar tarifa de cancelación: MX$'
+
+    //     SendSMS.send({
+    //         body: Descripcion,
+    //         recipients: [keys.datos_usuario.numeroTelefono],
+    //         successTypes: ['sent', 'queued'],
+    //         allowAndroidSendWithoutReadPermission: true
+    //     }, (completed, cancelled, error) => {
+
+    //         console.log('SMS Callback: completed: ' + completed + ' cancelled: ' + cancelled + 'error: ' + error);
+
+    //     });
+    // }
 
  
     render() {
@@ -701,7 +938,11 @@ export default class Travel_Integrado extends Component {
                                     name="arrow-left"
                                     color="#ff8834"
                                     size={25}
-                                    onPress={() => this.props.navigation.navigate("Home")}
+                                    onPress={() => {
+                                        clearInterval(this.timer_Vehicles);
+                                        clearInterval(this.timer_VehiclesConsult);
+                                        this.props.navigation.navigate("Home")
+                                    }}
                                 ></Icon>
                             </View>
 
@@ -904,6 +1145,30 @@ export default class Travel_Integrado extends Component {
                                 >
                                     <Icon name="map-pin" size={20} color="green"></Icon>
                                 </Marker>
+
+                                {this.state.Vehicles != null && this.state.showVehicles ?
+
+
+                                    this.state.Vehicles.map(marker => (
+
+                                        <Marker
+                                            key={"key"}
+                                            coordinate={{
+                                                latitude: marker.latitud,
+                                                longitude: marker.longitud
+                                            }}
+
+                                        >
+                                            <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" : "car-side"} size={20} color="orange"></Icon>
+
+                                        </Marker>
+                                    ))
+
+
+                                    :
+                                    null
+
+                                }
 
                                 {
                                     this.state.Paradas!=null?
@@ -1111,7 +1376,7 @@ export default class Travel_Integrado extends Component {
                                 </View>
 
                                 <View style={{paddingLeft:120}}>
-                                    <Text> MX$ {this.state.infoVehicleTarifa}</Text>
+                                    <Text> MX$ {this.state.infoVehicleTarifa.Tarifa}</Text>
                                 </View>
                             
                             </View>
@@ -1427,7 +1692,7 @@ export default class Travel_Integrado extends Component {
                             </View>
 
                             <View style={styles.area}>
-                                <Icon color="#ff8834" name="phone" size={30}></Icon>
+                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30} onPress={()=>this.callPhoneFunction()}></Icon>
                                 <View style={{paddingLeft:10}}></View>
                                 <Icon name="comment-dots"
                                     color="#ff8834"

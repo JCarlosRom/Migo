@@ -6,14 +6,14 @@ export default keys={
     id_recorrido: '',
     // Usuario
     datos_usuario: {
-        id_usuario: 1,
-        nombreUsuario: 'Luis Oswaldo Tovar Olivera',
-        CURP: 'TOOL980302HCMVLS06',
-        numeroTelefono: "3121402169",
-        correoElectronico: "16460445@itcolima.edu.mx"
+        id_usuario: 2,
+        nombreUsuario: 'Juan Hernandez',
+        CURP: 'GUGL970208MCMTRR05',
+        numeroTelefono: "3121942513",
+        correoElectronico: "15460810@itcolima.edu.mx"
 
     },
-    categoriaVehiculo:null,
+    categoriaVehiculo:1,
     tipoVehiculo:null, 
     tipoServicio:null,
     // Chofer
@@ -29,7 +29,8 @@ export default keys={
         idChofer: null,
         nombreChofer: null,
         Estrellas: null,
-        Reconocimientos: null
+        Reconocimientos: null,
+        Telefono: null 
 
     },
     // Información de viajes 
@@ -41,9 +42,23 @@ export default keys={
      
 
     },
-    Tarifa:0,
+    Tarifa:{
+        Solicitud: 0,
+        tarifaBase: 0, 
+        tarifaMinima:0,
+        porMinuto: 0,
+        porKilometro: 0, 
+        recargosEstimados: 0,
+        Gob:0,
+        Peaje: 0,
+        Propina:0,
+        Total:0,
+        tarifa_cancelacion: 0
+         
+    },
     Paradas: null, 
     typePay:1,
+    typePropina:1,
     // Punteros
     flag: null,
     type: "",
@@ -51,7 +66,7 @@ export default keys={
     addressInput:"",
     Chat: [],
     HoraServicio:null,
-    // urlSocket: 'http://192.168.0.13:3001',
-    urlSocket: 'http://35.203.42.33:3001/',
+    urlSocket: 'http://192.168.0.13:3001', 
+    // urlSocket: 'http://35.203.42.33:3001/',
 
 }

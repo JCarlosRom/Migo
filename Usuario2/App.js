@@ -23,6 +23,8 @@ import Travel_MP2 from "./componentes/TravelMP2";
 import TravelMP2Change from "./componentes/TravelMP2Change"
 
 import DesgloseTarifa from "./componentes/DesgloseTarifa";
+import DetalleCancelacion from "./componentes/DetalleCancelacion"
+
 import InfoTravel from "./componentes/InfoTravel";
 import Chat from "./componentes/Chat";
 import Inicio from "./componentes/Inicio";
@@ -62,6 +64,9 @@ const MainStack = createStackNavigator({
   },
   DesgloseTarifa:{
     screen:DesgloseTarifa
+  },
+  DetalleCancelacion:{
+    screen:DetalleCancelacion
   },
   InfoTravel:{
     screen: InfoTravel

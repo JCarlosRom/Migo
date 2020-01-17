@@ -56,7 +56,7 @@ export default class TravelNoDestination extends Component {
 
             Express_Estandar: {
                 categoria_servicio: 0,
-                nombre_categoria: "",
+                nombre_categoria: "Express Estandar",
                 out_costo_viaje: 0,
                 tarifaBase: 0,
                 tarifaMinima: 0,
@@ -68,7 +68,7 @@ export default class TravelNoDestination extends Component {
             },
             Express_Lujo: {
                 categoria_servicio: 0,
-                nombre_categoria: "",
+                nombre_categoria: "Express Lujo",
                 out_costo_viaje: 0,
                 tarifaBase: 0,
                 tarifaMinima: 0,
@@ -80,7 +80,7 @@ export default class TravelNoDestination extends Component {
             },
             Pool_Estandar: {
                 categoria_servicio: 0,
-                nombre_categoria: "",
+                nombre_categoria: "Pool Estandar",
                 out_costo_viaje: 0,
                 tarifaBase: 0,
                 tarifaMinima: 0,
@@ -92,7 +92,7 @@ export default class TravelNoDestination extends Component {
             },
             Pool_Lujo: {
                 categoria_servicio: 0,
-                nombre_categoria: "",
+                nombre_categoria: "Pool Lujo",
                 out_costo_viaje: 0,
                 tarifaBase: 0,
                 tarifaMinima: 0,
@@ -122,7 +122,7 @@ export default class TravelNoDestination extends Component {
 
         } else {
 
-            this.getVehicles(keys.categoriaVehiculo, keys.tipoVehiculo);
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio);
 
         }
         // Socket para escuchar el socket de vehículo
@@ -136,13 +136,14 @@ export default class TravelNoDestination extends Component {
 
 
         })
+        keys.socket.removeAllListeners("chat_usuario");
 
         // Chat de Usuario
         keys.socket.on('chat_usuario', (num) => {
 
-            console.log("chat_usuario", num)
+            // console.log("chat_usuario", num)
 
-            // keys.Chat.push(num.Mensaje);
+            keys.Chat.push(num.Mensaje);
 
             this.setState({
                 showModal: true,
@@ -204,6 +205,10 @@ export default class TravelNoDestination extends Component {
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
             console.log('conductor_sendInfo');
+
+            var d = new Date(); // get current date
+            d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
+            keys.HoraServicio = d.toLocaleTimeString()
 
             clearInterval(this.timer_Vehicles);
 
@@ -329,7 +334,9 @@ export default class TravelNoDestination extends Component {
         });
     }
 
-    async getVehicles(categoriaVehiculo, tipoVehiculo) {
+    async getVehicles(tipoVehiculo, tipoServicio) {
+
+        console.log(tipoVehiculo,",",tipoServicio)
 
 
 
@@ -337,20 +344,20 @@ export default class TravelNoDestination extends Component {
 
         clearInterval(this.timer_VehiclesConsult);
 
-        keys.socket.emit('vehiclesConsult', {
-            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+        keys.socket.emit('vehiclesConsultTravel', {
+            tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
         });
 
         this.timer_VehiclesConsult = setInterval(() => {
 
-            keys.socket.emit('vehiclesConsult', {
-                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+            keys.socket.emit('vehiclesConsultTravel', {
+                tipoVehiculo: tipoVehiculo, tipoServicio: tipoServicio, id_usuario_socket: keys.id_usuario_socket
             });
 
 
         }, 10000);
 
-        keys.categoriaVehiculo = categoriaVehiculo;
+        keys.tipoServicio = tipoServicio;
 
         keys.tipoVehiculo = tipoVehiculo;
 
@@ -468,24 +475,97 @@ export default class TravelNoDestination extends Component {
             });
     
             res.data.datos.forEach(element => {
-                if (element["categoria_servicio"] == keys.categoriaVehiculo) {
-                    keys.Tarifa = {
-                        Solicitud: element["cuota_solicitud"],
-                        tarifaBase: parseInt(element["tarifa_base"]),
-                        tarifaMinima: parseInt(element["tarifa_minima"]),
-                        porMinuto: parseInt(element["tiempo"]),
-                        porKilometro: parseInt(element["distancia"]),
-                        Gob: element["cuota_gob"],
-                        Total: parseInt(element["out_costo_viaje"]),
-                        tarifa_cancelacion: element["tarifa_cancelacion"]
 
+                if (keys.tipoVehiculo == 1 && keys.tipoServicio == 1) {
+
+                    if (element["categoria_servicio"] == 1) {
+
+                        this.setState({
+                            infoVehicleTarifa: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                Tarifa: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                            },
+                        })
                     }
+                } else {
+                    if (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) {
+                        if (element["categoria_servicio"] == 2) {
+
+                            this.setState({
+                                infoVehicleTarifa: {
+                                    categoria_servicio: element["categoria_servicio"],
+                                    nombre_categoria: element["nombre_categoria"],
+                                    Tarifa: parseInt(element["out_costo_viaje"]),
+                                    tarifaBase: parseInt(element["tarifa_base"]),
+                                    tarifaMinima: parseInt(element["tarifa_minima"]),
+                                    porKilometro: parseInt(element["distancia"]),
+                                    porMinuto: parseInt(element["tiempo"]),
+                                    Gob: element["cuota_gob"],
+                                    Solicitud: element["cuota_solicitud"],
+                                    tarifa_cancelacion: element["tarifa_cancelacion"]
 
 
+                                },
+                            })
+                        }
+                    } else {
+                        if (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) {
+                            if (element["categoria_servicio"] == 3) {
+
+                                this.setState({
+                                    infoVehicleTarifa: {
+                                        categoria_servicio: element["categoria_servicio"],
+                                        nombre_categoria: element["nombre_categoria"],
+                                        Tarifa: parseInt(element["out_costo_viaje"]),
+                                        tarifaBase: parseInt(element["tarifa_base"]),
+                                        tarifaMinima: parseInt(element["tarifa_minima"]),
+                                        porKilometro: parseInt(element["distancia"]),
+                                        porMinuto: parseInt(element["tiempo"]),
+                                        Gob: element["cuota_gob"],
+                                        Solicitud: element["cuota_solicitud"],
+                                        tarifa_cancelacion: element["tarifa_cancelacion"]
 
 
+                                    },
+                                })
+                            }
+                        } else {
+                            if (keys.tipoVehiculo == 2 && keys.tipoServicio == 2) {
+                                if (element["categoria_servicio"] == 4) {
 
+                                    this.setState({
+                                        infoVehicleTarifa: {
+                                            categoria_servicio: element["categoria_servicio"],
+                                            nombre_categoria: element["nombre_categoria"],
+                                            Tarifa: parseInt(element["out_costo_viaje"]),
+                                            tarifaBase: parseInt(element["tarifa_base"]),
+                                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                                            porKilometro: parseInt(element["distancia"]),
+                                            porMinuto: parseInt(element["tiempo"]),
+                                            Gob: element["cuota_gob"],
+                                            Solicitud: element["cuota_solicitud"],
+                                            tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                        },
+                                    })
+                                }
+                            }
+                        }
+                    }
                 }
+
+
             });
 
             
@@ -612,6 +692,8 @@ export default class TravelNoDestination extends Component {
     
     showInfoVehicle(typeVehicle){
 
+        console.log(typeVehicle);
+
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
     
@@ -622,10 +704,12 @@ export default class TravelNoDestination extends Component {
                 infoVehicleLlegada: d.toLocaleTimeString(),
                 infoVehicleTarifa: this.state.Express_Estandar.out_costo_viaje
             })
-            // Express
-            keys.tipoServicio = 1;
             // Estandar
             keys.tipoVehiculo = 1;
+            // Express
+            keys.tipoServicio = 1;
+
+            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
 
 
         }else{
@@ -636,10 +720,13 @@ export default class TravelNoDestination extends Component {
                     infoVehicleTarifa: this.state.Express_Lujo.out_costo_viaje
                 })
 
-                // Express
-                keys.tipoServicio = 1;
                 // Lujo
                 keys.tipoVehiculo = 2;
+                // Express
+                keys.tipoServicio = 1;
+
+                this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+
             }else{
                 if(typeVehicle=="Pool Estandar"){
                     this.setState({
@@ -648,23 +735,27 @@ export default class TravelNoDestination extends Component {
                         infoVehicleTarifa: this.state.Pool_Estandar.out_costo_viaje
                     })
 
-                    // Pool
-                    keys.tipoServicio = 2;
                     // Estandar
                     keys.tipoVehiculo = 1;
+                    // Pool
+                    keys.tipoServicio = 2;
+
+                    this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
 
                 }else{
                     if(typeVehicle=="Pool Lujo"){
                         this.setState({
                             infoVehicleTipo: "Pool Lujo",
                             infoVehicleLlegada: d.toLocaleTimeString(),
-                            infoVehicleTarifa: Pool_Lujo.out_costo_viaje
+                            infoVehicleTarifa: this.state.Pool_Lujo.out_costo_viaje
                         })
 
-                        // Pool
-                        keys.tipoServicio = 2;
                         // Lujo
                         keys.tipoVehiculo = 2;
+                        // Pool
+                        keys.tipoServicio = 2;
+
+                        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
                     }
                 }
             }
@@ -675,7 +766,7 @@ export default class TravelNoDestination extends Component {
             Home: false
         })
 
-        this.getVehicles(keys.tipoServicio, keys.tipoVehiculo)
+      
     }
 
 

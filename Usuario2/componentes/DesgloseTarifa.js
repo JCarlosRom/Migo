@@ -28,7 +28,7 @@ export default class DesgloseTarifa extends Component {
     backToInicio(){
         const resetAction = StackActions.reset({
             index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: true } })],
+            actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "terminarViaje" } })],
             key: undefined
         });
 
@@ -66,7 +66,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}}></View>
 
                     <View style={{ flex: 1 }}>
-                        <Text>$8.50</Text>
+                        <Text>${keys.Tarifa.tarifaBase}</Text>
 
                     </View>
                 </View>
@@ -80,7 +80,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}}></View>
 
                     <View style={{ flex:1 }}>
-                        <Text>$32.26</Text>
+                        <Text>${keys.Tarifa.porMinuto}</Text>
 
                     </View>
                 </View>
@@ -94,7 +94,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}}></View>
 
                     <View style={{ flex: 1 }}>
-                        <Text>$1.90</Text>
+                        <Text>${keys.Tarifa.porKilometro}</Text>
 
                     </View>
                 </View>
@@ -109,7 +109,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}} ></View>
 
                     <View style={{ flex: 1 }}>
-                        <Text>$4.50</Text>
+                        <Text>${keys.Tarifa.Total}</Text>
 
                     </View>
                 </View>
@@ -123,7 +123,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:2}}></View>
 
                     <View style={{ flex: 1 }}>
-                        <Text>$0.00</Text>
+                        <Text>${keys.Tarifa.Gob}</Text>
 
                     </View>
                 </View>
@@ -138,7 +138,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}}></View>
 
                     <View style={{flex:1}} >
-                        <Text>$9.99</Text>
+                        <Text>${keys.Tarifa.Solicitud}</Text>
 
                     </View>
                 </View>
@@ -153,7 +153,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:4}}></View>
 
                     <View style={{ flex: 1 }} >
-                        <Text>${keys.Tarifa}</Text>
+                        <Text>${keys.Tarifa.Total}</Text>
 
                     </View>
                 </View>
@@ -167,7 +167,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:3}}></View>
 
                     <View style={{ flex: 1 }} >
-                        <Text>$0.00</Text>
+                        <Text>${keys.Tarifa.Propina}</Text>
 
                     </View>
                 </View>
@@ -193,7 +193,7 @@ export default class DesgloseTarifa extends Component {
                     <View style={{flex:2}}></View>
 
                     <View style={{ flex: 1 }} >
-                        <Text>${keys.Tarifa}</Text>
+                        <Text>${keys.Tarifa.Total+keys.Tarifa.Propina}</Text>
 
                     </View>
                 </View>

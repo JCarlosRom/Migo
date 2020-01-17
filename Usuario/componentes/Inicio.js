@@ -51,10 +51,19 @@ export default class Inicio extends Component {
         title: "Inicio"
     };
 
+    componentDidMount(){
+
+        this.setPropina(keys.typePropina);
+
+    }
 
 
 
     async componentWillMount () {
+
+        
+
+        
 
         keys.Chat = [];
         
@@ -102,7 +111,7 @@ export default class Inicio extends Component {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude
             },
-            tarifaFinal:keys.Tarifa.Total
+            
 
         });
 
@@ -150,6 +159,7 @@ export default class Inicio extends Component {
                 }
             }
         }
+        keys.typePropina = tipoPropina;
 
         console.log("Tarifa final",this.state.tarifaFinal);
         console.log("Propina", this.state.Propina);

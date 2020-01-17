@@ -84,10 +84,11 @@ export default class TravelNoDestination extends Component {
 
         });
 
+        keys.socket.removeAllListeners("chat_chofer");
 
         keys.socket.on('chat_chofer', (num) => {
 
-            console.log("chat_chofer", num)
+            // console.log("chat_chofer", num)
 
             keys.Chat.push(num.Mensaje);
 

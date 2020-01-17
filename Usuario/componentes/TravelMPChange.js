@@ -87,7 +87,15 @@ export default class TravelMPChange extends Component {
         creditPay:false,
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
-        infoVehicleTarifa:0,
+        infoVehicleTarifa: {
+            Tarifa: 0,
+            tarifaBase: 0,
+            tarifaMinima: 0,
+            porKilometro: 0,
+            porMinuto: 0,
+            Gob: 0,
+            Solicitud: 0,
+        },
     };
 
     constructor(props) {
@@ -420,16 +428,94 @@ export default class TravelMPChange extends Component {
 
             res.data.datos.forEach(element => {
 
-                if (element["categoria_servicio"] == keys.categoriaVehiculo) {
+                if (keys.tipoVehiculo == 1 && keys.tipoServicio == 1) {
 
-                    this.setState({
+                    if (element["categoria_servicio"] == 1) {
 
-                        infoVehicleTarifa: parseInt(element["out_costo_viaje"])
+                        this.setState({
+                            infoVehicleTarifa: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                Tarifa: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
 
-                    })
+
+                            },
+                        })
+                    }
+                } else {
+                    if (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) {
+                        if (element["categoria_servicio"] == 2) {
+
+                            this.setState({
+                                infoVehicleTarifa: {
+                                    categoria_servicio: element["categoria_servicio"],
+                                    nombre_categoria: element["nombre_categoria"],
+                                    Tarifa: parseInt(element["out_costo_viaje"]),
+                                    tarifaBase: parseInt(element["tarifa_base"]),
+                                    tarifaMinima: parseInt(element["tarifa_minima"]),
+                                    porKilometro: parseInt(element["distancia"]),
+                                    porMinuto: parseInt(element["tiempo"]),
+                                    Gob: element["cuota_gob"],
+                                    Solicitud: element["cuota_solicitud"],
+                                    tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                },
+                            })
+                        }
+                    } else {
+                        if (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) {
+                            if (element["categoria_servicio"] == 3) {
+
+                                this.setState({
+                                    infoVehicleTarifa: {
+                                        categoria_servicio: element["categoria_servicio"],
+                                        nombre_categoria: element["nombre_categoria"],
+                                        Tarifa: parseInt(element["out_costo_viaje"]),
+                                        tarifaBase: parseInt(element["tarifa_base"]),
+                                        tarifaMinima: parseInt(element["tarifa_minima"]),
+                                        porKilometro: parseInt(element["distancia"]),
+                                        porMinuto: parseInt(element["tiempo"]),
+                                        Gob: element["cuota_gob"],
+                                        Solicitud: element["cuota_solicitud"],
+                                        tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                    },
+                                })
+                            }
+                        } else {
+                            if (keys.tipoVehiculo == 2 && keys.tipoServicio == 2) {
+                                if (element["categoria_servicio"] == 4) {
+
+                                    this.setState({
+                                        infoVehicleTarifa: {
+                                            categoria_servicio: element["categoria_servicio"],
+                                            nombre_categoria: element["nombre_categoria"],
+                                            Tarifa: parseInt(element["out_costo_viaje"]),
+                                            tarifaBase: parseInt(element["tarifa_base"]),
+                                            tarifaMinima: parseInt(element["tarifa_minima"]),
+                                            porKilometro: parseInt(element["distancia"]),
+                                            porMinuto: parseInt(element["tiempo"]),
+                                            Gob: element["cuota_gob"],
+                                            Solicitud: element["cuota_solicitud"],
+                                            tarifa_cancelacion: element["tarifa_cancelacion"]
+
+
+                                        },
+                                    })
+                                }
+                            }
+                        }
+                    }
                 }
-
-
 
 
             });
@@ -444,6 +530,15 @@ export default class TravelMPChange extends Component {
     }
 
     generarSolicitud = () => {
+
+        keys.Tarifa.Total = this.state.infoVehicleTarifa.Tarifa;
+        keys.Tarifa.tarifaBase = this.state.infoVehicleTarifa.tarifaBase;
+        keys.Tarifa.tarifaMinima = this.state.infoVehicleTarifa.tarifaMinima;
+        keys.Tarifa.porMinuto = this.state.infoVehicleTarifa.porMinuto;
+        keys.Tarifa.porKilometro = this.state.infoVehicleTarifa.porKilometro;
+        keys.Tarifa.Solicitud = this.state.infoVehicleTarifa.Solicitud;
+        keys.Tarifa.Gob = this.state.infoVehicleTarifa.Gob;
+        keys.Tarifa.tarifa_cancelacion = this.state.infoVehicleTarifa.tarifa_cancelacion;
         
         usuario_latitud = this.state.myPosition.latitude;
         usuario_longitud = this.state.myPosition.longitude;
@@ -452,9 +547,9 @@ export default class TravelMPChange extends Component {
         type = keys.type;
         keys.id_usuario_socket = keys.socket.id;
         id_chofer_socket = keys.id_chofer_socket;
-        Tarifa = this.state.infoVehicleTarifa;
+        Tarifa = keys.Tarifa.Total;
         Distancia = this.state.distance,
-            Tiempo = this.state.duration
+        Tiempo = this.state.duration
 
         keys.Tarifa.Total = Tarifa;
 
