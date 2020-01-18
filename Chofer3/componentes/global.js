@@ -30,23 +30,24 @@ export default keys={
 
     },
     datos_vehiculo: {
-        id_unidad: 2,
-        modelo:'Dodge attitude',
-        Matricula:'FRS408A',
+        id_unidad: 7,
+        modelo:'Mitsubishi Mirage',
+        Matricula:'FTA196',
         // Taxi: 1, Van: 2, Camioneta: 3
         categoriaVehiculo: 1,
         // Estandar: 1, Lujo: 2
         tipoVehiculo:2,
         // Express: 1, Pool: 2
-        tipoServicio: 2
+        tipoServicio: 1
 
     },
     datos_chofer:{
-        idChofer:1,
-        nombreChofer:'Oscar Dario Leyva',
-        Estrellas:'4.5',
-        Reconocimientos:'Habla inglés y español',
-        Telefono:'3121942513'
+        idChofer:8,
+        nombreChofer:'Jesús Mendoza',
+        Estrellas:'4.8',
+        Reconocimientos:'Excelente servicio, buena ruta, amable, buena conversación, Heroe',
+        Idiomas: "Español e Italiano",
+        Telefono:'3123109533'
 
     },
     GOOGLE_MAPS_APIKEY : 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY',
@@ -57,8 +58,8 @@ export default keys={
     intervalUpdateChoferCoordinates: null,
     Chat: [],
     travelType: true,
-    socketUrl:'http://192.168.0.13:3001',
-    // socketUrl:'http://35.203.42.33:3001/'
+    // socketUrl:'http://192.168.0.13:3001',
+    socketUrl:'http://35.203.42.33:3001/'
     
 }
 

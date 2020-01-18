@@ -36,9 +36,9 @@ export default keys={
         // Taxi: 1, Van: 2, Camioneta: 3
         categoriaVehiculo: 1,
         // Estandar: 1, Lujo: 2
-        tipoVehiculo:2,
+        tipoVehiculo:1,
         // Express: 1, Pool: 2
-        tipoServicio: 2
+        tipoServicio: 1
 
     },
     datos_chofer:{
@@ -57,8 +57,8 @@ export default keys={
     intervalUpdateChoferCoordinates: null,
     Chat: [],
     travelType: true,
-    socketUrl:'http://192.168.0.13:3001',
-    // socketUrl:'http://35.203.42.33:3001/'
+    // socketUrl:'http://192.168.0.13:3001',
+    socketUrl:'http://35.203.42.33:3001/'
     
 }
 

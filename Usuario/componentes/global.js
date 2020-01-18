@@ -66,7 +66,7 @@ export default keys={
     addressInput:"",
     Chat: [],
     HoraServicio:null,
-    urlSocket: 'http://192.168.0.13:3001', 
-    // urlSocket: 'http://35.203.42.33:3001/',
+    // urlSocket: 'http://192.168.0.13:3001', 
+    urlSocket: 'http://35.203.42.33:3001/',
 
 }

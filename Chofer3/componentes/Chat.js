@@ -10,17 +10,17 @@ export default class Chat extends Component {
 
     constructor(props) {
 
-        keys.socket.on('isConnected', () => {})
+        keys.socket.on('isConnected', () => { })
 
         super(props);
 
         this.state = {
 
-            
-            Chat:[],
+
+            Chat: [],
             Mensaje: "",
-            onFocus:false,
-            initChat:true
+            onFocus: false,
+            initChat: true
 
         };
 
@@ -32,8 +32,12 @@ export default class Chat extends Component {
         keys.socket.on('chat_chofer', (num) => {
 
 
+
+            if (keys.Chat.length >= 5) {
+                keys.Chat.splice(0, 1);
+            }
             // console.log("chat_chofer", num)
-          
+
             keys.Chat.push(num.Mensaje);
 
             this.setState({
@@ -53,14 +57,19 @@ export default class Chat extends Component {
 
     componentDidMount() {
 
-        this.setState({
-            Chat:keys.Chat
-        })
-        
 
-        console.log("Chat",this.state.Chat);
-      
-        
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
+
+        this.setState({
+            Chat: keys.Chat
+        })
+
+
+        console.log("Chat", this.state.Chat);
+
+
     }
 
     componentWillMount() {
@@ -74,12 +83,12 @@ export default class Chat extends Component {
     }
 
     _keyboardDidShow() {
-    
+
         this.setState({
             onFocus: true
         })
     }
-  
+
 
     _keyboardDidHide() {
         this.setState({
@@ -95,32 +104,36 @@ export default class Chat extends Component {
 
     sendMessage() {
 
-    
 
-        var infoMessage ={
-            Usuario:"Conductor",
+        var infoMessage = {
+            Usuario: "Conductor",
             nombreUsuario: keys.datos_chofer.nombreChofer,
             Mensaje: this.state.Mensaje
-            
+
         }
 
-       this.setState({
-           Mensaje:""
-       })
-        
-        keys.socket.emit('room_chofer_usuario_chat',
-        {
-            id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
-            infoMessage: infoMessage
-        });
+        this.setState({
+            Mensaje: ""
+        })
 
-             
+        keys.socket.emit('room_chofer_usuario_chat',
+            {
+                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+                infoMessage: infoMessage
+            });
+
+
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
+
+
         keys.Chat.push(infoMessage);
 
         this.setState({
             Chat: keys.Chat
         })
-        
+
 
         console.log("Chat Conductor", keys.Chat);
     }
@@ -133,22 +146,22 @@ export default class Chat extends Component {
             <KeyboardAvoidingView style={{ flex: 1 }} behavior="height" enabled >
                 <View style={{ flex: this.state.onFocus ? 4 : 5 }}>
 
-              
+
                     <View style={styles.area}>
-                        <View style={{flex:2}}></View>
+                        <View style={{ flex: 2 }}></View>
 
                         <View style={{ flex: 2 }}>
-                           
-                            <Text style={{fontSize:9, alignContent:"center"}}>{keys.datos_usuario.nombreUsuario}</Text>
-                        
+
+                            <Text style={{ fontSize: 9, alignContent: "center" }}>{keys.datos_usuario.nombreUsuario}</Text>
+
                         </View>
-                       
+
                     </View>
 
-                
 
 
-                    {this.state.Chat!=[]?
+
+                    {this.state.Chat != [] ?
 
                         this.state.Chat.map(element => (
 
@@ -165,14 +178,14 @@ export default class Chat extends Component {
                                 :
                                 <View style={styles.area}>
                                     <View style={{ flex: 2 }}>
-                                        
-                                        <Text style={{fontWeight:"bold"}}>{element.nombreUsuario}</Text>
+
+                                        <Text style={{ fontWeight: "bold" }}>{element.nombreUsuario}</Text>
                                         <Text>{element.Mensaje}</Text>
                                     </View>
                                 </View>
 
                         ))
-                    :
+                        :
                         null
                     }
 
@@ -193,13 +206,13 @@ export default class Chat extends Component {
                             rightIcon={
                                 <Icon
                                     name="reply"
-                                    onPress={()=>this.sendMessage()}
+                                    onPress={() => this.sendMessage()}
                                     size={24}
                                     color="#ff8834"
                                 />
 
                             }
-                            
+
                         />
 
                     </View>

@@ -32,6 +32,10 @@ export default class Chat extends Component {
         keys.socket.on('chat_chofer', (num) => {
 
 
+
+            if (keys.Chat.length >= 5) {
+                keys.Chat.splice(0, 1);
+            }
             // console.log("chat_chofer", num)
           
             keys.Chat.push(num.Mensaje);
@@ -52,6 +56,11 @@ export default class Chat extends Component {
     }
 
     componentDidMount() {
+
+
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
 
         this.setState({
             Chat:keys.Chat
@@ -95,7 +104,6 @@ export default class Chat extends Component {
 
     sendMessage() {
 
-    
 
         var infoMessage ={
             Usuario:"Conductor",
@@ -113,6 +121,11 @@ export default class Chat extends Component {
             id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
             infoMessage: infoMessage
         });
+
+
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
 
              
         keys.Chat.push(infoMessage);
