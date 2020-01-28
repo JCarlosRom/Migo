@@ -17,15 +17,8 @@ export default class Inicio extends Component {
 
   
 
-        
-
-        if (keys.socket == null) {
-
-            keys.socket = SocketIOClient(keys.urlSocket);
-            
-
-        }
-
+        keys.socket.removeAllListeners("getIdSocket");
+        keys.socket.removeAllListeners("sendIdChoferUsuario");
 
         super(props);
         this.state = {
@@ -41,7 +34,8 @@ export default class Inicio extends Component {
             Description:"",
             tarifaFinal:0,
             Propina:1,
-            showModalCancel:false
+            showModalCancel:false,
+            showModalCancelNoCobro:false
         };
 
 
@@ -62,9 +56,6 @@ export default class Inicio extends Component {
     async componentWillMount () {
 
         
-
-        
-
         keys.Chat = [];
         
         Flag = this.props.navigation.getParam('Flag', false);
@@ -92,6 +83,12 @@ export default class Inicio extends Component {
                     })
                 
                  
+                }else{
+                    if (Flag =="CancelarServicioNoCobro"){
+                        this.setState({
+                            showModalCancelNoCobro: true
+                        })
+                    }
                 }
             }
         }
@@ -193,17 +190,17 @@ export default class Inicio extends Component {
     
             keys.Tarifa.Total = keys.Tarifa.Total + keys.Tarifa.Propína;
     
-            keys.socket.emit("generar_transaccion",{
-                id_chofer_socket: keys.id_chofer_socket,
-                id_usuario_socket: keys.id_usuario_socket,
-                in_telefono_dispositivo: keys.datos_usuario.numeroTelefono,
-                in_forma_pago: 1,
-                in_importe: keys.Tarifa.Total,
-                in_id_chofer: keys.datos_chofer.idChofer,
-                in_id_recorrido: keys.id_recorrido,
-                in_id_servicio: keys.id_servicio
+            // keys.socket.emit("generar_transaccion",{
+            //     id_chofer_socket: keys.id_chofer_socket,
+            //     id_usuario_socket: keys.id_usuario_socket,
+            //     in_telefono_dispositivo: keys.datos_usuario.numeroTelefono,
+            //     in_forma_pago: 1,
+            //     in_importe: keys.Tarifa.Total,
+            //     in_id_chofer: keys.datos_chofer.idChofer,
+            //     in_id_recorrido: keys.id_recorrido,
+            //     in_id_servicio: keys.id_servicio
     
-            })
+            // })
 
 
             keys.Tarifa = {
@@ -242,7 +239,7 @@ export default class Inicio extends Component {
     render() {
 
         return (
-            <View>
+            <View style={{flex:1}}>
 
                 <View>
 
@@ -476,9 +473,75 @@ export default class Inicio extends Component {
                     </Modal>
 
                 </View>
-                
-                <View style={{ flexDirection: "row", position:"relative", paddingTop:10 }}>
-                    <View style={{ flex: 1, alignContent: "center", marginLeft:10 }}>
+
+                <View>
+
+                    {/* Modal de cobro final */}
+                    <Modal
+
+                        isVisible={this.state.showModalCancelNoCobro}
+
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+                                <Text style={{ fontWeight: "bold", fontSize: 16, marginLeft: 10 }}>Pagar</Text>
+                                <View style={{ paddingTop: 20 }}>
+                                    <Text style={{ alignSelf: "center", marginLeft: 10, marginRight: 10 }}>Cobro no aplicado</Text>
+                                   
+                                </View>
+
+                            </View>
+
+
+                            <View style={{ paddingLeft: 20, marginBottom: 40, marginTop: 20 }}>
+                                <View style={{ alignSelf: "center", paddingLeft: 10, paddingRight: 10, width: "100%" }}>
+                                    <Button
+                                        style={{ width: "100%" }}
+                                        title="Aceptar"
+                                        color="#ff8834"
+
+                                        onPress={() => this.setState({
+                                            showModalCancelNoCobro: false
+                                        })}></Button>
+                                </View>
+                            </View>
+
+
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
+                {this.state.myPosition.latitude != 0 && this.state.myPosition.longituden != 0 ?
+                    
+                    <MapView
+
+                        style={{flex:1}}
+                        region={{
+                            latitude: this.state.myPosition.latitude,
+                            longitude: this.state.myPosition.longitude,
+                            longitudeDelta: 0.060,
+                            latitudeDelta: 0.060
+                        }}
+
+                        showsUserLocation={true}
+                        followsUserLocation={true}
+                        showsMyLocationButton={false}
+
+
+                    >
+                    </MapView>
+
+                    :
+                    null
+                }
+
+
+                <View style={{ flexDirection: "row", position:"absolute", top:"2%", left:"3%" }}>
+                    <View style={{ flex: 1, alignContent: "center" }}>
                         <Icon name="bars" color="#ff8834" size={35}></Icon>
 
                     </View>
@@ -539,7 +602,7 @@ export default class Inicio extends Component {
                     </View>
 
                 </View>
-                <View style={{flexDirection:"row", paddingTop:10, paddingLeft:10}}>
+                <View style={{flexDirection:"row", position:"absolute", top:"9%", left:"3%"}}>
                     <View style={{ flex: 4 }}>
 
                         <TextInput
@@ -551,35 +614,8 @@ export default class Inicio extends Component {
                     </View>
                     <View style={{ flex: 1 }}></View>
                 </View>
-                {this.state.myPosition.latitude!=0 && this.state.myPosition.longituden !=0?
-                    <View style={styles.containerMap}>
-
-                    
-                        
-                            <MapView
-
-                                style={styles.map}
-                                region={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
-                                    longitudeDelta: 0.060,
-                                    latitudeDelta: 0.060
-                                }}
-
-                                showsUserLocation={true}
-                                followsUserLocation={true}
-                                showsMyLocationButton={false}
-
-
-                            >
-                            </MapView>
-                    
-                    
-                    
-                    </View>
-                    :
-                        null
-                    }
+                
+             
             </View>
         );
 

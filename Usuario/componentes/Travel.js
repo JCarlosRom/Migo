@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
+import * as Permissions from 'expo-permissions';
 import { StackActions, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 import keys from "./global";
@@ -12,12 +13,32 @@ import keys from "./global";
 export default class Travel extends Component {
     constructor(props) {
 
+
+    //    alert("Actualizada");
+
+        // Socket para asignar automáticamente el id desde el servidor 
+      
+
         if (keys.socket == null) {
 
-            // keys.socket = SocketIOClient('http://192.168.0.38:3001');
-            keys.socket = SocketIOClient('http://35.203.42.33:3001/');
+            keys.socket = SocketIOClient(keys.urlSocket);
 
+            console.log("Usuario",keys.urlSocket);
+
+            keys.id_usuario_socket = keys.socket.id;
+
+            keys.socket.on('getIdSocket', (num) => {
+
+                // console.log(num);
+
+                keys.id_usuario_socket = num.id;
+
+
+            })
+
+        
         }
+
         super(props);
         this.state = {
             slideDistance:1,
@@ -31,7 +52,7 @@ export default class Travel extends Component {
                 latitude: 0,
                 longitude: 0,
             },
-            region: {
+            region: {  
                 latitude: 0,
                 longitude: 0,
                 longitudeDelta:0,
@@ -51,7 +72,9 @@ export default class Travel extends Component {
 
         keys.id_usuario_socket = keys.socket.id;
 
-        if(keys.categoriaVehiculo==null && keys.tipoVehiculo==null){
+
+
+        if(keys.categoriaVehiculo==null || keys.tipoVehiculo==null){
 
             this.getVehicles(1, 1);
             
@@ -102,6 +125,13 @@ export default class Travel extends Component {
   
 
     async componentWillMount() {
+
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permission to access location was denied',
+            });
+        }
 
         // console.log("componentWillMount Categoria Vehiculo");
         // console.log(keys.categoriaVehiculo);
@@ -364,11 +394,14 @@ export default class Travel extends Component {
         });
         
         this.timer_VehiclesConsult = setInterval(() => {
- 
-            keys.socket.emit('vehiclesConsult', {
-                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
-            });
 
+            if(keys.id_usuario_socket!=null){
+
+                keys.socket.emit('vehiclesConsult', {
+                    categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+                });
+            }
+ 
 
         }, 10000);
 
@@ -435,13 +468,11 @@ export default class Travel extends Component {
 
     saveConfiguration(){
 
-
-
         clearInterval(this.timer_Vehicles);
 
         clearInterval(this.timer_VehiclesConsult);
 
-     
+        keys.socket.removeAllListeners("getIdSocket");
 
         const resetAction = StackActions.reset({
             index: 0,
@@ -459,108 +490,117 @@ export default class Travel extends Component {
    
         
         return (
-            <ScrollView contentContainerStyle={styles.contentContainer}>
-            
-            <View style={styles.container}>
-               
-            
-            <View style={styles.area}>
 
-                <View>
-                    <TextInput
-                  
-                        style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
-                        value={this.state.location}
-                        placeholderTextColor="gray"
-                    ></TextInput>
+            <View style={{ flex: 1 }}>
+
+                {this.state.region.latitude!=0 && this.state.region.longitude && this.state.region.latitudeDelta!=0 && this.state.region.longitudeDelta?
+                
+                    <MapView
+
+                        style={{ flex: 1 }}
+                        region={{
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta
+                        }}
+
+                        onRegionChangeComplete={this.onRegionChange}
+
+                        showsUserLocation={true}
+                        followsUserLocation={true}
+                        showsMyLocationButton={false}
+
+
+                        onLongPress={this.onMapPress.bind(this)}
+                    >
+                        <Marker
+                        coordinate={{
+                            latitude: this.state.myPosition.latitude,
+                            longitude: this.state.myPosition.longitude,
+                        }}
+
+                            >
+                                <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
+                        </Marker> 
+
+                            {this.state.Vehicles != null ?
+
+
+                                this.state.Vehicles.map(marker => (
+
+                                    <Marker
+                                        key={"key"}
+                                        coordinate={{
+                                            latitude: marker.latitud,
+                                            longitude: marker.longitud
+                                        }}
+
+                                    >
+                                        <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" :"car-side"} size={20} color="orange"></Icon>
+
+                                    </Marker>
+                                ))
+
+
+                                :
+                                    null
+
+                            }
+
+
+
+                    </MapView>
+                    :
+                    null
+                }
+             
+                <View style={{
+                    flexDirection:"row",
+                    position: "absolute", //use absolute position to show button on top of the map
+                    width: 300,
+                    left: "9%",
+                    top: "2%",
+                    backgroundColor: "#fff"}}>
+
+                    <View>
+                        <TextInput
+                    
+                            style={{ height: 40, width: 300, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
+                            value={this.state.location}
+                            placeholderTextColor="gray"
+                        ></TextInput>
+                    </View>
                 </View>
-            </View>
 
-               <View style={{
+                <View style={{
                     flexDirection: "row",
-                    backgroundColor: "#fff", paddingLeft: 20,
-                    paddingBottom: 20
+                    position: "absolute", //use absolute position to show button on top of the map
+                    width: 300,
+                    left: "9%",
+                    top: "10%",
+                    backgroundColor: "#fff"
                 }}>
                     <TextInput
-                        style={{ height: 40, width: 270, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
+                        style={{ height: 40, width: 300, borderColor: 'gray', borderWidth: 1, backgroundColor: '#DCDCDC' }}
                         placeholder=" ¿A dónde vamos?"
                         placeholderTextColor="gray"
                             onFocus={() => this.saveConfiguration()}
                     ></TextInput>
-                    
-                    
+
+
                 </View>
-                
-                {this.state.region.latitude!=0 && this.state.region.longitude !=0 && this.state.region.latitudeDelta!=0 && this.state.region.longitudeDelta!=0 ?
-                
-                    <View style={styles.containerMap}>
-                        <MapView
 
-                            style={styles.map}
-                            region={{
-                                latitude: this.state.region.latitude,
-                                longitude: this.state.region.longitude,
-                                latitudeDelta: this.state.region.latitudeDelta,
-                                longitudeDelta: this.state.region.longitudeDelta
-                            }}
-
-                            onRegionChangeComplete={this.onRegionChange}
-                            
-                            showsUserLocation={true}
-                            followsUserLocation={true}
-                            showsMyLocationButton={false}
-                    
-
-                            onLongPress={this.onMapPress.bind(this)}
-                        >
-                            <Marker
-                            coordinate={{
-                                latitude: this.state.myPosition.latitude,
-                                longitude: this.state.myPosition.longitude,
-                            }}
-                        
-                                >
-                                    <Icon name="map-pin" color="#ff8834" size={20} color="orange"></Icon> 
-                            </Marker> 
-
-                                {this.state.Vehicles != null ?
-
-                                
-                                    this.state.Vehicles.map(marker => (
-
-                                        <Marker
-                                            key={"key"}
-                                            coordinate={{
-                                                latitude: marker.latitud,
-                                                longitude: marker.longitud
-                                            }}
-
-                                        >
-                                            <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" :"car-side"} size={20} color="orange"></Icon>
-                                            
-                                        </Marker>
-                                    ))
-
-                            
-                                    :
-                                        null
-
-                                }
-
-                    
-                            
-                        </MapView>
-                    </View>
-            
-                :
-                    null
-                }
-             
                 <View
-                    style={
-                        styles.area
-                    }
-                >
+                    style={{
+                        flexDirection: "row",
+                        position: "absolute", //use absolute position to show button on top of the map
+                        width: 300,
+                        left: "7%",
+                        top: "65%",
+                        // backgroundColor: "#fff"
+                    }}
+                    >
                     <Text style={
                         {
                             fontWeight:"bold",
@@ -572,7 +612,7 @@ export default class Travel extends Component {
                     </Text>
 
                     {this.state.showLeftCars?
-                    
+
                         <Text style={
                             {
                                 fontWeight: "bold",
@@ -589,17 +629,19 @@ export default class Travel extends Component {
 
                 </View>
 
-          
                 <View
                     style={{
 
                         flexDirection: "row",
-                        paddingBottom: 10,
-                        backgroundColor: "#fff"
+                        position: "absolute", //use absolute position to show button on top of the map
+                        // width: 300,
+                        // left: "7%",
+                        top: "70%",
+                        // backgroundColor: "#fff"
                     }
                     }>
-                    
-                  
+
+
 
                     <View style={{flex:1, marginRight:35, paddingLeft:25}}>
                         <View style={{height:55}}>
@@ -609,7 +651,7 @@ export default class Travel extends Component {
                                 <Image
                                     source={this.state.standarSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-ESTANDAR-41.png")
                                     :require("./../assets/TipoVehiculos/ESTANDAR-37.png")}
-                                    
+
                                 >
                                 </Image>
 
@@ -624,21 +666,21 @@ export default class Travel extends Component {
                         <View style={{ flex: 1, marginRight: 35 }}>
 
                             <View style={{ height: 55 }}>
-                            
+
                                 <TouchableWithoutFeedback onPress={() => this.setSelectedVehicle(1, 2)}>
 
                                     <Image
                                         source={this.state.luxeSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-DE-LUJO-42.png")
                                             : require("./../assets/TipoVehiculos/DE-LUJO-38.png")}
-                                
+
                                     >
                                     </Image>
 
                                 </TouchableWithoutFeedback>
-                            
+
                             </View>
 
-                        
+
                             <Text style={{ fontSize: 9, alignSelf: "center" }}>De Lujo</Text>
                     </View>
 
@@ -652,7 +694,7 @@ export default class Travel extends Component {
                                     <Image
                                         source={this.state.VanSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-VANS-43.png")
                                             : require("./../assets/TipoVehiculos/VANS-39.png")}
-                                        
+
                                     >
 
                                     </Image>
@@ -660,7 +702,7 @@ export default class Travel extends Component {
                                 </TouchableWithoutFeedback>
 
                             </View>
-                        
+
 
                             <Text style={{ fontSize: 9, alignSelf: "center" }}>Van</Text>
 
@@ -675,11 +717,11 @@ export default class Travel extends Component {
                                     <Image
                                         source={this.state.TruckSelected ? require("./../assets/TipoVehiculos/SELECCIONADO-CAMIONETA-44.png")
                                             : require("./../assets/TipoVehiculos/CAMIONETA-40.png")}
-                                        
+
                                     >
 
                                     </Image>
-                                    
+
                                 </TouchableWithoutFeedback>
 
                             </View>
@@ -687,75 +729,115 @@ export default class Travel extends Component {
 
 
                             <Text style={{ fontSize: 8, alignSelf: "center"}}>Camioneta</Text>
-                        
+
                     </View>
 
                     <View style={{ flex: 1 }}></View>
 
-              
-                    
-                
-
                 </View>
 
                 <View
-                    style={
-                       styles.area
-                    }
+                    style={{
+                        flexDirection: "row",
+                        position: "absolute", //use absolute position to show button on top of the map
+                        // width: 300,
+                        left: "7%",
+                        top: "82%",
+                
+                    }}
                 >
                     <Text style={
                         {
                             fontWeight: "bold",
-                            fontSize: 14
+                            fontSize: 14,
+                            flex:3
                         }
                     }>
                         Radar de visualización
                     </Text>
-                
+
                 </View>
 
-                <View style={ styles.Slider}>
+                <View
+                    style={{
+                        flexDirection: "row",
+                        position: "absolute", //use absolute position to show button on top of the map
+                        // width: 300,
+                        // left: "5%",
+                        top: "87%",
 
-                        <Slider
-                            value={this.state.slideDistance}
-                            minimumValue={1}
-                            maximumValue={10}
-                            step={5}
-                            onValueChange={value => this.setState({ slideDistance:parseInt((value==6)? 5: value) })}
-                        />
-                        <View style={styles.area}>
+                    }}
+                >
+                    <Slider
+                        style={styles.Slider}
+                        value={this.state.slideDistance}
+                        minimumValue={1}
+                        maximumValue={10}
+                        step={5}
+                        onValueChange={value => this.setState({ slideDistance: parseInt((value == 6) ? 5 : value) })}
+                    />
 
-                            <View style={{flex:3}}>
-
-                                <Text>1 Km</Text>
-                            
-                            </View>
-
-
-                            <View style={{ flex: 3 }}>
-
-                                <Text>5 Km</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Text>10 Km</Text>
-
-                            </View>
-                        
-
-                        </View>
-                        <Text>Distancia: {this.state.slideDistance}</Text>
-        
                 </View>
 
+                <View style={{
+                    flexDirection: "row",
+                    position: "absolute", //use absolute position to show button on top of the map
+                    // width: 300,
+                    left: "2%",
+                    top: "90%",
+                }}>
+
+                    <View style={{ flex: 1 }}>
+
+                        <Text 
+                        style={{fontWeight: "bold" }}
+                        >1 Km</Text>
+
+                    </View>
+
+                    <View style={{flex:2}}></View>
+
+                    <View style={{ flex: 1 }}>
+
+                        <Text style={{ fontWeight: "bold" }}>5 Km</Text>
+
+                    </View>
+
+                    <View style={{flex:2}}>
+
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+
+                        <Text style={{ fontWeight: "bold" }}>10 Km</Text>
+
+                    </View>
+
+
+
+                </View>
+                <View style={{
+                    flexDirection: "row",
+                    position: "absolute", //use absolute position to show button on top of the map
+                    // width: 300,
+                    left: "5%",
+                    top: "96%",
+                }}>
+                    <View style={{ flex: 4}}></View>
+
+                    <View style={{flex:2}}>
+
+                        <Text style={{ fontWeight: "bold" }}>Distancia: {this.state.slideDistance}</Text>
                     
+                    </View>
+
+                </View>
+
+         
             </View>
-            </ScrollView>
+
+
        
-      
-   
         );
     }
 }
@@ -796,10 +878,11 @@ const styles = StyleSheet.create({
     },
     Slider:{
 
-        paddingBottom: 20,
-        paddingLeft: 20,
-        backgroundColor: "#fff",
-        flex: 1, alignItems: 'stretch', justifyContent: 'center'
+        // paddingBottom: 20,
+        // paddingLeft: 20,
+        // backgroundColor: "#fff",
+        flex: 1, 
+        alignItems: 'stretch', justifyContent: 'center'
     },
 
 

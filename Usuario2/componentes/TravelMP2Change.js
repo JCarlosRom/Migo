@@ -95,6 +95,22 @@ export default class TravelMP2Change extends Component {
 
     constructor(props) {
         super(props);
+
+        keys.socket.removeAllListeners("chat_usuario");
+        
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+        })
+        // Chat del chofer
+        keys.socket.on('chat_usuario', (num) => {
+
+            keys.Chat.push(num.Mensaje);
+
+
+        })
         
         // Socket para designar el punto de encuentro 
         keys.socket.on('puntoEncuentroUsuario', (num) => {
@@ -798,286 +814,338 @@ export default class TravelMP2Change extends Component {
     render() {
         return (
 
-            <ScrollView>
-                <View style={styles.container}>
+         
+            <View style={{ flex: 1 }}>
+
+                <View>
+                    {/* Modal para mensajes */}
+                    <Modal
+                        isVisible={this.state.showModal}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
 
 
-                    <View>
-                        {/* Modal para mensajes */}
-                        <Modal
-                            isVisible={this.state.showModal}
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
 
-                        >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
 
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
 
                                 </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
-
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModal: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
+                                <View style={{ flex: 2 }}></View>
                             </View>
-
-
-                        </Modal>
-
-                    </View>
-                    {this.state.showBackButton ?
-
-                        <View style={styles.area}>
-                            <View style={{ flex: 1 }}>
-                                <Icon
-                                    name="arrow-left"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.props.navigation.navigate("Home")}
-                                ></Icon>
-                            </View>
-
-                        </View>
-                        :
-                        null
-                    }
-
-                    {this.state.showTimeChofer ?
-                        <View style={{ flexDirection: "row", backgroundColor: "#fff" }}>
-                            <View style={{ flex: 1, backgroundColor: "#EFEEEC" }}></View>
-                            <View style={{ backgroundColor: "black", flex: 3, height: 20 }}>
-                                <Text style={{ color: "white" }}>Llegada: {this.state.timeChofer} Minuto(s)</Text>
-                            </View>
-                            <View style={{ flex: 3, backgroundColor: "#EFEEEC" }}></View>
                         </View>
 
-                        :
-                        null
-                    }
 
-                    {/* Modal para la cancelación del servicio */}
+                    </Modal>
 
-                   
-                    <View > 
+                </View>
+                {/* Modal de aceptación del chofer */}
+                <View>
 
-                        <Modal
-                            isVisible={this.state.showModalCancel}
+                    <Modal
+                        isVisible={this.state.showModalAcept}
 
-                        >   
-                            <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
-                                <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera x minutos después de haber</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
-                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop:5,
-                                    marginBottom:5
-                                
-                                }}>
-                                    <View style={{ flex:2 }}></View>
-                                    <View style={{ flex:1, paddingRight:5 }}>
-                                        <Button
-                                            title="No"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModalCancel: false
-                                            })}
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.DescripcionAcept}</Text>
 
-
-                                        ></Button>
-                                      
-                                    </View>
-
-                                    <View style={{ flex:1, paddingLeft:5 }}>
-
-                                        <Button
-                                            title="Si"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.cancelarServicio()}
-                                        ></Button>
-
-                                   
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
                             </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
 
-        
-                        </Modal>
+                            }}>
+                                <View style={{ flex: 2 }}></View>
 
-                    </View>
 
-                    {/* Modal para la confirmación de llegada del conductor  */}
-                    <View>
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
 
-                        <Modal
-                            isVisible={this.state.showModalLlegada}
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModalAcept: false
+                                        })}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
+                {/* Modal para la cancelación del servicio */}
+
+
+                <View >
+
+                    <Modal
+                        isVisible={this.state.showModalCancel}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
+                                <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
+                                <View style={{ flex: 1, paddingRight: 5 }}>
+                                    <Button
+                                        title="No"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModalCancel: false
+                                        })}
+
+
+                                    ></Button>
+
+                                </View>
+
+                                <View style={{ flex: 1, paddingLeft: 5 }}>
+
+                                    <Button
+                                        title="Si"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.cancelarServicio()}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+                {/* Modal para la confirmación de llegada del conductor  */}
+                <View>
+
+                    <Modal
+                        isVisible={this.state.showModalLlegada}
+
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Llegada</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>El conductor ha llegado al punto de partida</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solo te esperará 7 minutos</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>¡Ve hacía ahí! De lo contrario, se te cobrará tarifa</Text>
+                                <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModalLlegada: false
+                                        })}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+                {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
+
+                 
+                    <MapView
+
+                        style={{ top: "-30%", height: "130%" }}
+
+                        region={{
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta,
+                        }}
+
+                        onRegionChangeComplete={this.onRegionChange}
+
+                        showsUserLocation={true}
+                        showsMyLocationButton={true}
+                    >
+
+
+                        <Marker
+                            coordinate={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
 
                         >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Llegada</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>El conductor ha llegado al punto de partida</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solo te esperará 7 minutos</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>¡Ve hacía ahí! De lo contrario, se te cobrará tarifa</Text>
-                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+                            <Icon name="map-pin" size={20} color="green"></Icon>
+                        </Marker>
 
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
+                        {this.state.Paradas != null ?
 
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModalLlegada: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
-                            </View>
-
-
-                        </Modal>
-
-                    </View>
-
-                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
-
-                        <View style={styles.containerMap}>
-                            <MapView
-
-                                style={styles.map}
-
-                                region={{
-                                    latitude: this.state.region.latitude,
-                                    longitude: this.state.region.longitude,
-                                    latitudeDelta: this.state.region.latitudeDelta,
-                                    longitudeDelta: this.state.region.longitudeDelta,
+                            <Marker
+                                coordinate={{
+                                    latitude: this.state.Paradas[0]["latitude"],
+                                    longitude: this.state.Paradas[0]["longitude"],
                                 }}
 
-                                onRegionChangeComplete={this.onRegionChange}
-
-                                showsUserLocation={true}
-                                showsMyLocationButton={true}
                             >
-                
+                                <Icon name="map-pin" size={20} color="red"></Icon>
+                            </Marker>
+                            :
+                            null
+                        }
 
-                                <Marker
-                                    coordinate={{
-                                        latitude: this.state.myPosition.latitude,
-                                        longitude: this.state.myPosition.longitude,
-                                    }}
+                        {this.state.Paradas != null ?
 
-                                >
-                                    <Icon name="map-pin" size={20} color="green"></Icon>
-                                </Marker>
+                            <Marker
+                                coordinate={{
+                                    latitude: this.state.Paradas[1]["latitude"],
+                                    longitude: this.state.Paradas[1]["longitude"],
+                                }}
 
-                                {this.state.Paradas!=null?
-                                
-                                    <Marker
-                                        coordinate={{
-                                            latitude: this.state.Paradas[0]["latitude"],
-                                            longitude: this.state.Paradas[0]["longitude"],
-                                        }}
-
-                                    >
-                                        <Icon name="map-pin" size={20} color="red"></Icon>
-                                    </Marker>
-                                :
-                                    null
-                                }
-
-                                {this.state.Paradas != null ?
-
-                                    <Marker
-                                        coordinate={{
-                                            latitude: this.state.Paradas[1]["latitude"],
-                                            longitude: this.state.Paradas[1]["longitude"],
-                                        }}
-
-                                    >
-                                        <Icon name="map-pin" size={20} color="blue"></Icon>
-                                    </Marker>
-                                    :
-                                    null
-                                }
+                            >
+                                <Icon name="map-pin" size={20} color="blue"></Icon>
+                            </Marker>
+                            :
+                            null
+                        }
 
 
 
-                                {this.state.Onway?
-                                    <Marker
-                                        coordinate={{
-                                            latitude: this.state.positionChofer.latitude,
-                                            longitude: this.state.positionChofer.longitude,
-                                        }}
+                        {this.state.Onway ?
+                            <Marker
+                                coordinate={{
+                                    latitude: this.state.positionChofer.latitude,
+                                    longitude: this.state.positionChofer.longitude,
+                                }}
 
-                                    >
-                                        <Icon color="#ff8834" name="car" size={20} ></Icon> 
-                                    </Marker>
+                            >
+                                <Icon color="#ff8834" name="car" size={20} ></Icon>
+                            </Marker>
 
-                                :
-                                    null
-                                }
-                            
-
+                            :
+                            null
+                        }
 
 
-                                {this.state.ConductorMapDirection && this.state.positionChofer.latitude != 0 && this.state.positionChofer.longitude != 0
-                                && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0 ?
+
+
+                        {this.state.ConductorMapDirection && this.state.positionChofer.latitude != 0 && this.state.positionChofer.longitude != 0
+                            && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0 ?
+                            <MapViewDirections
+
+
+                                destination={{
+                                    latitude: this.state.positionChofer.latitude,
+                                    longitude: this.state.positionChofer.longitude,
+                                }}
+                                origin={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                apikey={GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="blue"
+                                onReady={result => {
+
+                                    this.setState({
+                                        timeChofer: parseInt(result.duration),
+                                        distance: parseInt(result.distance),
+                                        duration: parseInt(result.duration)
+
+                                    });
+
+                                    this.getTarifas();
+
+
+                                }}
+
+                            />
+
+                            :
+                            null
+                        }
+
+                        {
+                            this.state.Paradas != null ?
+
+                                this.state.routeParada1 && this.state.Paradas[0]["latitude"] != 0
+                                    && this.state.Paradas[0]["longitude"] != 0 ?
+
                                     <MapViewDirections
 
 
                                         destination={{
-                                            latitude: this.state.positionChofer.latitude,
-                                            longitude: this.state.positionChofer.longitude,
+                                            latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.myPosition.latitude,
+                                            longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.myPosition.longitude
                                         }}
                                         origin={{
-                                            latitude: this.state.myPosition.latitude,
-                                            longitude: this.state.myPosition.longitude,
+                                            latitude: this.state.Paradas[0]["latitude"],
+                                            longitude: this.state.Paradas[0]["longitude"],
                                         }}
                                         apikey={GOOGLE_MAPS_APIKEY}
                                         strokeWidth={1}
@@ -1085,7 +1153,6 @@ export default class TravelMP2Change extends Component {
                                         onReady={result => {
 
                                             this.setState({
-                                                timeChofer: parseInt(result.duration),
                                                 distance: parseInt(result.distance),
                                                 duration: parseInt(result.duration)
 
@@ -1100,197 +1167,208 @@ export default class TravelMP2Change extends Component {
 
                                     :
                                     null
-                                }
 
-                                {
-                                    this.state.Paradas!=null?
 
-                                        this.state.routeParada1 && this.state.Paradas[0]["latitude"] != 0 
-                                        && this.state.Paradas[0]["longitude"] != 0 ?
-            
-                                            <MapViewDirections
-            
-            
-                                                destination={{
-                                                    latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.myPosition.latitude,
-                                                    longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.myPosition.longitude
-                                                }}
-                                                origin={{
-                                                    latitude: this.state.Paradas[0]["latitude"],
-                                                    longitude: this.state.Paradas[0]["longitude"],
-                                                }}
-                                                apikey={GOOGLE_MAPS_APIKEY}
-                                                strokeWidth={1}
-                                                strokeColor="blue"
-                                                onReady={result => {
+                                :
 
-                                                    this.setState({
-                                                        distance: parseInt(result.distance),
-                                                        duration: parseInt(result.duration)
-                                                    
-                                                    });
+                                null
+                        }
 
-                                                    this.getTarifas();
-            
-            
-                                                }}
-            
-                                            />
-                                            
-                                        :
-                                            null
-                                        
+                        {
+                            this.state.Paradas != null ?
+
+                                this.state.routeParada2 && this.state.Paradas[1]["latitude"] != 0
+                                    && this.state.Paradas[1]["longitude"] != 0 ?
+
+                                    <MapViewDirections
+
+
+                                        destination={{
+                                            latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[0]["latitude"],
+                                            longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[0]["longitude"]
+                                        }}
+                                        origin={{
+                                            latitude: this.state.Paradas[1]["latitude"],
+                                            longitude: this.state.Paradas[1]["longitude"],
+                                        }}
+                                        apikey={GOOGLE_MAPS_APIKEY}
+                                        strokeWidth={1}
+                                        strokeColor="orange"
+                                        onReady={result => {
+                                            this.setState({
+                                                distance: this.state.distance + parseInt(result.distance),
+                                                duration: this.state.duration + parseInt(result.duration)
+
+                                            })
+
+                                            this.getTarifas();
+
+                                        }}
+
+                                    />
 
                                     :
-
                                     null
-                                }
-
-                                {
-                                    this.state.Paradas != null ?
-
-                                        this.state.routeParada2 && this.state.Paradas[1]["latitude"] != 0 
-                                            && this.state.Paradas[1]["longitude"] != 0?
-
-                                            <MapViewDirections
 
 
-                                                destination={{
-                                                    latitude: this.state.Onway ? this.state.positionChofer.latitude : this.state.Paradas[0]["latitude"],
-                                                    longitude: this.state.Onway ? this.state.positionChofer.longitude : this.state.Paradas[0]["longitude"]
-                                                }}
-                                                origin={{
-                                                    latitude: this.state.Paradas[1]["latitude"],
-                                                    longitude: this.state.Paradas[1]["longitude"],
-                                                }}
-                                                apikey={GOOGLE_MAPS_APIKEY}
-                                                strokeWidth={1}
-                                                strokeColor="orange"
-                                                onReady={result => {
-                                                    this.setState({
-                                                        distance: this.state.distance + parseInt(result.distance),
-                                                        duration: this.state.duration + parseInt(result.duration)
+                                :
 
-                                                    })
-                                                    
-                                                    this.getTarifas();
-
-                                                }}
-
-                                            />
-
-                                            :
-                                            null
+                                null
+                        }
 
 
-                                        :
-
-                                        null
-                                }
-
-  
 
 
-                                
-                    
-                                
-                            
-                            </MapView>
-                        </View>
+
+
+
+
+                    </MapView>
+                 
                     :
-                        null
-                    }   
-                   
+                    null
+                }   
 
-                    
+                {this.state.showTimeChofer ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "1%" }}>
+                        <View style={{ flex: 1, height: 20 }}>
+                            <Text style={{ color: "black", fontWeight: "bold" }}>Llegada: {this.state.timeChofer} Minuto(s)</Text>
+                        </View>
 
+                    </View>
 
-                    {this.state.Onway?
-                        <View>
-                            <View styles={styles.area}>
-                                <Icon color="#ff8834" name="chevron-up"
-                                style={{alignSelf:"center", paddingTop:5}}
+                    :
+                    null
+                }
+
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "60%" }}>
+                        <View style={{ flex: 2.5 }}></View>
+                        <View style={{ flex: 1 }}>
+                            <Icon color="#ff8834" name="chevron-up"
+                                style={{ alignSelf: "center", paddingTop: 5 }}
                                 size={30}
-                                    onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "TravelMP", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino })}
-                              
-                                ></Icon>
+                                onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_Integrado", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino })}
 
-                            </View>
-                            <View styles={styles.area}>
-                                <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
-                            </View>
-                            <View
-                            style={
-                                {
-                                    backgroundColor:"black",
-                                }}
-                            >
-                                <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf:"center"}}>Verifica la matricula y los detalles del auto</Text>
-                            </View>
+                            ></Icon>
+                        </View>
+                        <View style={{ flex: 2.5 }}></View>
 
-                            <View style={styles.area}>
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/Auto.png")}
-                                ></Image>
-                                <View style={{paddingLeft:120}}>
-                                    <Text>{keys.datos_vehiculo.modelo}</Text>
-                                    <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
-                                    <Button color="#ff8834" title="Cancelar"
-                                        onPress={() => this.setState({
-                                            showModalCancel:true
-                                        })}
-                                    ></Button>
+                    </View>
+                    :
+                    null
+                }
 
-                                </View>
-                            </View>
-                        
-                            <View style={{ alignSelf: "center", backgroundColor:"white" }}>
-                                <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
-                            </View>
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "65%" }}>
 
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30}></Icon>
-                                <View style={{paddingLeft:10}}></View>
-                                <Icon name="comment-dots"
-                                    color="#ff8834"
-                                    style={{ paddingLeft: 40 }}
-                                    size={25}
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-                                  
-                            </View>
+                        <Text style={{ fontWeight: "bold", fontSize: 14, alignSelf: "center" }}>Tu conductor está en camino, espera un momento</Text>
 
-                
 
+                    </View>
+                    :
+                    null
+                }
+
+
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "68%", backgroundColor: "black", width: "100%" }}>
+
+                        <View style={{ flex: 1 }}></View>
+
+                        <View style={{ flex: 4 }}>
+
+                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 12, alignSelf: "center" }}>Verifica la matricula y los detalles del auto</Text>
 
                         </View>
 
-                
+                        <View style={{ flex: 1 }}></View>
+
+                    </View>
                     :
-                        <View style={{ backgroundColor: "#fff", paddingTop: 50 }}>
-                            <Button title="Confirmar"
+                    null
+                }
+
+                {this.state.Onway ?
+
+                    < View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "71%" }}>
+                        <Image
+                            style={{ width: 50, height: 50 }}
+                            source={require("./../assets/user.png")}
+                        ></Image>
+                        <Image
+                            style={{ width: 50, height: 50 }}
+                            source={require("./../assets/Auto.png")}
+                        ></Image>
+                        <View style={{ paddingLeft: 120 }}>
+                            <Text>{keys.datos_vehiculo.modelo}</Text>
+                            <Text style={{ fontWeight: "bold", fontSize: 16 }}>{keys.datos_vehiculo.Matricula}</Text>
+                            <Button color="#ff8834" title="Cancelar"
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Button>
+
+                        </View>
+                    </View>
+                    :
+                    null
+                }
+
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "85%" }}>
+
+                        <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
+
+
+                    </View>
+                    :
+                    null
+                }
+
+
+
+                {this.state.Onway ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "90%" }}>
+
+                        <View style={{ flex: 2 }}></View>
+                        <View style={{ flex: 1 }}>
+
+                            <Icon color="#ff8834" name="phone" onPress={() => this.callPhoneFunction()} size={30} onPress={() => this.callPhoneFunction()}></Icon>
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                color="#ff8834"
+                                // style={{ paddingLeft: 40 }}
+                                size={30}
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+                        <View style={{ flex: 2 }}></View>
+
+
+                    </View>
+                    :
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "92%", width: "100%" }}>
+                        <View style={{ flex: 6 }}>
+
+                            <Button title={"Confirmar "}
                                 style={{ width: '100%' }}
                                 type="outline"
                                 onPress={() => this.generarSolicitud()}
                             ></Button>
+
                         </View>
-                    }
-                 
-                    
-                 
+                    </View>
+                }
 
-                
-
-                </View>
-            
+            </View>
 
 
-            </ScrollView>
         );
     }
 }

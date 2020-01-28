@@ -1,7 +1,11 @@
+// Variables globales
 export default keys={
+    // Objeto socket, conexción 
     socket:null,
+    // Sockets ids
     id_chofer_socket: '',
     id_usuario_socket: '',
+    // Ids de transacción 
     id_servicio: '',
     id_recorrido: '',
     // Usuario
@@ -25,6 +29,7 @@ export default keys={
         categoriaVehiculo: null,
 
     },
+    // Datos del chófer
     datos_chofer: {
         idChofer: null,
         nombreChofer: null,
@@ -39,9 +44,12 @@ export default keys={
         Parada1:null,
         Parada2:null,
         Parada3:null,
+        typePay:null
+
      
 
     },
+    // JSON de tarifas
     Tarifa:{
         Solicitud: 0,
         tarifaBase: 0, 
@@ -53,7 +61,8 @@ export default keys={
         Peaje: 0,
         Propina:0,
         Total:0,
-        tarifa_cancelacion: 0
+        tarifa_cancelacion: 0,
+        typePay:null
          
     },
     Paradas: null, 

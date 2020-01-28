@@ -3,7 +3,7 @@ export default keys={
     timerCoordenadas:null,
     id_chofer_socket:'',
     id_usuario_socket:'',
-    id_chofer: 5,
+    id_chofer: 1,
     myPosition: null,
     stateConductor: false,
     id_servicio: '',
@@ -30,24 +30,23 @@ export default keys={
 
     },
     datos_vehiculo: {
-        id_unidad: 71,
-        modelo:'Bocho',
-        Matricula:'HSJSJ',
+        id_unidad: 2,
+        modelo:'Dodge attitude',
+        Matricula:'FRS408A',
         // Taxi: 1, Van: 2, Camioneta: 3
         categoriaVehiculo: 1,
-        // Estandar: 1, Lujo: 2
+        // Estandar: 1, Lujo: 2 
         tipoVehiculo:1,
         // Express: 1, Pool: 2
-        tipoServicio: 2
+        tipoServicio: 1
 
     },
     datos_chofer:{
-        idChofer:5,
-        nombreChofer:'Noel Noel',
-        Estrellas:'4.7',
-        Reconocimientos:'Excelente servicio, buena ruta, amable, buena conversación, Heroe',
-        Idiomas: "Español e Italiano",
-        Telefono:'3122091462'
+        idChofer:1,
+        nombreChofer:'José Carlos Romero',
+        Estrellas:'4.5',
+        Reconocimientos:'Habla inglés y español',
+        Telefono:'3121942513'
 
     },
     GOOGLE_MAPS_APIKEY : 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY',

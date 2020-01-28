@@ -35,13 +35,13 @@ export default class Home extends Component {
 
         super(props);
 
+    
+
         if(keys.socket==null){
 
             keys.socket = SocketIOClient(keys.socketUrl);
-            // keys.socket = SocketIOClient('http://35.203.42.33:3001/');
-            
+            console.log("Chofer",keys.socketUrl)
         }
-
 
         keys.socket.on('isConnected', () => { })
 
@@ -410,66 +410,106 @@ export default class Home extends Component {
 
     render() {
         return (
-        <ScrollView contentContainerStyle={styles.contentContainer}>
-          <View style={styles.container}>
-                    <View>
+            <View style={{flex:1}}>
 
-                        <Modal
-                            isVisible={this.state.showModal}
+                <View>
 
-                        >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
+                    <Modal
+                        isVisible={this.state.showModal}
 
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Description}</Text>
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Description}</Text>
 
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModal: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
                             </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
 
 
-                        </Modal>
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
 
-                    </View>
-              <View style={styles.area}>
-                  <View>
-                    <Switch 
-                    value={this.state.stateConductor}
-                    onChange={()=>this.conectChofer()}
-                    />
-                  </View>
-                  <View>
-                    <Text style={{width:100}} >{this.state.stateConductor?"Conectado":"Desconectado"}</Text>
-                  </View>
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
+                <MapView
+
+                    style={{ top:"-20%", height:"120%"}}
+
+                        region={
+                            this.state.myPosition!=null?
+                            {
+
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                                    longitudeDelta: 0.060,
+                                    latitudeDelta: 0.060
+                            }
+                            :
+                                {
+
+                                latitude: 19.14391,
+                                longitude: -103.3297,
+                                    longitudeDelta: 0.060,
+                                    latitudeDelta: 0.060
+                            }
+
+                        }
+
+
+                    showsUserLocation={true}
+                    followsUserLocation={true}
+
+                >
+
+
+                </MapView>
                 
+                <View style={{
+                    flexDirection: "row",
+                    position: "absolute", //use absolute position to show button on top of the map
+                    left: "2%",
+                    top: "2%",
+                }}>
+                   <View style={{flex:1}}>
+                        <Switch 
+                        value={this.state.stateConductor}
+                        onChange={()=>this.conectChofer()}
+                        />
+                  </View>
+                  <View style={{flex:2.5}}>
+                    <Text  >{this.state.stateConductor?"Conectado":"Desconectado"}</Text>
+                  </View>
+
+                  <View style={{flex:0.5}}></View>
+
                     <View style={
                         {
-                            paddingLeft: 130,
-                            paddingBottom:5
+                            flex:1
                         }
                     }>
                         <Icon name="question-circle"
@@ -478,147 +518,102 @@ export default class Home extends Component {
                     </View>
                     <View style={
                         {
-                            paddingLeft: 10,
-                            paddingBottom:5
-                        }
-                    }>
+                            flex:1
+                    }}>
                         <Icon name="cog"
                                 color="#ff8834"
                             size={30}></Icon>
                     </View>
-              </View>
-              
-                    <View style={styles.containerMap}>
-
-                        
-
-                        <MapView
-
-                            style={styles.map}
-
-                              region={
-                                  this.state.myPosition!=null?
-                                    {
-                            
-                                        latitude: this.state.myPosition.latitude,
-                                        longitude: this.state.myPosition.longitude,
-                                          longitudeDelta: 0.060,
-                                          latitudeDelta: 0.060
-                                    }
-                                  :
-                                     {
-                            
-                                        latitude: 19.14391,
-                                        longitude: -103.3297,
-                                          longitudeDelta: 0.060,
-                                          latitudeDelta: 0.060
-                                    }
-                                  
-                              }
-
-
-                            showsUserLocation={true}
-                            followsUserLocation={true}
-                        
-                        >
-                           
-                        
-
-                      
-                        </MapView>
-
-                        <View >
-
-                            <View style={{paddingLeft:210, paddingBottom:20}}>
-
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/botonPanico.png")}
-                                >
-
-                                </Image>
-
-                            </View>
-
-                           
-                        </View>
-
-
-
-                    </View>
-                
-                    <View style={{backgroundColor:"white"}}>
-                        <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
-
-                    </View>
-                    
-                    
-                    <View style={
-                        styles.area
-                    }>
-                        <View>
-                            <Icon name="bell"
-                            color="#ff8834"
-                            size={25}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                paddingLeft:20
-                            }
-                        }>
-                            <Text>Última notificación</Text>
-                        </View>
-
-                        <View style={
-                            {
-                                paddingLeft: 80,
-                                flexDirection:"row"
-                            }
-                        }>
-                            <Text>Ver todas</Text>
-                            <Icon name="chevron-right"
-                                color="#ff8834"
-                            // onPress={() => this.props.navigation.navigate("Notificaciones",
-                            // {
-                            //     id_chofer:this.state.id_chofer,
-                            //     stateConductor:this.state.stateConductor
-                            // })} 
-                            size={15}
-                            style={
-                                {
-                                    paddingLeft:10,
-                                    paddingTop:2
-                                }
-                            }
-                            ></Icon>
-                        </View>
-
-                    </View>
-                    <View style={styles.area}>
-                        <View style={{ flex: 1 }}>
-                            <Switch
-                                value={this.state.travelType}
-                                onChange={() => this.setTravel()}
-                            />
-                        </View>
-                       
-                    </View>
-                    <View
-                        style={
-                            {
-                                paddingBottom:90
-                            }
-                        }
-                    ></View>
-        
-                    <BottomNavigation
-                
-                        onTabPress={newTab => this.setState({ activeTab: newTab.key })}
-                        renderTab={this.renderTab}
-                        tabs={this.tabs}
-                    />
                 </View>
-          </ScrollView>
+
+                <View style={{ flexDirection:"row", position:"absolute", left:"80%", top:"65%"}}>
+                    
+                    <Image
+                        style={{ width: 50, height: 50 }}
+                        source={require("./../assets/botonPanico.png")}
+                    >
+
+                    </Image>
+
+                </View>
+
+                <View style={{ flexDirection: "row", position: "absolute", left: "6%", top:"74%"}}>
+                   
+                   <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
+
+               </View>
+
+                <View style={{ flexDirection: "row", position:"absolute", left: "6%", top:"82%"}}>
+
+                    <View style={{flex:1}}>
+                        <Icon name="bell"
+                        color="#ff8834"
+                        size={25}></Icon>
+                    </View>
+                    <View style={{ flex: 2 }}>
+
+                        <Text>Última notificación</Text>
+
+                    </View>
+
+                    <View style={{flex:2}}>
+
+                        <Text>Ver todas</Text>
+
+                    </View>
+                    <View style={{flex:1}}>
+
+                        <Icon name="chevron-right"
+                            color="#ff8834"
+                    
+                        size={15}
+                        
+                        ></Icon>
+                    </View>
+                 
+                </View>
+
+                <View style={{flexDirection:"row", position:"absolute", top:"90%"}}>
+                    <View style={{ flex: 1 }}>
+                        <Switch
+                        value={this.state.travelType}
+                        onChange={() => this.setTravel()}
+                        />
+                    </View>
+                    <View style={{flex:5}}></View>
+
+                </View>
+
+            
+            </View>
+        // <ScrollView contentContainerStyle={styles.contentContainer}>
+        //   <View style={styles.container}>
+
+    
+              
+      
+                
+     
+                    
+                    
+
+  
+        //             <View
+        //                 style={
+        //                     {
+        //                         paddingBottom:90
+        //                     }
+        //                 }
+        //             ></View>
+        
+        //             <BottomNavigation
+                
+        //                 onTabPress={newTab => this.setState({ activeTab: newTab.key })}
+        //                 renderTab={this.renderTab}
+        //                 tabs={this.tabs}
+        //             />
+        //         </View>
+        //   </ScrollView>
         );
     }
 }

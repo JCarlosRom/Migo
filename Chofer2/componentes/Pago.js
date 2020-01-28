@@ -99,6 +99,7 @@ export default class Pago extends Component {
             console.log("Keys Tarifa", keys.Tarifa)
 
             // Socket de punto de encuentro, socket puntoEncuentroUsuario
+            
             keys.socket.emit("terminarViajeChofer", {
                 id_usuario_socket: keys.id_usuario_socket,
                 Tarifa: keys.Tarifa

@@ -791,6 +791,8 @@ export default class changeDestinoView extends Component {
 
     render(){
         return(
+      
+
             <ScrollView style={styles.container}>
                 <View>
 

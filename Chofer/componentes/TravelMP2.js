@@ -1,11 +1,11 @@
+// Importación de librerías 
 import React, { Component } from "react";
-import { Image,View, Text, StyleSheet, Switch, ScrollView } from "react-native";
+import { Image,View, Text, StyleSheet, Switch } from "react-native";
 import Modal from "react-native-modal";
 import { Button  } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import axios from 'axios';
-import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
+import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import { StackActions, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 import { showLocation } from 'react-native-map-link'
@@ -13,45 +13,96 @@ import keys from './global';
 import * as Location from "expo-location";
 import * as Permissions from 'expo-permissions';
 import call from 'react-native-phone-call'
-
+// Clase principal de Componente de Travel MP 
 export default class TravelMP2 extends Component {
+    /**
+    *Creates an instance of TravelMP.
+    * Constructor de de la clase TRAVELMP2
+    * @param {*} props
+    * @memberof TravelMP2
+    */
     constructor(props) {
 
+        // Socket para asignar los ids de socket en caso de cambio
+        keys.socket.on('getIdSocket', (num) => {
+
+            // Asignación de nuevo socket
+            keys.id_chofer_socket = num.id;
+
+            // Socket de emisión de Id de Chofer a usuario
+            keys.socket.emit("WSsendIdChoferUsuario", {
+                id_socket_usuario: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
+            })
+
+        })
+        // Socket para escuchar el cambio de id de usuario
+        keys.socket.on('sendIdUsuarioChofer', (num) => {
+            // Asignación de id del usuario, en variable global 
+            keys.id_usuario_socket = num.id_socket_usuario;
+        })
+
+        // Socket para recibir ids de recorrido y servicio, en caso de inserción 
+        keys.socket.on('recorrido_id_conductor', num => {
+            console.log('Llego respuesta: ', num);
+
+            keys.id_servicio = num.servicio;
+            keys.id_recorrido = num.recorrdio;
+
+            console.log("idServicio", keys.id_servicio);
+            console.log("idRecorrido", keys.id_recorrido);
+      
+
+        });
+        // Socket receptor, verificador de chófer On Line 
         keys.socket.on('isConnected', () => {})
         
         super(props);
+        // Estados de componente
          this.state = {
-            id_usuario: "2",
+             // Estados de navegación
             puntoEncuentro:false,
             HomeTravel:true,
             aceptViaje:false,
             initravel:false,
             Travel: false,
             showMapDirections:false,
+            // Posición del usuario 
             positionUser: null,
-        
+            // Coordenadas fijas para consulta de direcciones, google directions
             latitude: 19.273247,
             longitude: -103.715795,
             myPosition:null,
             distance:0,
             duration:0,
+            // Estados de las rutas de cada destino del viaje 
             routeInitial: true,
             routeParada1: false,
             routeParada2: false,
             routeParada3: false,
             location:null,
-             region: {
-                 latitude: 0,
-                 longitude: 0,
-                 longitudeDelta: 0,
-                 latitudeDelta: 0
+            // Coordenadas de la región inicial del mapa
+            region: {
+                latitude: 0,
+                longitude: 0,
+                longitudeDelta: 0,
+                latitudeDelta: 0
 
-             },
+            },
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             showModal:false, 
             Description: "",
-            infoVehicleLlegada:0
+            infoVehicleLlegada:0,
+             // Cronometers
+             minutosUsuario: 2,
+             segundosUsuario: 0,
+             timeUsuario: "",
+             finTimerUsuario: false,
+             // TimerTravel
+             minutosTravelUsuario: 0,
+             segundosTravelUsuario: 0,
+             timeTravelUsuario: "",
+             FinTimeTravelUsuario: false
      
     
 
@@ -61,10 +112,8 @@ export default class TravelMP2 extends Component {
         keys.socket.on('changeDestinoChofer', num => {
 
             clearInterval(keys.intervalBroadcastCoordinates);
-            // this.state.datos_solicitud = num;
-
-            console.log("Datos Solicitud", num);
-
+            
+            // Asignación de datos del nuevo viaje en variables globales de Chofer
             if (num != null) {
 
                 keys.datos_usuario = {
@@ -110,12 +159,7 @@ export default class TravelMP2 extends Component {
 
                 keys.Tarifa = num.Tarifa;
 
-
-
-
-                // console.log("Socket del chofer", keys.id_chofer_socket)
-
-
+                // Limpiar intervalos de coordenadas de usuario 
 
                 clearInterval(this.state.timer);
                 clearInterval(keys.timerCoordenadas);
@@ -128,7 +172,7 @@ export default class TravelMP2 extends Component {
                     // tiempoLlegada: d.toLocaleTimeString(
 
                 });
-
+                // Sección de navegación por tipo de viaje
                 if (keys.type == "Unico") {
 
                     const resetAction = StackActions.reset({
@@ -138,8 +182,6 @@ export default class TravelMP2 extends Component {
                     });
 
                     this.props.navigation.dispatch(resetAction);
-
-
 
                 } else {
 
@@ -152,8 +194,6 @@ export default class TravelMP2 extends Component {
                         });
 
                         this.props.navigation.dispatch(resetAction);
-
-
 
                     } else {
 
@@ -187,28 +227,28 @@ export default class TravelMP2 extends Component {
 
 
                 }
-
+                // Fin de sección
             }
 
         });
-
+        // Detiene el socket de chat 
         keys.socket.removeAllListeners("chat_chofer");
 
+        // Socket para mostrar mensaje cuando llegue mensaje 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+        })
+        // Socket para recibir nuevo mensaje de chat
         keys.socket.on('chat_chofer', (num) => {
-
-            console.log("chat_chofer", num)
 
             keys.Chat.push(num.Mensaje);
 
 
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje"
-            })
-
-
         })
-
+        // Socket para detectar la cancelación del servicio por parte del usuario
         keys.socket.on('cancelViajeChofer', () => {
 
             clearInterval(keys.intervalBroadcastCoordinates);
@@ -228,6 +268,11 @@ export default class TravelMP2 extends Component {
         
     };
 
+    /**
+     * Función para llamar al teléfono del usuario
+     *
+     * @memberof TravelMP2
+     */
     callPhoneFunction() {
         const args = {
             number: keys.datos_usuario.numeroTelefono, // String value with the number to call
@@ -237,8 +282,27 @@ export default class TravelMP2 extends Component {
         call(args).catch(console.error)
     }
 
-    componentDidMount() {
+    /** Función para llamar al teléfono de soporte
+    *
+    *
+    * @memberof TravelMP2
+    */
+    callPhoneSoporte() {
+        const args = {
+            number: keys.numeroSoporte, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
 
+        call(args).catch(console.error)
+    }
+
+    /**
+    *Ciclo de vida para despúes de que se monta el componente
+    *
+    * @memberof TravelMP2
+    */
+    componentDidMount() {
+        // Bloque para accionar funciones como Aceptación del viaje o cambio de destino 
         Flag = this.props.navigation.getParam('Flag', false);
         console.log(Flag)
 
@@ -316,9 +380,11 @@ export default class TravelMP2 extends Component {
     }
     
     
-
-
-
+    /**
+    *
+    *Ciclo de vida para antes de que se monte el componente
+    * @memberof TravelMP2
+    */
     async componentWillMount() {
         
         Flag = this.props.navigation.getParam('Flag', false);
@@ -330,7 +396,7 @@ export default class TravelMP2 extends Component {
             })
         }
 
-        // Check my current position
+        // Bloque para pedir permisos de GPS
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -338,7 +404,8 @@ export default class TravelMP2 extends Component {
                 errorMessage: 'Permisos denegados por el usuario'
             });
         }
-
+        // Fin del bloque
+        // Bloque para la asignación de mi posición, paradas, y del usuario 
         let location = await Location.getCurrentPositionAsync({});
 
         this.setState({ location });
@@ -402,18 +469,17 @@ export default class TravelMP2 extends Component {
             Paradas
         })
 
-        // this.chofer_setPosition();
-
-        console.log('Paradas',Paradas);
-        
+        // Fin del bloque 
         
     }
-
-    
-    
-    // Función para aceptar el viaje
+    /**
+    * Función para aceptar el viaje
+    *
+    * @memberof TravelMP2
+    */
     aceptViaje() {
 
+        // Generar la hora límite para generar la cancelación del servicio 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
         keys.HoraServicio = d.toLocaleTimeString()
@@ -425,21 +491,21 @@ export default class TravelMP2 extends Component {
 
 
         clearInterval(this.state.intervaltimerAceptViaje);
-
+        // Socket para emitir la aceptación del viaje 
         keys.socket.emit('chofer_accept_request', {
             id_usuario_socket: keys.id_usuario_socket,
             id_chofer_socket: keys.id_chofer_socket,
             datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
             positionChofer: this.state.myPosition
         });
-
+        // Socket para generar el servicio 
         keys.socket.emit('generar_servicio', {
             id_conductor_socket: keys.id_chofer_socket,
             id_usuario_socket: keys.id_usuario_socket,
             distancia_destino_usuario: keys.travelInfo.Distancia,
             tiempo_viaje_destino: keys.travelInfo.Tiempo,
-            latitud_usuario: keys.positionUser.usuario_latitud,
-            longitud_usuario: keys.positionUser.usuario_longitud,
+            latitud_usuario: this.state.positionUser.latitude,
+            longitud_usuario: this.state.positionUser.longitude,
             latitud_usuario_destino: keys.travelInfo.Parada2.latitude,
             longitud_usuario_destino: keys.travelInfo.Parada2.longitude,
             geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
@@ -448,10 +514,9 @@ export default class TravelMP2 extends Component {
             id_unidad: keys.datos_vehiculo.id_unidad,
             id_conductor: keys.datos_vehiculo.id_chofer
         })
-
+         // Inicio de transmisión de coordenadas al usuario 
         this.fleet_chofer_usuario();
-
-
+        // Cambio de estado de componente a viaje aceptado 
         this.setState({
             HomeTravel: false,
             aceptViaje: true,
@@ -513,7 +578,13 @@ export default class TravelMP2 extends Component {
         this.setState({ timer_chofer });
     }
 
+    /**
+     * Función para enviar la posición del chofer al usuario (Con socket)
+     *
+     * Retorno de coordenadas de chófer, transmisión
+     */
     findCurrentLocationAsync = async () => {
+        // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -525,10 +596,13 @@ export default class TravelMP2 extends Component {
         let location = await Location.getCurrentPositionAsync({});
         this.setState({ location });
     };
-
-
+    /**
+    * Función para empezar el viaje por google maps y Waze
+    *
+    * @memberof TravelMP
+    */
     Go = () => {
-
+        // Bloque de asignación de coordenadas de la posición del usuario y las paradas
         coordinates = {
             latitude: 0,
             longitude: 0
@@ -556,8 +630,9 @@ export default class TravelMP2 extends Component {
                 longitude: keys.travelInfo.Parada2.longitude,
             }
         }
+        // Fin del bloque 
 
-
+        // Asignación de coordenadas para usar el viaje con google maps 
         if (keys.travelType == true) {
 
             const data = {
@@ -610,6 +685,12 @@ export default class TravelMP2 extends Component {
 
     }
 
+    /**
+    *Barra de navegación de TravelMP
+    *
+    * @static
+    * @memberof TravelMP2
+    */
     static navigationOptions = {
         title: "Viaje",
         headerLeft: null
@@ -617,7 +698,13 @@ export default class TravelMP2 extends Component {
 
   
 
+    /**
+     * Función para iniciar en el punto de encuentro
+     *
+     * @memberof TravelMP
+     */
     puntoEncuentro(){
+        // Asignación de estado de componentes iniciar el viaje 
         this.setState({
             HomeTravel: false,
             aceptViaje: false,
@@ -634,14 +721,53 @@ export default class TravelMP2 extends Component {
         keys.socket.emit("puntoEncuentro", {
             id_socket_usuario: keys.id_usuario_socket
         });
+        // Interval para el cronometro de 2 minutos de manera regresiva 
+        let intervalEsperaUsuario = setInterval(() => {
+            if (this.state.segundosUsuario == 0) {
+                this.setState({
+                    segundosUsuario: 59,
+                    minutosUsuario: this.state.minutosUsuario - 1
+
+                })
+            } else {
+                this.setState({
+                    segundosUsuario: this.state.segundosUsuario - 1
+                })
+            }
+
+            if (this.state.segundosUsuario < 10) {
+
+                this.setState({
+                    timeUsuario: this.state.minutosUsuario + ":0" + this.state.segundosUsuario
+                })
+            } else {
+                this.setState({
+                    timeUsuario: this.state.minutosUsuario + ":" + this.state.segundosUsuario
+                })
+            }
+            if (this.state.minutosUsuario == 0 && this.state.segundosUsuario == 0) {
+                clearInterval(intervalEsperaUsuario)
+                this.setState({
+                    finTimerUsuario: true
+                })
+            }
+            console.log("timeUsuario", this.state.timeUsuario)
+        }, 1000)
+
+        keys.intervalEsperaUsuario = intervalEsperaUsuario;
 
 
     }
 
 
-   
+    /**
+     *Función para terminar el viaje
+    *
+    * @memberof TravelMP2
+    */
     terminarViaje(){
-
+        // Limpiar intervals de cronometro del viaje y de la transmisión de coordenadas 
+        clearInterval(keys.intervalTimeTravel)
         clearInterval(keys.intervalBroadcastCoordinates);
 
         keys.Chat = [];
@@ -651,44 +777,39 @@ export default class TravelMP2 extends Component {
 
     }
 
+    /**
+    * Función para cancelar el viaje
+    *
+    * @memberof TravelMP2
+    */
     cancelViaje() {
 
-        var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes(), 0, 0);
-        horaActual = d.toLocaleTimeString()
+        // Limpiar chat 
+        keys.Chat = []
+        // Limpíar el intervalo de transmisión de coordenas
+        clearInterval(keys.intervalBroadcastCoordinates);
+        // Socket para hacer la transacción de la cancelación del viaje 
+        keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
+        // Emisión de la cancelación al usuario 
+        keys.socket.emit("cancelViajeChofer", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
+        // Cambio de pantalla a Home 
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
+            key: undefined
+        });
 
-        console.log("Hora Actual", horaActual);
-        console.log("Hora Servicio", keys.HoraServicio);
+        this.props.navigation.dispatch(resetAction);
 
-        if (horaActual < keys.HoraServicio) {
-
-            keys.Chat = []
-
-            clearInterval(keys.intervalBroadcastCoordinates);
-
-            keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
-
-            keys.socket.emit("cancelViajeChofer", {
-                id_socket_usuario: keys.id_usuario_socket
-            });
-
-            const resetAction = StackActions.reset({
-                index: 0,
-                actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
-                key: undefined
-            });
-
-            this.props.navigation.dispatch(resetAction);
-
-        } else {
-            this.setState({
-                showModalCancel: false,
-                showModal: true,
-                Descripcion: "No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
-            })
-        }
+        
     }
-
+    /**
+    * Función para actualizar la región del mapa
+    *
+    * @param {*} region
+    */
     onRegionChange = async region => {
 
 
@@ -698,19 +819,69 @@ export default class TravelMP2 extends Component {
 
 
     } 
-
+    /**
+    * Función para la primera parada
+    *
+    * @memberof TravelMP2
+    */
     primeraParada(){
+        // Asignar estados de primera parada, reiniciar timer de viaje 
         this.setState({
             routeInitial: false,
             routeParada1: true,
             routeParada2: false,
+            FinTimeTravelUsuario: false,
+            segundosTravelUsuario: 0,
+            minutosTravelUsuario: 0
         })
+        clearInterval(keys.intervalTimeTravel);
+        // Iniciar intervalo de cronometro, de tiempo de viaje 
+
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
+
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
 
 
     }
-
+    /**
+     * Función para la segunda parada
+     *
+     * @memberof TravelMP2
+     */
     segundaParada(){
-
+        // Asignar estados de segunda parada, reiniciar timer de viaje 
+        clearInterval(keys.intervalTimeTravel);
 
         Paradas = [];
 
@@ -725,6 +896,9 @@ export default class TravelMP2 extends Component {
             routeInitial: false,
             routeParada1: false,
             routeParada2: true,
+            FinTimeTravelUsuario: false,
+            segundosTravelUsuario: 0,
+            minutosTravelUsuario: 0
  
         })
 
@@ -732,452 +906,420 @@ export default class TravelMP2 extends Component {
         keys.socket.emit("segundaParada", {
             id_socket_usuario: keys.id_usuario_socket
         });
-    }
+        // Iniciar intervalo de cronometro, de tiempo de viaje 
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
 
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
+    }
+    /**
+    * Función para el Chat
+    *
+    * @memberof TravelMP2
+    */
     Chat() {
 
         keys.socket.removeAllListeners("chat_chofer");
         this.props.navigation.navigate("Chat")
     }
+    /**
+    * Función para iniciar el viaje
+    *
+    * @memberof TravelMP2
+    */
+    async iniciarViaje() {
+        // Limpiar el intervalo de la espera de usuario 
+        clearInterval(keys.intervalEsperaUsuario)
 
 
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: false,
+            initravel: false,
+            Travel: true,
+
+
+        })
+        // Intervalo para generar el cronometro del tiempo de viaje 
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
+
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
+
+
+
+    }
+
+    /**
+    * Render principal del componente
+    *
+    * @returns
+    * @memberof TravelMP2
+    */
     render() {
         return (
-            <ScrollView contentContainerStyle={styles.contentContainer}>
-                <View style={styles.container}>
-
-                    <View>
-
-                        <Modal
-                            isVisible={this.state.showModal}
-
-                        >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
-
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
-
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
-
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
 
 
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
+            <View style={{ flex: 1 }}>
+                {/* Modal genérico de mensajes   */}
+                <View>
 
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModal: false
-                                            })}
-                                        ></Button>
+                    <Modal
+                        isVisible={this.state.showModal}
 
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+
                             </View>
-
-
-                        </Modal>
-
-                    </View>
-                    <View >
-
-                        <Modal
-                            isVisible={this.state.showModalCancel}
-                        
-
-                        >
-                            <View style={styles.area}>
-                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
-                            </View>
-                            {/* Primer motivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: true,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> El cliente no se presentó</Text>
-                                </View>
-                            </View>
-                            {/* Segundo mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.clienteNoCancelacion ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: true,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> El cliente pidió la cancelación</Text>
-                                </View>
-                            </View>
-                            {/* Tercer mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.direccionIncorrecta ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: true,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> Dirección incorrecta</Text>
-                                </View>
-                            </View>
-
-                            {/* Cuarto mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-                                        <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: true,
-                                            Otro: false
-                                        })}></Icon>
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> No cobrar al cliente</Text>
-                                </View>
-                            </View>
-
-                            {/* Quinto mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
-                                            onPress={() => this.setState({
-                                                clienteNoPresento: false,
-                                                clienteNoCancelacion: false,
-                                                direccionIncorrecta: false,
-                                                noCobrarCliente: false,
-                                                Otro: true
-                                            })}></Icon>
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> Otro</Text>
-                                </View>
-                            </View>
-
-                            <View
-                                style={styles.area}>
-                                <View style={{ flex: 2 }}></View>
-
-                                <View style={{ flex: 2, marginBottom: 5, paddingRight: 5 }}>
-                                    <Button
-                                        title="No Cancelar"
-                                        buttonStyle={{
-                                            backgroundColor: "#ff8834"
-                                        }}
-                                        titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.setState({
-                                            showModalCancel: false
-                                        })}
-
-                                    ></Button>
-
-                                </View>
-                                <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
-
-                                    <Button
-                                        title="Cancelar"
-                                        buttonStyle={{
-                                            backgroundColor: "#ff8834"
-                                        }}
-                                        titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.cancelViaje()}
-
-                                    ></Button>
-
-                                </View>
-                            </View>
-
-
-                        </Modal>
-
-                    </View>
-                    <View style={styles.area}>
-                        <View style={{ flex: 1 }}>
-                            <Switch
-                                value={keys.stateConductor}
-                                
-                            />
-                        </View>
-                        <View style={{ flex: 2 }}>
-                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}></View>
-
-                        <View style={
-                            {
-                                flex: 1,
-                                paddingBottom: 5
-                            }
-                        }>
-                            <Icon name="question-circle"
-                                size={30}
-                                color="#ff8834"></Icon>
-                        </View>
-                        <View style={
-                            {
-                                flex: 1,
-                                paddingBottom: 5
-                            }
-                        }>
-                            <Icon name="cog"
-                                size={30}
-                                color="#ff8834"></Icon>
-                        </View>
-                    </View>
-                    {/* Barra superior de punto de encuentro  */}
-                    {this.state.HomeTravel?
-                     
-                        <View >
-
                             <View style={{
                                 flexDirection: "row",
-                                paddingLeft: 10,
-                                backgroundColor: "#fff",
-                                paddingTop: 10,
-                                marginTop: 2
+                                paddingTop: 5,
+                                marginBottom: 5
+
                             }}>
-                                <View>
-                                    <Image
-                                        style={{ width: 50, height: 50 }}
-                                        source={require("./../assets/user.png")}
-                                    ></Image>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
+
                                 </View>
-                                <View style={
-                                    {
-                                        marginLeft: 10
-                                    }
-                                }>
-                                    <Text>{keys.datos_usuario.nombreUsuario}</Text>
-                                </View>
-                                <View >
-                                    <Text style={{ fontWeight: "bold", marginLeft: 100 }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
-
-                                    <Text style={{ marginLeft: 70 }}>{this.state.distance} km de ti</Text>
-                                </View>
-
-
-                            </View>
-                            <View style={styles.area}>
-
-                                <Icon name="chevron-right" color="green" size={15}></Icon>
-
-                                <Text style={{ marginLeft: 10 }}>
-                                    {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1==true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2==true) ? keys.travelInfo.Parada2.Direccion  : "Test" }
-                                </Text>
+                                <View style={{ flex: 2 }}></View>
                             </View>
                         </View>
-                    :
-                       null
-                    }
-                    {/* Barra superior para aceptar el viaje  */}
-
-                    {this.state.aceptViaje || this.state.Travel?
 
 
-                        <View >
+                    </Modal>
 
-                            <View style={styles.area}>
+                </View>
 
-                                <Icon name="chevron-right" color="green" size={15}></Icon>
+                {/* Modal de cancelación  */}
+                <View >
 
-                                <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : "Test"}</Text>
-                                    <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
-                                </View>
-                                <View>
-                                    <Icon name="chevron-up" size={30} onPress={this.Go} color="#ff8834"></Icon>
-                                    <Text style={{paddingLeft:4}}>Go</Text>
+                    <Modal
+                        isVisible={this.state.showModalCancel}
+
+                    >
+                        <View style={styles.area}>
+                            <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
+                        </View>
+                        {/* Primer motivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: true,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
+
                                 </View>
                             </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> El cliente no se presentó</Text>
+                            </View>
                         </View>
-                    :
-                        null
-                    }
-    
-                  
-    
+                        {/* Segundo mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.clienteNoCancelacion ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: true,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
+
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> El cliente pidió la cancelación</Text>
+                            </View>
                         </View>
-                    <View style={styles.containerMap}>
-                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null?
+                        {/* Tercer mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.direccionIncorrecta ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: true,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
+
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> Dirección incorrecta</Text>
+                            </View>
+                        </View>
+
+                        {/* Cuarto mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+                                    <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: true,
+                                        Otro: false
+                                    })}></Icon>
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> No cobrar al cliente</Text>
+                            </View>
+                        </View>
+
+                        {/* Quinto mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
+                                        onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: false,
+                                            Otro: true
+                                        })}></Icon>
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> Otro</Text>
+                            </View>
+                        </View>
+
+
+                        <View
+                            style={styles.area}>
+                            <View style={{ flex: 2 }}></View>
+
+                            <View style={{ flex: 2, marginBottom: 5, paddingRight: 5 }}>
+                                <Button
+                                    title="No Cancelar"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834"
+                                    }}
+                                    titleStyle={{ fontSize: 12 }}
+                                    onPress={() => this.setState({
+                                        showModalCancel: false
+                                    })}
+
+                                ></Button>
+
+                            </View>
+                            <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
+
+                                <Button
+                                    title="Cancelar"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834"
+                                    }}
+                                    titleStyle={{ fontSize: 12 }}
+                                    onPress={() => this.cancelViaje()}
+
+                                ></Button>
+
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
+                    {/* Mapa */}
+                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
 
                         <MapView
 
-                        style={styles.map}
-                        region={{
-                            latitude: this.state.region.latitude,
-                            longitude: this.state.region.longitude,
-                            latitudeDelta: this.state.region.latitudeDelta,
-                            longitudeDelta: this.state.region.longitudeDelta
-                        }}
-
-                        onRegionChangeComplete={this.onRegionChange}
-
-                        followUserLocation={true}
-                        ref={ref => (this.mapView = ref)}
-                        zoomEnabled={true}
-                        showsUserLocation={true}
-
-                        >
-
-                        {/* Mi posición */}
-                        <Marker
-                            coordinate={{
-                                latitude: this.state.myPosition.latitude,
-                                longitude: this.state.myPosition.longitude,
+                        style={{ top: "-10%", height: "110%" }}
+                            region={{
+                                latitude: this.state.region.latitude,
+                                longitude: this.state.region.longitude,
+                                latitudeDelta: this.state.region.latitudeDelta,
+                                longitudeDelta: this.state.region.longitudeDelta
                             }}
 
-                        >
-                            <Icon name="car" size={20} color="orange"></Icon>
-                        </Marker>
-                        
-                        {/* Ubicación del usuario */}
-                        <Marker
-                            coordinate={{
-                                latitude: this.state.positionUser.latitude,
-                                longitude: this.state.positionUser.longitude,
-                            }}
+                            onRegionChangeComplete={this.onRegionChange}
+
+                            followUserLocation={true}
+                            ref={ref => (this.mapView = ref)}
+                            zoomEnabled={true}
+                            showsUserLocation={true}
 
                         >
-                            <Icon name="map-pin" size={20} color="green"></Icon>
-                        </Marker>
 
-                        {   
-                            this.state.Paradas!=null?
-
-                                this.state.Paradas.map(marker => (
-
-                                    <Marker
-                                        key={marker.numParada ? marker.numParada : "key"}
-                                        coordinate={{
-                                            latitude: marker.latitude,
-                                            longitude: marker.longitude
-                                        }}
-
-                                    >
-                                        <Icon name="map-pin" size={20} color="orange"></Icon>
-
-                                    </Marker>
-                                ))
-                            :
-
-                                null
-                            
-                       
-                        } 
-                        
-                 
-                        {/* Primer Parada */}
-                            {this.state.routeInitial && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude != 0 
-                                && this.state.myPosition.latitude != 0 & this.state.myPosition.longitude != 0 ?
-                            <MapViewDirections
-
-
-                                origin={{
+                            {/* Mi posición */}
+                            <Marker
+                                coordinate={{
                                     latitude: this.state.myPosition.latitude,
                                     longitude: this.state.myPosition.longitude,
                                 }}
-                                destination={{
+
+                            >
+                                <Icon name="car" size={20} color="orange"></Icon>
+                            </Marker>
+
+                            {/* Ubicación del usuario */}
+                            <Marker
+                                coordinate={{
                                     latitude: this.state.positionUser.latitude,
                                     longitude: this.state.positionUser.longitude,
                                 }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="blue"
-                                onReady={result => {
-                                    if(result!=null){
 
-                            
-                                        this.setState({
-                                    
-                                            distance: parseInt(result.distance),
-                                            duration: parseInt(result.duration)
+                            >
+                                <Icon name="map-pin" size={20} color="green"></Icon>
+                            </Marker>
 
-                                        })
-                                    }
+                            {
+                                this.state.Paradas != null ?
 
+                                    this.state.Paradas.map(marker => (
 
-                                }}
+                                        <Marker
+                                            key={marker.numParada ? marker.numParada : "key"}
+                                            coordinate={{
+                                                latitude: marker.latitude,
+                                                longitude: marker.longitude
+                                            }}
 
-                            />
-                    
-                        :
-                            null
-                        }
-                        
-                      { this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude !=0
-                      && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude != 0 ?
+                                        >
+                                            <Icon name="map-pin" size={20} color="orange"></Icon>
 
-                            <MapViewDirections
-                                origin={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
-                                }}
-                                destination={{
-                                    latitude: keys.travelInfo.Parada1.latitude,
-                                    longitude: keys.travelInfo.Parada1.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="orange"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: parseInt(result.distance),
-                                        duration: parseInt(result.duration)
+                                        </Marker>
+                                    ))
+                                    :
 
-                                    })
+                                    null
 
 
+                            }
 
-                                }}
 
-                            />
-                        :
-                            null
-                      }
-                      {
-                        this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
-                        && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0 ?
+                            {/* Primer Parada */}
+                            {this.state.routeInitial && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude != 0
+                                && this.state.myPosition.latitude != 0 & this.state.myPosition.longitude != 0 ?
+                                <MapViewDirections
+
+
+                                    origin={{
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                    }}
+                                    destination={{
+                                        latitude: this.state.positionUser.latitude,
+                                        longitude: this.state.positionUser.longitude,
+                                    }}
+                                    apikey={keys.GOOGLE_MAPS_APIKEY}
+                                    strokeWidth={1}
+                                    strokeColor="blue"
+                                    onReady={result => {
+                                        if (result != null) {
+
+
+                                            this.setState({
+
+                                                distance: parseInt(result.distance),
+                                                duration: parseInt(result.duration)
+
+                                            })
+                                        }
+
+
+                                    }}
+
+                                />
+
+                                :
+                                null
+                            }
+                            {/* Ruta de mi posición a la parada 1 */}
+                            {this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                                && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude != 0 ?
 
                                 <MapViewDirections
                                     origin={{
@@ -1185,12 +1327,12 @@ export default class TravelMP2 extends Component {
                                         longitude: this.state.myPosition.longitude,
                                     }}
                                     destination={{
-                                        latitude: keys.travelInfo.Parada2.latitude,
-                                        longitude: keys.travelInfo.Parada2.longitude,
+                                        latitude: keys.travelInfo.Parada1.latitude,
+                                        longitude: keys.travelInfo.Parada1.longitude,
                                     }}
                                     apikey={keys.GOOGLE_MAPS_APIKEY}
                                     strokeWidth={1}
-                                    strokeColor="red"
+                                    strokeColor="orange"
                                     onReady={result => {
                                         this.setState({
                                             distance: parseInt(result.distance),
@@ -1198,448 +1340,718 @@ export default class TravelMP2 extends Component {
 
                                         })
 
-                                    
-
 
 
                                     }}
 
                                 />
-                        :
-                            null
-                      }
-                    
-                     
-
-                     
-                                
-                                
-                    </MapView>
-
-                    :
-                    
-                        null
-                    
-                    }
-
-                        <View>
-
-                        <View style={{paddingLeft:210, paddingBottom:20}}>
-
-                                    <Icon name="exclamation-circle"
-                                        size={30}
-                                        onPress={()=>this.alert()} 
-                                        color="#ff8834"  
-                                    ></Icon>
-
-                                </View>
-
-                        </View>
-
-                    </View>
-                    {/* Barra inferior de punto de encuentro */}
-                    {this.state.aceptViaje?
-                        <View>
-
-                            <View style={styles.area}>
-
-                    <Text style={{marginLeft:5}}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
-
-
-                            </View>
-                        <View style={styles.area}>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-
-                            </View>
-
-                            <View style={{ flex: 2 }}>
-
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
-
-
-                        </View>
-                            <View style={styles.area}>
-                                
-                                <View style={{paddingLeft:120}}>
-                                    <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
-                                    <Text>soporte@yimi.com</Text>
-                                </View>
-
-                            </View>
-                            <View>
-
-                            </View>
-                            <View style={styles.area}>
-
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 50
-                                    }
-                                }>
-                                    <Button
-
-                                        title="En el punto de encuentro"
-                                        type="clear"
-                                        onPress={() => {
-                                            this.puntoEncuentro()
-                                        }}
-                                    />
-                           
-                                </View>
-
-
-                            </View>
-
-                        </View>
-                    :
-                        null
-                    
-                    }
-                    {/* Barra inferior para aceptar el viaje  */}
-                    {this.state.HomeTravel?
-                    <View style={styles.area}>
-
-                        <Icon name="angle-double-right" size={30} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
-                        <View style={
-                            {
-                                paddingLeft: 85
+                                :
+                                null
                             }
-                        }>
-                            <Button
+                            {/* Ruta de mi posición a parada 2 */}
+                            {
+                                this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                                    && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0 ?
 
-                                title="Aceptar viaje"
-                                type="clear"
-                                onPress={() => this.aceptViaje()}
-                            />
-                            <Text style={
-                                {
-                                    paddingLeft: 45
-                                }
-                            }>{this.state.timerAceptViaje} s</Text>
-                        </View>
+                                    <MapViewDirections
+                                        origin={{
+                                            latitude: this.state.myPosition.latitude,
+                                            longitude: this.state.myPosition.longitude,
+                                        }}
+                                        destination={{
+                                            latitude: keys.travelInfo.Parada2.latitude,
+                                            longitude: keys.travelInfo.Parada2.longitude,
+                                        }}
+                                        apikey={keys.GOOGLE_MAPS_APIKEY}
+                                        strokeWidth={1}
+                                        strokeColor="red"
+                                        onReady={result => {
+                                            this.setState({
+                                                distance: parseInt(result.distance),
+                                                duration: parseInt(result.duration)
+
+                                            })
 
 
-                    </View>
-                    :
+
+
+
+                                        }}
+
+                                    />
+                                    :
+                                    null
+                            }
+
+
+
+
+
+
+                        </MapView>
+
+                        :
+
                         null
+
                     }
-                {/* Barra inferior de inicio de viaje */}
-                {this.state.initravel ?
+                {/* Barra superior del componente  */}}
                     <View>
 
-                        <View style={styles.area}>
+                        <View style={{ paddingLeft: 210, paddingBottom: 20 }}>
 
-                            <Text style={{ marginLeft: 20 }}> Por favor espera al usuario: 2:00 minutos</Text>
-
-
-                        </View>
-                        <View style={styles.area}>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-
-                            </View>
-
-                            <View style={{ flex: 2 }}>
-
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
-
+                            <Icon name="exclamation-circle"
+                                size={30}
+                                onPress={() => this.alert()}
+                                color="#ff8834"
+                            ></Icon>
 
                         </View>
-                        <View style={styles.area}>
 
-                            <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
-                                <Text>soporte@yimi.com</Text>
-                            </View>
+                    </View>
 
+             
+                {/* Barra superior de punto de encuentro  */}
+                <View style={{ flexDirection: "row", position: "absolute", top: "3%" }}>
+                    <View style={{ flex: 1 }}>
+                        <Switch
+                            value={keys.stateConductor}
+
+                        />
+                    </View>
+                    <View style={{ flex: 4 }}>
+                        <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}></View>
+
+                    <View style={
+                        {
+                            flex: 1,
+                            paddingBottom: 5
+                        }
+                    }>
+                        <Icon name="question-circle"
+                            size={30}
+                            color="#ff8834"
+                        ></Icon>
+                    </View>
+                    <View style={
+                        {
+                            flex: 1,
+                            paddingBottom: 5
+                        }
+                    }>
+                        <Icon name="cog"
+                            color="#ff8834"
+                            size={30}></Icon>
+                    </View>
+                </View>
+
+                {/* Barra superior de punto de encuentro  */}
+                {this.state.HomeTravel ?
+                    <View style={{
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "10%",
+                        left: "3%"
+                    }}>
+                        <View style={{ flex: 1 }}>
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
+                        </View>
+                        <View style={
+                            {
+                                flex: 3
+                            }
+                        }>
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+                        </View>
+                        <View style={{ flex: 2 }} >
+                            <Text style={{ fontWeight: "bold" }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
+
+                            <Text style={{ marginLeft: 5 }}>{this.state.distance} km de ti</Text>
+                        </View>
+
+
+                    </View>
+
+
+                    :
+                    null
+                }
+                {/* Componente de muestra de punto de partida */}
+                {this.state.HomeTravel ?
+                    <View style={{
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "20%",
+                        left: "3%"
+                    }}>
+
+                        <Icon name="chevron-right" color="green" size={15}></Icon>
+
+                        <Text style={{ marginLeft: 10 }}>{keys.travelInfo.puntoPartida.addressInput}</Text>
+                    </View>
+                    :
+                    null
+                }
+
+                {/* Nombre de los destinos, tiempo y distancia, funcón de viaje en waze o Google Maps */}
+                {this.state.aceptViaje || this.state.Travel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "12%" }}>
+
+                        <Icon name="chevron-right" color="green" size={15}></Icon>
+
+                        <View style={{ width: 280 }}>
+                            <Text style={{ marginLeft: 10 }}>{(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : "Test"}</Text>
+                            <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                         </View>
                         <View>
+                            <Icon name="chevron-up" size={30} color="#ff8834" onPress={this.Go}></Icon>
+                            <Text style={{ paddingLeft: 4 }}>Go</Text>
+                        </View>
+                    </View>
+
+                    :
+                    null
+                }
+
+                {/* Barra inferior para aceptar el viaje  */}
+                {this.state.HomeTravel ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "85%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
 
                         </View>
-                        <View style={styles.area}>
+                        <View style={
+                            {
+                                flex: 3
+                            }
+                        }>
+                            <View>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop:10 }}></Icon>
-                            <View style={
-                                {
-                                    paddingLeft: 110
-                                }
-                            }>
                                 <Button
 
-                                    title="Iniciar viaje"
+                                    title="Aceptar viaje"
                                     type="clear"
                                     onPress={() => {
-                                        this.setState({
-                                            HomeTravel: false,
-                                            aceptViaje: false,
-                                            initravel: false,
-                                            Travel: true,
-
-                                        })
+                                        this.aceptViaje();
                                     }}
                                 />
+                                <View style={{ flexDirection: "row" }}>
+
+                                    <View style={{ flex: 1 }}></View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text>{this.state.timerAceptViaje}</Text>
+                                    </View>
+
+                                </View>
+
+
 
                             </View>
-
+                        </View>
+                        <View style={{ flex: 1 }}>
 
                         </View>
 
                     </View>
                     :
                     null
-
                 }
-                {this.state.Travel?
-                    <View>
 
-                        <View style={styles.area}>
+                {/* Barra inferior de punto de encuentro */}
+                {this.state.aceptViaje ?
 
-                            <Text style={{ marginLeft: 20 }}> Pago con tarjeta</Text>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "58%" }}>
 
+                        <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
 
-                        </View>
-                        <View style={styles.area}>
+                    </View>
 
-                            <View style={{ flex: 1 }}>
+                    :
+                    null
+                }
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
+                {this.state.aceptViaje ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "70%" }}>
 
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
+                        <View style={{ flex: 1 }}>
 
-                            </View>
-
-                            <View style={{ flex: 2 }}>
-
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
-
-
-                        </View>
-                        <View style={styles.area}>
-
-                            <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
-                                <Text>soporte@yimi.com</Text>
-                            </View>
-
-                        </View>
-                        <View>
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
 
                         </View>
 
-                        {this.state.routeInitial?
-                            <View style={styles.area}>
+                        <View style={{ flex: 2 }}>
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
 
-                                    
-                                    <Button
+                        </View>
 
-                                        title="Ir a primera parada"
-                                        type="clear"
-                                        onPress={() => this.primeraParada()}
-                                    />
-                                   
+                        <View style={{ flex: 1 }}>
 
-                                </View>
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
 
+                        <View style={{ flex: 1 }}>
 
-                            </View>
-                        
-                        :
-                            null
-                        }
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
 
-                        {this.state.routeParada1 ?
-                            <View style={styles.area}>
+                        </View>
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
+                        <View style={{ flex: 1 }}>
 
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
 
-                                    <Button
-
-                                        title="Ir a segunda parada"
-                                        type="clear"
-                                        onPress={() => this.segundaParada()}
-                                    />
-
-
-                                </View>
-
-
-                            </View>
-
-                            :
-                            null
-                        }
-
-
-                        {this.state.routeParada2 ?
-                            <View style={styles.area}>
-
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }}></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
-
-
-                                    <Button
-
-                                        title="Terminar Viaje"
-                                        type="clear"
-                                        onPress={() =>
-                                            this.terminarViaje()
-                                        }
-                                    />
-
-
-                                </View>
-
-
-                            </View>
-
-                            :
-                            null
-                        }
+                        </View>
 
 
                     </View>
-                :
-                null
-                }
-                  
 
-           
-            </ScrollView>
-        );
+                    :
+                    null
+                }
+                {/* Llamada a soporte */}
+                {this.state.aceptViaje ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%", left:"3%" }}>
+
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
+
+                            ></Icon>
+
+                        </View>
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
+                        </View>
+                    </View>
+
+                    :
+                    null
+
+                }
+                {/* Botón de punto de encuentro  */}
+                {this.state.aceptViaje ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "87%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+
+                                title="En el punto de encuentro"
+                                type="clear"
+                                onPress={() => {
+                                    this.puntoEncuentro()
+                                }}
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+
+                    </View>
+
+                    :
+                    null
+                }
+
+                {/* Barra inferior de inicio de viaje */}
+                {this.state.initravel ?
+                    this.state.finTimerUsuario ?
+                        <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+                            <Text style={{ marginLeft: 5 }}> El usuario está retrasado pongase en contacto para confirmar el horario</Text>
+
+
+                        </View>
+                        :
+                        <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+                            <Text style={{ marginLeft: 5 }}> Por favor espera al usuario: {this.state.timeUsuario} minutos</Text>
+
+
+                        </View>
+                    :
+                    null
+
+                }
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "73%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
+
+                        </View>
+
+                        <View style={{ flex: 2 }}>
+
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
+
+                        </View>
+
+
+                    </View>
+
+                    :
+                    null
+                }
+                {/* Llamada a soporte */}
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "83%", left:"3%" }}>
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
+
+                            ></Icon>
+
+                        </View>
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
+                        </View>
+
+                    </View>
+
+                    :
+                    null
+                }
+                {/* Botón para iniciar el viaje */}
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title="Iniciar viaje"
+                                type="clear"
+                                onPress={() =>this.iniciarViaje()}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+
+                    :
+                    null
+                }
+                {/* Tipo de pago y tiempo de viaje  */}
+                {this.state.Travel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+
+                        <View style={{ flex: 5 }}>
+
+                            <Text> Pago con tarjeta</Text>
+
+                        </View>
+
+
+                        <View style={{ flex: 1 }}>
+
+                            <Text style={{ color: (this.state.FinTimeTravelUsuario == false) ? "green" : "red" }}>{this.state.timeTravelUsuario}</Text>
+                        </View>
+
+
+                    </View>
+                    :
+                    null
+                }
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
+                {this.state.Travel ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "67%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
+
+                        </View>
+
+                        <View style={{ flex: 2 }}>
+
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
+
+                        </View>
+
+
+                    </View>
+                    :
+                    null
+                }
+                {/* Llamada a soporte */}
+                {this.state.Travel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%", left:"3%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
+
+                            ></Icon>
+
+                        </View>
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
+                        </View>
+
+                    </View>
+                    :
+                    null
+                }
+                {/* Botón de finalización del viaje  */}
+                {this.state.Travel && this.state.routeInitial ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title="Ir a primera parada"
+                                type="clear"
+                                onPress={() => this.primeraParada()}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+                    :
+                    null
+                }
+                {/* Botón de segunda parada */}
+                {this.state.Travel && this.state.routeParada1 ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+
+                                title="Ir a segunda parada"
+                                type="clear"
+                                onPress={() => this.segundaParada()}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+
+
+                    :
+                    null
+                }
+                {/* Botón para terminar viaje */}
+                {this.state.Travel && this.state.routeParada2 ?
+
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title="Terminar viaje"
+                                type="clear"
+                                onPress={() => {
+                                    this.terminarViaje()
+                                }}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+                    :
+                    null
+                }
+
+
+
+
+
+
+            </View>
+
+
+
+       
+       );
     }
 }
 
 
-
+// Estilos de TravelMP2
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",

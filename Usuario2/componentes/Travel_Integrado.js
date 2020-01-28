@@ -20,6 +20,28 @@ export default class Travel_Integrado extends Component {
 
     constructor(props) {
 
+        // Socket para asignar los ids de socket en caso de cambio
+        keys.socket.on('getIdSocket', (num) => {
+
+            // console.log(num);
+
+            keys.id_usuario_socket = num.id;
+
+            console.log("Usuario", keys.id_usuario_socket);
+
+
+            keys.socket.emit("WSsendIdUsuarioChofer", {
+                id_usuario_socket: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
+            })
+
+
+        })
+
+        keys.socket.on("sendIdChoferUsuario",(num)=>{
+            keys.id_chofer_socket = num.id_socket_chofer;
+            console.log("Recibí id de chofer",keys.id_chofer_socket)
+        })
+
         super(props);
 
         this.state = {
@@ -127,13 +149,15 @@ export default class Travel_Integrado extends Component {
 
         };
 
-        if (keys.categoriaVehiculo == null && keys.tipoVehiculo == null) {
+        
 
-            this.getVehicles(1, 1);
+        if (keys.categoriaVehiculo == null || keys.tipoVehiculo == null) {
+
+            this.getVehiclesInit(1, 1);
 
         } else {
 
-            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio);
+            this.getVehiclesInit(keys.categoriaVehiculo, keys.tipoVehiculo);
 
         }
         // Socket para escuchar el socket de vehículo
@@ -150,20 +174,21 @@ export default class Travel_Integrado extends Component {
 
         keys.socket.removeAllListeners("chat_usuario");
 
- 
-        // Chat de Usuario
-        keys.socket.on('chat_usuario', (num) => {
-
-            console.log("chat_usuario", num)
-
-            keys.Chat.push(num.Mensaje);
-
+        keys.socket.on("LlegoMensaje", (num)=>{
             this.setState({
                 showModal: true,
                 Descripcion: "Te llegó un mensaje",
             })
 
+        })
+ 
+        // Chat de Usuario
+        keys.socket.on('chat_usuario', (num) => {
 
+            
+            keys.Chat.push(num.Mensaje);
+            
+            console.log("Travel Integrado", keys.Chat)
         })
     
  
@@ -293,7 +318,8 @@ export default class Travel_Integrado extends Component {
         keys.socket.on('terminarViajeUsuario', num => {
 
             keys.Chat=[];
-
+            keys.Tarifa.Total = num.Tarifa;
+            console.log('terminarViajeUsuario', keys.Tarifa.Total);
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "terminarViaje" } })],
@@ -347,9 +373,40 @@ export default class Travel_Integrado extends Component {
         });
     }
 
-    async getVehicles(tipoVehiculo, tipoServicio) {
+    async getVehiclesInit(categoriaVehiculo, tipoVehiculo) {
 
 
+
+        clearInterval(this.timer_Vehicles);
+
+        clearInterval(this.timer_VehiclesConsult);
+
+        keys.socket.emit('vehiclesConsult', {
+            categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+        });
+
+        this.timer_VehiclesConsult = setInterval(() => {
+
+            keys.socket.emit('vehiclesConsult', {
+                categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
+            });
+
+
+        }, 10000);
+
+        keys.categoriaVehiculo = categoriaVehiculo;
+
+        keys.tipoVehiculo = tipoVehiculo;
+
+
+        console.log("Categoria vehiculo get");
+        console.log(keys.categoriaVehiculo);
+        console.log("Tipo Vehiculo Get");
+        console.log(keys.tipoVehiculo);
+
+    }
+
+    async getVehicles( tipoVehiculo, tipoServicio ){
 
         clearInterval(this.timer_Vehicles);
 
@@ -368,15 +425,17 @@ export default class Travel_Integrado extends Component {
 
         }, 10000);
 
+        keys.tipoVehiculo = tipoVehiculo;
+
         keys.tipoServicio = tipoServicio;
 
-        keys.tipoVehiculo = tipoVehiculo;
 
         console.log("Categoria vehiculo get");
         console.log(keys.categoriaVehiculo);
-        console.log("Tipo Vehiculo Get");
+        console.log("Tipo de vehiculo");
         console.log(keys.tipoVehiculo);
-
+        console.log("Tipo Servicio Get");
+        console.log(keys.tipoServicio);
     }
 
 
@@ -708,7 +767,7 @@ export default class Travel_Integrado extends Component {
             // Express
             keys.tipoServicio = 1;
 
-            this.getVehicles(keys.tipoVehiculo,keys.tipoServicio)
+            this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
 
 
         }else{
@@ -736,7 +795,7 @@ export default class Travel_Integrado extends Component {
                 // Express
                 keys.tipoServicio = 1;
 
-                this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
             }else{
                 if(typeVehicle=="Pool Estandar"){
                     this.setState({
@@ -760,7 +819,7 @@ export default class Travel_Integrado extends Component {
                     // Pool
                     keys.tipoServicio = 2;
 
-                    this.getVehicles(keys.tipoVehiculo,keys.tipoServicio)
+                    this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
 
                 }else{
                     if(typeVehicle=="Pool Lujo"){
@@ -785,7 +844,7 @@ export default class Travel_Integrado extends Component {
                         // Pool
                         keys.tipoServicio = 2;
 
-                        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                        this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
                     }
                 }
             }
@@ -813,6 +872,8 @@ export default class Travel_Integrado extends Component {
         latitudeDelta = region.latitudeDelta;
         longitudeDelta = region.longitudeDelta;
 
+        console.log(region)
+
         this.setState({
             region
         });
@@ -829,24 +890,33 @@ export default class Travel_Integrado extends Component {
         console.log("Hora Actual", horaActual);
         console.log("Hora Servicio", keys.HoraServicio);
 
-        if(horaActual<keys.HoraServicio){
+        keys.Chat=[];
 
-            keys.Chat=[];
-    
-            this.setState({
-                
-                showModalCancel: false,
+        this.setState({
             
-    
-                
-            })
+            showModalCancel: false,
+        
 
-            // this.sendSMS();
-    
+            
+        })
+
+        keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
+
+        if(horaActual<keys.HoraServicio){
+            
             keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
 
-            keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
-    
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicioNoCobro" } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
+            
+        }else{
+            
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
@@ -854,12 +924,7 @@ export default class Travel_Integrado extends Component {
             });
     
             this.props.navigation.dispatch(resetAction);
-        }else{
-            this.setState({
-                showModalCancel:false,
-                showModal:true, 
-                Descripcion:"No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
-            })
+
         }
 
     }
@@ -883,193 +948,159 @@ export default class Travel_Integrado extends Component {
  
     render() {
         return (
+            <View style={{ flex: 1 }}>
 
-            <ScrollView>
-                <View style={styles.container}>
 
-                    <View>
-                        {/* Modal para mensajes */}
-                        <Modal
-                            isVisible={this.state.showModal}
+                {/* Modal para mensajes */}
+               <View>
+                    <Modal
+                        isVisible={this.state.showModal}
 
-                        >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
 
                                 </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
-
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModal: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
+                                <View style={{ flex: 2 }}></View>
                             </View>
-
-
-                        </Modal>
-
-                    </View>
-                    {this.state.showBackButton?
-                    
-                        <View style={styles.area}>
-                            <View style={{ flex: 1 }}>
-                                <Icon
-                                    name="arrow-left"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => {
-                                        clearInterval(this.timer_Vehicles);
-                                        clearInterval(this.timer_VehiclesConsult);
-                                        this.props.navigation.navigate("Home")
-                                    }}
-                                ></Icon>
-                            </View>
-
-                        </View>
-                    :
-                        null
-                    }
-                    {this.state.showTimeChofer ?
-                        <View style={{ flexDirection:"row", backgroundColor: "#fff"}}>
-                            <View style={{ flex: 1, backgroundColor: "#EFEEEC" }}></View>
-                            <View style={{ backgroundColor: "black", flex:3, height:20 }}>
-                                <Text style={{ color: "white" }}>Llegada: {this.state.timeChofer} Minuto(s)</Text> 
-                            </View>
-                            <View style={{flex:3, backgroundColor:"#EFEEEC"}}></View>
                         </View>
 
-                        :
-                        null
-                    }
 
+                    </Modal>
 
-                    <View>
+                </View>
 
-                        <Modal
+                {/* Modal de aviso de viaje aceptado */}
+                <View>
+
+                    <Modal
                             isVisible={this.state.showModalAcept}
 
                         >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
 
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
-
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModalAcept: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
                             </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop: 5,
+                                marginBottom: 5
+
+                            }}>
+                                <View style={{ flex: 2 }}></View>
 
 
-                        </Modal>
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
 
-                    </View>
-                
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModalAcept: false
+                                        })}
+                                    ></Button>
 
-                    {/* Modal para la cancelación del servicio */}
-                    <View > 
-
-                        <Modal
-                            isVisible={this.state.showModalCancel}
-
-                        >   
-                            <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
-                                <View>
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera x minutos después de haber</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
-                                    <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
-                                    <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
 
                                 </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop:5,
-                                    marginBottom:5
-                                
-                                }}>
-                                    <View style={{ flex:2 }}></View>
-                                    <View style={{ flex:1, paddingRight:5 }}>
-                                        <Button
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            title="No"
-                                            onPress={() => this.setState({
-                                                showModalCancel: false
-                                            })}
-
-
-                                        ></Button>
-                                      
-                                    </View>
-
-                                    <View style={{ flex:1, paddingLeft:5 }}>
-
-                                        <Button
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            title="Si"
-                                            onPress={() => this.cancelarServicio()}
-                                        ></Button>
-
-                                   
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
+                                <View style={{ flex: 2 }}></View>
                             </View>
+                        </View>
 
-        
-                        </Modal>
 
-                    </View>
+                    </Modal>
 
-                    <View>
+                </View>
+
+                {/* Modal para la cancelación del servicio */}
+                <View > 
+
+                    <Modal
+                        isVisible={this.state.showModalCancel}
+
+                    >   
+                        <View style={{ marginTop: 22, backgroundColor: "#fff"}}>
+                            <View>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign:"justify" }}>Recuerde que si supera 3 minutos después de haber</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop:5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
+                                <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
+
+                            </View>
+                            <View style={{
+                                flexDirection: "row",
+                                paddingTop:5,
+                                marginBottom:5
+
+                            }}>
+                                <View style={{ flex:2 }}></View>
+                                <View style={{ flex:1, paddingRight:5 }}>
+                                    <Button
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        title="No"
+                                        onPress={() => this.setState({
+                                            showModalCancel: false
+                                        })}
+
+
+                                    ></Button>
+
+                                </View>
+
+                                <View style={{ flex:1, paddingLeft:5 }}>
+
+                                    <Button
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        title="Si"
+                                        onPress={() => this.cancelarServicio()}
+                                    ></Button>
+
+
+                                </View>
+                                <View style={{ flex: 2 }}></View>
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+                {/* Modal para aviso de llegada */}
+                <View>
 
                     <Modal
                         isVisible={this.state.showModalLlegada}
@@ -1091,7 +1122,7 @@ export default class Travel_Integrado extends Component {
 
                             }}>
                                 <View style={{ flex: 2 }}></View>
-                            
+
 
                                 <View style={{ flex: 2, paddingBottom: 5 }}>
 
@@ -1115,126 +1146,219 @@ export default class Travel_Integrado extends Component {
                     </Modal>
 
                 </View>
+                {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
 
-                  
-                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
-                        
-                        <View style={styles.containerMap}>
-                         
-                            <MapView
+                    <MapView
 
-                                style={styles.map}
-                                region={{
-                                    latitude: this.state.region.latitude,
-                                    longitude: this.state.region.longitude,
-                                    latitudeDelta: this.state.region.latitudeDelta,
-                                    longitudeDelta: this.state.region.longitudeDelta
-                                }}
+                        style={{ top: "-30%", height: "130%" }}
 
-                                onRegionChangeComplete={this.onRegionChange}
+                        region={{
+                            latitude: this.state.region.latitude,
+                            longitude: this.state.region.longitude,
+                            latitudeDelta: this.state.region.latitudeDelta,
+                            longitudeDelta: this.state.region.longitudeDelta
+                        }}
 
-                                showsUserLocation={true}
-                                showsMyLocationButton={true}
-                            >
+                        onRegionChangeComplete={this.onRegionChange}
+
+                        showsUserLocation={true}
+                        showsMyLocationButton={true}
+                    >
+                        <Marker
+                            coordinate={{
+                                latitude: this.state.myPosition.latitude,
+                                longitude: this.state.myPosition.longitude,
+                            }}
+
+                        >
+                            <Icon name="map-pin" size={20} color="green"></Icon>
+                        </Marker>
+
+                        {this.state.Vehicles != null && this.state.showVehicles ?
+
+
+                            this.state.Vehicles.map(marker => (
+
                                 <Marker
+                                    key={"key"}
                                     coordinate={{
-                                        latitude: this.state.myPosition.latitude,
-                                        longitude: this.state.myPosition.longitude,
+                                        latitude: marker.latitud,
+                                        longitude: marker.longitud
                                     }}
 
                                 >
-                                    <Icon name="map-pin" size={20} color="green"></Icon>
+                                    <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" : "car-side"} size={20} color="orange"></Icon>
+
+                                </Marker>
+                            ))
+
+
+                            :
+                            null
+
+                        }
+
+                        {
+                            this.state.Paradas!=null?
+
+                                <Marker
+                                    coordinate={{
+                                        latitude: this.state.Paradas[0]["latitude"],
+                                        longitude: this.state.Paradas[0]["longitude"],
+                                    }}
+
+                                >
+                                    <Icon name="map-pin" size={20} color="red"></Icon>
                                 </Marker>
 
-                                {this.state.Vehicles != null && this.state.showVehicles ?
+                            :
+
+                            null
+                        }
 
 
-                                    this.state.Vehicles.map(marker => (
+                        {this.state.Onway?
+                            <Marker
+                                coordinate={{
+                                    latitude: this.state.positionChofer.latitude,
+                                    longitude: this.state.positionChofer.longitude,
+                                }}
 
-                                        <Marker
-                                            key={"key"}
-                                            coordinate={{
-                                                latitude: marker.latitud,
-                                                longitude: marker.longitud
-                                            }}
+                            >
+                                <Icon color="#ff8834" name="car" size={20} ></Icon> 
+                            </Marker>
 
-                                        >
-                                            <Icon name={(marker.tipoVehiculo == 1) ? "car-side" : (marker.tipoVehiculo == 2) ? "car" : (marker.tipoVehiculo == 3) ? "shuttle-van" : (marker.tipoVehiculo == 4) ? "truck-pickup" : "car-side"} size={20} color="orange"></Icon>
+                        :
+                            null
+                        }
 
-                                        </Marker>
-                                    ))
+                        {this.state.ConductorMapDirection 
+                        && this.state.positionChofer.latitude!=0 
+                        && this.state.positionChofer.longitude != 0
+                        && this.state.myPosition.latitude != 0
+                        && this.state.myPosition.longitude !=0 
+                        ?
+                            <MapViewDirections
 
+                                origin={{
+                                    latitude: this.state.positionChofer.latitude,
+                                    longitude: this.state.positionChofer.longitude,
+                                }}
 
-                                    :
-                                    null
-
-                                }
-
-                                {
-                                    this.state.Paradas!=null?
-
-                                        <Marker
-                                            coordinate={{
-                                                latitude: this.state.Paradas[0]["latitude"],
-                                                longitude: this.state.Paradas[0]["longitude"],
-                                            }}
-
-                                        >
-                                            <Icon name="map-pin" size={20} color="red"></Icon>
-                                        </Marker>
-
-                                    :
-
-                                    null
-                                }
+                                destination={{
+                                    latitude: this.state.myPosition.latitude,
+                                    longitude: this.state.myPosition.longitude,
+                                }}
+                                apikey={GOOGLE_MAPS_APIKEY}
+                                strokeWidth={1}
+                                strokeColor="orange"
+                                onReady={result => {
 
 
-                                {this.state.Onway?
-                                    <Marker
-                                        coordinate={{
-                                            latitude: this.state.positionChofer.latitude,
-                                            longitude: this.state.positionChofer.longitude,
-                                        }}
+                                    this.setState({
+                                        timeChofer: parseInt(result.duration),
+                                        distance: parseInt(result.distance),
+                                        duration: parseInt(result.duration)
 
-                                    >
-                                        <Icon color="#ff8834" name="car" size={20} ></Icon> 
-                                    </Marker>
+                                    });
 
-                                :
-                                    null
-                                }
-                            
-                                {this.state.ConductorMapDirection 
-                                && this.state.positionChofer.latitude!=0 
-                                && this.state.positionChofer.longitude != 0
-                                && this.state.myPosition.latitude != 0
-                                && this.state.myPosition.longitude !=0 
+
+
+
+                                }}
+
+                            />
+
+                            :
+                            null
+                        }
+
+                        {
+                            this.state.Paradas!=null?
+
+                                this.state.routeParada1 && this.state.myPosition.latitude != 0
+                                && this.state.myPosition.longitude != 0 
+                                && this.state.Paradas[0]["latitude"] !=0
+                                && this.state.Paradas[0]["longitude"] !=0
                                 ?
+
                                     <MapViewDirections
 
-                                        origin={{
-                                            latitude: this.state.positionChofer.latitude,
-                                            longitude: this.state.positionChofer.longitude,
-                                        }}
 
-                                        destination={{
+                                        origin={{
                                             latitude: this.state.myPosition.latitude,
                                             longitude: this.state.myPosition.longitude,
                                         }}
+                                        destination={{
+                                            latitude: this.state.Paradas[0]["latitude"],
+                                            longitude: this.state.Paradas[0]["longitude"],
+                                        }}
                                         apikey={GOOGLE_MAPS_APIKEY}
                                         strokeWidth={1}
-                                        strokeColor="orange"
+                                        strokeColor="blue"
+
                                         onReady={result => {
 
-
                                             this.setState({
-                                                timeChofer: parseInt(result.duration),
                                                 distance: parseInt(result.distance),
                                                 duration: parseInt(result.duration)
 
                                             });
 
-                                    
+                                            this.getTarifas();
+
+
+
+
+                                        }}
+
+                                    />
+
+                                :
+                                    null
+
+
+                            :
+
+                            null
+                        }
+
+
+                        {
+                            this.state.Paradas != null ?
+
+                                this.state.routeChoferDestino && this.state.positionChofer.latitude!=0
+                                    && this.state.positionChofer.longitude != 0
+                                    && this.state.Paradas[0]["latitude"] != 0
+                                    && this.state.Paradas[0]["longitude"] !=0
+                                    ?
+
+                                    <MapViewDirections
+
+
+                                        origin={{
+                                            latitude: this.state.positionChofer.latitude,
+                                            longitude: this.state.positionChofer.longitude,
+                                        }}
+                                        destination={{
+                                            latitude: this.state.Paradas[0]["latitude"],
+                                            longitude: this.state.Paradas[0]["longitude"],
+                                        }}
+                                        apikey={GOOGLE_MAPS_APIKEY}
+                                        strokeWidth={1}
+                                        strokeColor="blue"
+
+                                        onReady={result => {
+
+                                            this.setState({
+                                                distance: parseInt(result.distance),
+                                                duration: parseInt(result.duration)
+
+                                            });
+
+                                            this.getTarifas();
+
+
 
 
                                         }}
@@ -1243,486 +1367,506 @@ export default class Travel_Integrado extends Component {
 
                                     :
                                     null
-                                }
-
-                                {
-                                    this.state.Paradas!=null?
-
-                                        this.state.routeParada1 && this.state.myPosition.latitude != 0
-                                        && this.state.myPosition.longitude != 0 
-                                        && this.state.Paradas[0]["latitude"] !=0
-                                        && this.state.Paradas[0]["longitude"] !=0
-                                        ?
-            
-                                            <MapViewDirections
-            
-            
-                                                origin={{
-                                                    latitude: this.state.myPosition.latitude,
-                                                    longitude: this.state.myPosition.longitude,
-                                                }}
-                                                destination={{
-                                                    latitude: this.state.Paradas[0]["latitude"],
-                                                    longitude: this.state.Paradas[0]["longitude"],
-                                                }}
-                                                apikey={GOOGLE_MAPS_APIKEY}
-                                                strokeWidth={1}
-                                                strokeColor="blue"
-                                            
-                                                onReady={result => {
-
-                                                    this.setState({
-                                                        distance: parseInt(result.distance),
-                                                        duration: parseInt(result.duration)
-                                                    
-                                                    });
-
-                                                    this.getTarifas();
-
-                                                    
-            
-            
-                                                }}
-            
-                                            />
-                                            
-                                        :
-                                            null
-                                        
-
-                                    :
-
-                                    null
-                                }
 
 
-                                {
-                                    this.state.Paradas != null ?
+                                :
 
-                                        this.state.routeChoferDestino && this.state.positionChofer.latitude!=0
-                                            && this.state.positionChofer.longitude != 0
-                                            && this.state.Paradas[0]["latitude"] != 0
-                                            && this.state.Paradas[0]["longitude"] !=0
-                                            ?
-
-                                            <MapViewDirections
-
-
-                                                origin={{
-                                                    latitude: this.state.positionChofer.latitude,
-                                                    longitude: this.state.positionChofer.longitude,
-                                                }}
-                                                destination={{
-                                                    latitude: this.state.Paradas[0]["latitude"],
-                                                    longitude: this.state.Paradas[0]["longitude"],
-                                                }}
-                                                apikey={GOOGLE_MAPS_APIKEY}
-                                                strokeWidth={1}
-                                                strokeColor="blue"
-
-                                                onReady={result => {
-
-                                                    this.setState({
-                                                        distance: parseInt(result.distance),
-                                                        duration: parseInt(result.duration)
-
-                                                    });
-
-                                                    this.getTarifas();
-
-
-
-
-                                                }}
-
-                                            />
-
-                                            :
-                                            null
-
-
-                                        :
-
-                                        null
-                                }
-
-                            </MapView>
-                        </View>
-
-                    :
-                        null
-                    }
-
-               
-
-                    {this.state.showEstimations?
-                        <View>
-
-                            <View style={styles.areawrow}>
-                            
-                                <Icon name="car-side" color="#ff8834" size={30} style={{ alignSelf: "center", paddingTop:5 }}></Icon>
-                            
-                            </View>
-
-                        
-
-                            <View style={styles.area}>
-                        
-                                <View>
-                                    <Text>{this.state.infoVehicleTipo} <Icon name="info-circle" color="#ff8834" size={18}
-                                    onPress={() => this.props.navigation.navigate("DesgloseTarifa")}
-                                    ></Icon> </Text>
-                                    <Text> {this.state.infoVehicleLlegada}</Text>
-                                </View>
-
-                                <View style={{paddingLeft:120}}>
-                                    <Text> MX$ {this.state.infoVehicleTarifa.Tarifa}</Text>
-                                </View>
-                            
-                            </View>
-                
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" :"credit-card"} size={30} onPress={() => this.showPay() }></Icon>
-
-                                <Text color="#ff8834" style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashpay? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
-                                
-                                <Icon color="#ff8834" style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.showPay()}></Icon>
-
-                            </View>
-                            {!this.state.Pay?
-                            
-                                <View >
-                                    <Button title={"Confirmar ",this.state.infoVehicleTipo }
-                                        style={{ width: '100%' }}
-                                        type="outline" 
-                                        onPress={()=>this.generarSolicitud()}
-                                        ></Button>
-                                </View>
-                            :
                                 null
-                            }
-                            
-                    
+                        }
+
+                    </MapView>
+
+                :
+                    null
+                }
+
+                {this.state.showBackButton?
+                
+                    <View style={{
+                        flexDirection: "row",
+                        position: "absolute", //use absolute position to show button on top of the map
+                        left: "3%",
+                        top: "1%",
+                 
+                    }}>
+                        <View style={{ flex: 1 }}>
+                            <Icon
+                                name="arrow-left"
+                                color="#ff8834"
+                                size={30}
+                                onPress={() => {
+                                    clearInterval(this.timer_Vehicles);
+                                    clearInterval(this.timer_VehiclesConsult);
+                                    this.props.navigation.navigate("Home")
+                                }}
+                            ></Icon>
                         </View>
-                        
+
+                    </View>
+                :
+                    null
+                }
+
+               {this.state.showTimeChofer ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "1%"}}>
+                        <View style={{ flex: 1, height: 20 }}>
+                            <Text style={{ color: "black", fontWeight:"bold" }}>Llegada: {this.state.timeChofer} Minuto(s)</Text> 
+                        </View>
+                      
+                    </View>
+
                     :
-                        null
-                    }
+                    null
+                }
 
-                    {this.state.Home?
+                {this.state.showEstimations?
+                    
+
+                        <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "70%" }}>
+
+                            <View style={{flex:2.5}}></View>
+                            <View style={{flex:1}}>
+                                <Icon name="car-side" color="#ff8834" size={30} ></Icon>
+                            </View>
+                            <View style={{ flex: 2.5 }}></View>
 
 
+                        </View>
+                :
 
-                    <View>
+                    null
 
-                        <View style={styles.area}>
+                }   
+
+                {this.state.showEstimations?
+                
+                        <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "77%" }}>
+                    
+                            <View>
+                                <Text>{this.state.infoVehicleTipo} <Icon name="info-circle" color="#ff8834" size={18}
+                                onPress={() => this.props.navigation.navigate("DesgloseTarifa")}
+                                ></Icon> </Text>
+                                <Text> {this.state.infoVehicleLlegada}</Text>
+                            </View>
+
+                            <View style={{paddingLeft:120}}>
+                                <Text> MX$ {this.state.infoVehicleTarifa.Tarifa}</Text>
+                            </View>
+
+                        </View>
+                :
+                    null
+                }
+
+                {this.state.showEstimations?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "87%" }}>
+                        <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" :"credit-card"} size={30} onPress={() => this.showPay() }></Icon>
+
+                        <Text color="#ff8834" style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashPay? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
+
+                        <Icon color="#ff8834" style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.showPay()}></Icon>
+
+                    </View>
+                :
+                    null
+                }
+
+                    
+                {!this.state.Pay && this.state.showEstimations?
+
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "92%" }}>
+                        <View style={{flex:6}}>
+
+                            <Button title={"Confirmar "+this.state.infoVehicleTipo }
+                                style={{ width: '100%' }}
+                                type="outline" 
+                                onPress={()=>this.generarSolicitud()}
+                                ></Button>
+
+                        </View>
+                    </View>
+                :
+                    null
+                }
+
+
+                {this.state.Home?
+
+                    <View style={{ position: "absolute", left: "3%", top: "70%" }}>
+
+                        <View>
                             <Text style={{fontWeight:"bold", fontSize:16}}>{
                                 this.state.isNextVehicles?
                                     "YiMi Express"
                                 :
                                 "YiMi Pool"
                             }</Text>
-                        </View>
-                     
-                        <View style={styles.area}>
 
-                            {this.state.isNextVehicles ?
-                                null
+                        </View>
+                    </View>
+                : 
+                    null
+                }
+                
+                {this.state.Home?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "77%" }}>
+
+                        {this.state.isNextVehicles ?
+                            null
+                            :
+                                <Icon name="chevron-left"
+                                color="#ff8834"
+                                size={25}
+                                onPress={() => this.setState({
+                                    isNextVehicles: !this.state.isNextVehicles
+                                })}
+                            ></Icon>
+                        }
+
+                        <View style={{paddingLeft:30}}> 
+                            <Icon name="car-side"
+                                color="#ff8834"
+                                size={25}
+                                style={{alignSelf:"center"}}
+                                onPress={()=>this.showInfoVehicle(this.state.isNextVehicles?"Express Estandar": "Pool Estandar")}
+                            ></Icon>
+                            <Text
+                            style={{ alignSelf: "center",
+                            fontSize: 12 }}
+                            >{
+                                this.state.isNextVehicles?
+                                    this.state.Express_Estandar.nombre_categoria
                                 :
-                                    <Icon name="chevron-left"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        isNextVehicles: !this.state.isNextVehicles
-                                    })}
-                                ></Icon>
-                            }
-                            
-                            <View style={{paddingLeft:30}}> 
-                                <Icon name="car-side"
-                                    color="#ff8834"
-                                    size={25}
-                                    style={{alignSelf:"center"}}
-                                    onPress={()=>this.showInfoVehicle(this.state.isNextVehicles?"Express Estandar": "Pool Estandar")}
-                                ></Icon>
-                                <Text
-                                style={{ alignSelf: "center",
-                                fontSize: 12 }}
-                                >{
-                                    this.state.isNextVehicles?
-                                        this.state.Express_Estandar.nombre_categoria
-                                    :
-                                        this.state.Pool_Estandar.nombre_categoria
-                                    
-                                    }</Text>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                >Aprox MX ${
-                                    this.state.isNextVehicles ?
-                                        this.state.Express_Estandar.out_costo_viaje
-                                        :
-                                        this.state.Pool_Estandar.out_costo_viaje
+                                    this.state.Pool_Estandar.nombre_categoria
 
                                 }</Text>
-                            </View>
-                            <View style={{ paddingLeft: 35 }}>
-                                <Icon name="car-side"
-                                    color="#ff8834"
-                                    onPress={() => this.showInfoVehicle(this.state.isNextVehicles ? "Express Lujo" : "Pool Lujo")}
-                                    size={25}
-                                    style={{ alignSelf: "center" }}
-                                ></Icon>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                    >{
+                            <Text
+                                style={{
+                                    alignSelf: "center",
+                                    fontSize: 12
+                                }}
+                            >Aprox MX ${
+                                this.state.isNextVehicles ?
+                                    this.state.Express_Estandar.out_costo_viaje
+                                    :
+                                    this.state.Pool_Estandar.out_costo_viaje
+
+                            }</Text>
+                        </View>
+                        <View style={{ paddingLeft: 35 }}>
+                            <Icon name="car-side"
+                                color="#ff8834"
+                                onPress={() => this.showInfoVehicle(this.state.isNextVehicles ? "Express Lujo" : "Pool Lujo")}
+                                size={25}
+                                style={{ alignSelf: "center" }}
+                            ></Icon>
+                            <Text
+                                style={{
+                                    alignSelf: "center",
+                                    fontSize: 12
+                                }}
+                                >{
+                                    this.state.isNextVehicles ?
+                                        this.state.Express_Lujo.nombre_categoria
+                                        :
+                                        this.state.Pool_Lujo.nombre_categoria
+
+                                    }</Text>
+                            <Text
+                                style={{
+                                    alignSelf: "center",
+                                    fontSize: 12
+                                }}
+                                >Aprox MX ${
                                         this.state.isNextVehicles ?
-                                            this.state.Express_Lujo.nombre_categoria
+                                            this.state.Express_Lujo.out_costo_viaje
                                             :
-                                            this.state.Pool_Lujo.nombre_categoria
+                                            this.state.Pool_Lujo.out_costo_viaje
 
-                                        }</Text>
-                                <Text
-                                    style={{
-                                        alignSelf: "center",
-                                        fontSize: 12
-                                    }}
-                                    >Aprox MX ${
-                                            this.state.isNextVehicles ?
-                                                this.state.Express_Lujo.out_costo_viaje
-                                                :
-                                                this.state.Pool_Lujo.out_costo_viaje
-
-                                        }</Text>
-                            </View>
-                            <View style={
-                                {
-                                    paddingLeft:30,
-                                    paddingTop:12
-                                }
-                            }>
-
-                            {this.state.isNextVehicles ?
-                              
-                                <Icon name="chevron-right"
-                                    color="#ff8834"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        isNextVehicles: !this.state.isNextVehicles
-                                    })}
-                                ></Icon>
-                                :
-                                null
+                                    }</Text>
+                        </View>
+                        <View style={
+                            {
+                                paddingLeft:30,
+                                paddingTop:12
                             }
-                             
-                            </View>
+                        }>
+
+                        {this.state.isNextVehicles ?
+
+                            <Icon name="chevron-right"
+                                color="#ff8834"
+                                size={25}
+                                onPress={() => this.setState({
+                                    isNextVehicles: !this.state.isNextVehicles
+                                })}
+                            ></Icon>
+                            :
+                            null
+                        }
+
                         </View>
-                        
-
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" : "credit-card"} size={30} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })
-
-                                }></Icon>
-                                <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashPay ? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
-                                <Icon color="#ff8834"  style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
-                                    showEstimations: false,
-                                    Home: false,
-                                    Pay: true
-                                })}></Icon>
-                            </View>
-                       
-                            
-                    
                     </View>
-                    :
-                        null
-                    }
+                :
+                    null
+                }
+
+                {this.state.Home?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "87%" }}>
+                        <Icon color="#ff8834" name={this.state.cashPay ? "money-bill-alt" : "credit-card"} size={30} onPress={() => this.setState({
+                            showEstimations: false,
+                            Home: false,
+                            Pay: true
+                        })
+
+                        }></Icon>
+                        <Text style={{ fontWeight: "bold", paddingLeft: 10, paddingTop: 5 }}>{this.state.cashPay ? "Efectivo" : "Tarjeta de Crédito / débito"}</Text>
+                        <Icon color="#ff8834"  style={{ paddingLeft: 10, paddingTop: 5 }} name="chevron-down" size={20} onPress={() => this.setState({
+                            showEstimations: false,
+                            Home: false,
+                            Pay: true
+                        })}></Icon>
+                    </View>
+            
+                :
+                    null
+                }
+
+                {this.state.Pay?
+                        
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "70%" }}>
+                        <Text style={{fontSize:16, fontWeight:"bold"}}> Método de pago</Text>
+
+                        {this.state.showEstimations?
+
+                            <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
+                        :
+                            <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
+                        }
 
 
-                    {this.state.Pay?
-                        <View>
-                            <View style={styles.area}>
-                                <Text style={{fontSize:16, fontWeight:"bold"}}> Método de pago</Text>
+                    </View>
+                :
 
-                                {this.state.showEstimations?
-                                
-                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
-                                :
-                                    <Icon color="#ff8834" style={{ paddingLeft: 135, paddingTop: 5 }} name="chevron-left" size={20} onPress={() => this.closePay()}></Icon>
-                                }
+                    null
+                }
+                {this.state.Pay?
 
-                                
-                            </View>
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "75%" }}>
 
-                            <View style={styles.area}>
+                        <View style={{flex:1}}>
 
-                                <View style={{flex:1}}>
-
-                                    <Icon color="#ff8834" name="money-bill-alt" size={25} ></Icon>
-
-                                </View>
-
-                                <View style={{flex:4}}>
-
-                                    <Text>Efectivo</Text>
-
-                                </View>
-
-                                
-                                <View style={{flex:1}}>
-
-                                    <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
-                                        cashPay: true,
-                                        creditPay: false
-                                    })}></Icon>
-
-
-                                </View>
-
-
-
-                            </View>
-
-
-
-                            <View style={styles.area}>
-
-                                <View style={{flex:1}}>
-
-                                    <Icon color="#ff8834" name="credit-card" size={25} ></Icon>
-
-                                </View>
-
-                                <View style={{flex:4}}>
-                                
-                                <Text color="#ff8834">Tarjeta de crédito / débito </Text>
-
-                                </View>
-
-                                <View style={{flex:1}}>
-                                    <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
-                                        cashPay: false,
-                                        creditPay: true
-                                    })}></Icon>
-
-                                </View>
-
-                            
-                            </View>
-
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name="cc-visa" size={25} ></Icon>
-
-                                <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
-
-                                <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 45 }} onPress={() => this.setState({
-                                    cashPay: false,
-                                    creditPay: true
-                                })}></Icon>
-
-
-                            </View>
-
-                            <View style={styles.area}>
-                                <Text>Agregar método de pago</Text>
-                            </View>
+                            <Icon color="#ff8834" name="money-bill-alt" size={25} ></Icon>
 
                         </View>
-                    :
-                        null
-                    }
 
-                    {this.state.Onway?
-                        <View>
-                            <View styles={styles.area}>
-                                <Icon color="#ff8834" name="chevron-up"
+                        <View style={{flex:4}}>
+
+                            <Text>Efectivo</Text>
+
+                        </View>
+
+                        
+                        <View style={{flex:1}}>
+
+                            <Icon name="check-circle" color={this.state.cashPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
+                                cashPay: true,
+                                creditPay: false
+                            })}></Icon>
+
+
+                        </View>
+
+
+
+                    </View>
+                
+            
+                :
+                    null
+                }
+
+                {this.state.Pay?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "80%" }}>
+
+                        <View style={{flex:1}}>
+
+                            <Icon color="#ff8834" name="credit-card" size={25} ></Icon>
+
+                        </View>
+
+                        <View style={{flex:4}}>
+
+                        <Text color="#ff8834">Tarjeta de crédito / débito </Text>
+
+                        </View>
+
+                        <View style={{flex:1}}>
+                            <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25}  onPress={() => this.setState({
+                                cashPay: false,
+                                creditPay: true
+                            })}></Icon>
+
+                        </View>
+
+
+                    </View>
+                :
+                    null
+                }
+
+                {this.state.Pay?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "85%" }}>
+                        <Icon color="#ff8834" name="cc-visa" size={25} ></Icon>
+
+                        <Text style={{ paddingLeft: 10 }}> **** **** **** 1254 </Text>
+
+                        <Icon name="check-circle" color={this.state.creditPay ? "green" : "#ff8834"} size={25} style={{ paddingLeft: 45 }} onPress={() => this.setState({
+                            cashPay: false,
+                            creditPay: true
+                        })}></Icon>
+
+
+                    </View>
+                :
+                    null
+                }
+                {this.state.Pay?
+                
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "90%" }}>
+                        <Text>Agregar método de pago</Text>
+                    </View>
+                :
+                    null
+                }
+
+                {this.state.Onway?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "60%" }}>
+                        <View style={{flex:2.5}}></View>
+                        <View style={{flex:1}}>
+                            <Icon color="#ff8834" name="chevron-up"
                                 style={{alignSelf:"center", paddingTop:5}}
                                 size={30}
-                                    onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_Integrado", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino})}
-                              
-                                ></Icon>
+                                onPress={() => this.props.navigation.navigate("InfoTravel", { typeTravel: "Travel_Integrado", timeArrival: this.state.timeChofer, Arrival: this.state.routeChoferDestino})}
 
-                            </View>
-                            <View styles={styles.area}>
-                                <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
-                            </View>
-                            <View
-                            style={
-                                {
-                                    backgroundColor:"black",
-                                }}
-                            >
-                                <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf:"center"}}>Verifica la matricula y los detalles del auto</Text>
-                            </View>
+                            ></Icon>
+                        </View>
+                        <View style={{flex:2.5}}></View>
 
-                            <View style={styles.area}>
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/Auto.png")}
-                                ></Image>
-                                <View style={{paddingLeft:120}}>
-                                    <Text>{keys.datos_vehiculo.modelo}</Text>
-                                    <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
-                                    <Button color="#ff8834" title="Cancelar"
-                                        onPress={() => this.setState({
-                                            showModalCancel:true
-                                        })}
-                                    ></Button>
+                    </View>
+                :
+                    null
+                }
 
-                                </View>
-                            </View>
-                        
-                            <View style={{ alignSelf: "center", backgroundColor:"white" }}>
-                                <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
-                            </View>
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "65%" }}>
+                  
+                        <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
+                          
 
-                            <View style={styles.area}>
-                                <Icon color="#ff8834" name = "phone" onPress={()=>this.callPhoneFunction()} size={30} onPress={()=>this.callPhoneFunction()}></Icon>
-                                <View style={{paddingLeft:10}}></View>
-                                <Icon name="comment-dots"
-                                    color="#ff8834"
-                                    style={{ paddingLeft: 40 }}
-                                    size={25}
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-                                  
-                            </View>
+                    </View>
+                    :
+                    null
+                }
 
-                
 
+                {this.state.Onway ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "68%", backgroundColor:"black", width:"100%" }}>
+
+                        <View style={{ flex:1 }}></View>
+
+                        <View style={{flex:4}}>
+
+                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 12, alignSelf: "center" }}>Verifica la matricula y los detalles del auto</Text>
 
                         </View>
 
-                
+                        <View style={{ flex: 1 }}></View>
+
+                    </View>
                     :
-                        null
-                    }
-                 
-                    
-                 
+                    null
+                }
 
+                {this.state.Onway?
                 
+                    < View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "71%" }}>
+                        <Image
+                            style={{ width: 50, height: 50 }}
+                            source={require("./../assets/user.png")}
+                        ></Image>
+                        <Image
+                            style={{ width: 50, height: 50 }}
+                            source={require("./../assets/Auto.png")}
+                        ></Image>
+                        <View style={{paddingLeft:120}}>
+                            <Text>{keys.datos_vehiculo.modelo}</Text>
+                            <Text style={{fontWeight:"bold", fontSize:16}}>{keys.datos_vehiculo.Matricula}</Text>
+                            <Button color="#ff8834" title="Cancelar"
+                                onPress={() => this.setState({
+                                    showModalCancel:true
+                                })}
+                            ></Button>
 
-                </View>
-            
+                        </View>
+                    </View>
+                :
+                    null
+                }
+
+                {this.state.Onway?
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "85%"}}>
+
+                        <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
 
 
-            </ScrollView>
+                    </View>
+                :
+                    null
+                }
+
+        
+
+                {this.state.Onway?
+
+                    <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "90%" }}>
+
+                        <View style={{flex:2}}></View>
+                        <View style={{flex:1}}>
+                            
+                            <Icon color="#ff8834" name="phone" onPress={() => this.callPhoneFunction()} size={30} onPress={() => this.callPhoneFunction()}></Icon>
+
+                        </View>
+                        <View style={{flex:1}}>
+
+                            <Icon name="comment-dots"
+                                color="#ff8834"
+                                // style={{ paddingLeft: 40 }}
+                                size={30}
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+                        <View style={{flex:2}}></View>
+                        
+                       
+                    </View>
+                :
+                    null
+                }
+
+
+
+
+            </View>
+
+  
+        
         );
     }
 }
@@ -1743,12 +1887,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         backgroundColor: "#fff"
     },
-    areawrow: {
-        paddingTop: 10,
-        paddingBottom: 10,
-        paddingLeft: 20,
-        backgroundColor: "#fff"
-    },
+
   
     containerMap: {
         // ...StyleSheet.absoluteFillObject,

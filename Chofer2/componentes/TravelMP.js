@@ -185,17 +185,16 @@ export default class TravelMP extends Component {
 
         keys.socket.removeAllListeners("chat_chofer");
 
-        keys.socket.on('chat_chofer', (num) => {
-
-            console.log("chat_chofer", num)
-
-            keys.Chat.push(num.Mensaje);
-
+        keys.socket.on("LlegoMensaje", (num) => {
             this.setState({
                 showModal: true,
-                Descripcion: "Te llegó un mensaje"
+                Descripcion: "Te llegó un mensaje",
             })
+        })
 
+        keys.socket.on('chat_chofer', (num) => {
+
+            keys.Chat.push(num.Mensaje);
 
 
         })
@@ -638,40 +637,26 @@ export default class TravelMP extends Component {
 
     cancelViaje() {
 
-        var d = new Date(); // get current date
-        d.setHours(d.getHours(), d.getMinutes(), 0, 0);
-        horaActual = d.toLocaleTimeString()
+   
+        keys.Chat=[]
 
-        console.log("Hora Actual", horaActual);
-        console.log("Hora Servicio", keys.HoraServicio);
+        clearInterval(keys.intervalBroadcastCoordinates);
 
-        if (horaActual < keys.HoraServicio) {
-    
-            keys.Chat=[]
-    
-            clearInterval(keys.intervalBroadcastCoordinates);
+        keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
 
-            keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
-    
-            keys.socket.emit("cancelViajeChofer", {
-                id_socket_usuario: keys.id_usuario_socket
-            });
-    
-            const resetAction = StackActions.reset({
-                index: 0,
-                actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
-                key: undefined
-            });
-    
-            this.props.navigation.dispatch(resetAction);
+        keys.socket.emit("cancelViajeChofer", {
+            id_socket_usuario: keys.id_usuario_socket
+        });
 
-        }else{
-            this.setState({
-                showModalCancel: false,
-                showModal: true,
-                Descripcion: "No se puede cancelar servicio después de 3 minutos de iniciar el servicio"
-            })
-        }
+        const resetAction = StackActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
+            key: undefined
+        });
+
+        this.props.navigation.dispatch(resetAction);
+
+      
     }
     onRegionChange = async region => {
 
@@ -753,308 +738,202 @@ export default class TravelMP extends Component {
 
     render() {
         return (
-            <ScrollView contentContainerStyle={styles.contentContainer}>
-                <View style={styles.container}>
 
-                    <View>
+            <View style={{ flex: 1 }}>
+                <View>
 
-                        <Modal
-                            isVisible={this.state.showModal}
+                    <Modal
+                        isVisible={this.state.showModal}
 
-                        >
-                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
-                                <View>
+                    >
+                        <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                            <View>
 
-                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
+                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Descripcion}</Text>
 
-                                </View>
-                                <View style={{
-                                    flexDirection: "row",
-                                    paddingTop: 5,
-                                    marginBottom: 5
-
-                                }}>
-                                    <View style={{ flex: 2 }}></View>
-
-
-                                    <View style={{ flex: 2, paddingBottom: 5 }}>
-
-                                        <Button
-                                            title="Ok"
-                                            buttonStyle={{
-                                                backgroundColor: "#ff8834"
-                                            }}
-                                            onPress={() => this.setState({
-                                                showModal: false
-                                            })}
-                                        ></Button>
-
-
-                                    </View>
-                                    <View style={{ flex: 2 }}></View>
-                                </View>
                             </View>
-
-
-                        </Modal>
-
-                    </View>
-                    <View >
-
-                        <Modal
-                            isVisible={this.state.showModalCancel}
-                            // isVisible={true}
-
-                        >
-                            <View style={styles.area}>
-                                <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
-                            </View>
-                            {/* Primer motivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: true,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> El cliente no se presentó</Text>
-                                </View>
-                            </View>
-                            {/* Segundo mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.clienteNoCancelacion ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: true,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> El cliente pidió la cancelación</Text>
-                                </View>
-                            </View>
-                            {/* Tercer mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.direccionIncorrecta ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: true,
-                                            noCobrarCliente: false,
-                                            Otro: false
-                                        })}></Icon>
-
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> Dirección incorrecta</Text>
-                                </View>
-                            </View>
-
-                            {/* Cuarto mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-                                        <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
-                                            clienteNoPresento: false,
-                                            clienteNoCancelacion: false,
-                                            direccionIncorrecta: false,
-                                            noCobrarCliente: true,
-                                            Otro: false
-                                        })}></Icon>
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> No cobrar al cliente</Text>
-                                </View>
-                            </View>
-
-                            {/* Quinto mótivo */}
-                            <View style={styles.area}>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ alignSelf: "center" }}>
-
-                                        <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
-                                            onPress={() => this.setState({
-                                                clienteNoPresento: false,
-                                                clienteNoCancelacion: false,
-                                                direccionIncorrecta: false,
-                                                noCobrarCliente: false,
-                                                Otro: true
-                                            })}></Icon>
-                                    </View>
-                                </View>
-                                <View style={{ flex: 5 }}>
-                                    <Text> Otro</Text>
-                                </View>
-                            </View>
-
-                            <View
-                                style={styles.area}>
-                                <View style={{ flex: 2 }}></View>
-
-                                <View style={{ flex: 2, marginBottom: 5, paddingRight: 5 }}>
-                                    <Button
-                                        title="No Cancelar"
-                                        buttonStyle={{
-                                            backgroundColor: "#ff8834"
-                                        }}
-                                        titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.setState({
-                                            showModalCancel: false
-                                        })}
-
-                                    ></Button>
-
-                                </View>
-                                <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
-
-                                    <Button
-                                        title="Cancelar"
-                                        buttonStyle={{
-                                            backgroundColor: "#ff8834"
-                                        }}
-                                        titleStyle={{ fontSize: 12 }}
-                                        onPress={() => this.cancelViaje()}
-
-                                    ></Button>
-
-                                </View>
-                            </View>               
-
-
-                        </Modal>
-
-                    </View>
-                    <View style={styles.area}>
-                        <View style={{ flex: 1 }}>
-                            <Switch
-                                value={keys.stateConductor}
-                                
-                            />
-                        </View>
-                        <View style={{ flex: 2 }}>
-                            <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}></View>
-
-                        <View style={
-                            {
-                                flex: 1,
-                                paddingBottom: 5
-                            }
-                        }>
-                            <Icon name="question-circle"
-                                color="#ff8834"
-                                size={30}></Icon>
-                        </View>
-                        <View style={
-                            {
-                                flex: 1,
-                                paddingBottom: 5
-                            }
-                        }>
-                            <Icon name="cog"
-                                color="#ff8834"
-                                size={30}></Icon>
-                        </View>
-                    </View>
-                    {/* Barra superior de punto de encuentro  */}
-                    {this.state.HomeTravel?
-                     
-                        <View >
-
                             <View style={{
                                 flexDirection: "row",
-                                paddingLeft: 10,
-                                backgroundColor: "#fff",
-                                paddingTop: 10,
-                                marginTop: 2
+                                paddingTop: 5,
+                                marginBottom: 5
+
                             }}>
-                                <View>
-                                    <Image
-                                        style={{ width: 50, height: 50 }}
-                                        source={require("./../assets/user.png")}
-                                    ></Image>
+                                <View style={{ flex: 2 }}></View>
+
+
+                                <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                    <Button
+                                        title="Ok"
+                                        buttonStyle={{
+                                            backgroundColor: "#ff8834"
+                                        }}
+                                        onPress={() => this.setState({
+                                            showModal: false
+                                        })}
+                                    ></Button>
+
+
                                 </View>
-                                <View style={
-                                    {
-                                        marginLeft: 10
-                                    }
-                                }>
-                                    <Text>{keys.datos_usuario.nombreUsuario}</Text>
-                                </View>
-                                <View >
-                                    <Text style={{ fontWeight: "bold", marginLeft: 100 }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
-
-                                    <Text style={{ marginLeft: 70 }}>{this.state.distance} km de ti</Text>
-                                </View>
-
-
-                            </View>
-                            <View style={styles.area}>
-
-                                <Icon name="chevron-right" color="green" size={15}></Icon>
-
-                                <Text style={{ marginLeft: 10 }}>
-                                    {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1==true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2==true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3==true) ? keys.travelInfo.Parada3.Direccion : "Test" }
-                                </Text>
+                                <View style={{ flex: 2 }}></View>
                             </View>
                         </View>
-                    :
-                       null
-                    }
-                    {/* Barra superior para aceptar el viaje  */}
-
-                    {this.state.aceptViaje || this.state.Travel?
 
 
-                        <View >
+                    </Modal>
 
-                            <View style={styles.area}>
+                </View>
 
-                                <Icon name="chevron-right" color="green" size={15}></Icon>
 
-                                <View  style={{width:280}}>
-                                    <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3 == true) ? keys.travelInfo.Parada3.Direccion : "Test"}</Text>
-                                    <Text style={{marginLeft:10}}>{this.state.duration} min ({this.state.distance} km)</Text>
-                                </View>
-                                <View>
-                                    <Icon name="chevron-up" size={30} onPress={this.Go} color="#ff8834"></Icon>
-                                    <Text style={{paddingLeft:4}}>Go</Text>
+                <View >
+
+                    <Modal
+                        isVisible={this.state.showModalCancel}
+
+                    >
+                        <View style={styles.area}>
+                            <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Esta cancelación afectará a tu tasa de viajes finalizados</Text>
+                        </View>
+                        {/* Primer motivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.clienteNoPresento ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: true,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
+
                                 </View>
                             </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> El cliente no se presentó</Text>
+                            </View>
                         </View>
-                    :
-                        null
-                    }
-    
-                  
-    
+                        {/* Segundo mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.clienteNoCancelacion ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: true,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
+
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> El cliente pidió la cancelación</Text>
+                            </View>
                         </View>
-                    <View style={styles.containerMap}>
-                        
-                    {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
+                        {/* Tercer mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
 
-                        <MapView
+                                    <Icon name="check-circle" color={this.state.direccionIncorrecta ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: true,
+                                        noCobrarCliente: false,
+                                        Otro: false
+                                    })}></Icon>
 
-                        style={styles.map}
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> Dirección incorrecta</Text>
+                            </View>
+                        </View>
+
+                        {/* Cuarto mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+                                    <Icon name="check-circle" color={this.state.noCobrarCliente ? "green" : "#ff8834"} size={20} onPress={() => this.setState({
+                                        clienteNoPresento: false,
+                                        clienteNoCancelacion: false,
+                                        direccionIncorrecta: false,
+                                        noCobrarCliente: true,
+                                        Otro: false
+                                    })}></Icon>
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> No cobrar al cliente</Text>
+                            </View>
+                        </View>
+
+                        {/* Quinto mótivo */}
+                        <View style={styles.area}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ alignSelf: "center" }}>
+
+                                    <Icon name="check-circle" color={this.state.Otro ? "green" : "#ff8834"} size={20}
+                                        onPress={() => this.setState({
+                                            clienteNoPresento: false,
+                                            clienteNoCancelacion: false,
+                                            direccionIncorrecta: false,
+                                            noCobrarCliente: false,
+                                            Otro: true
+                                        })}></Icon>
+                                </View>
+                            </View>
+                            <View style={{ flex: 5 }}>
+                                <Text> Otro</Text>
+                            </View>
+                        </View>
+
+
+                        <View
+                            style={styles.area}>
+                            <View style={{ flex: 2 }}></View>
+
+                            <View style={{ flex: 2, marginBottom: 5, paddingRight: 5 }}>
+                                <Button
+                                    title="No Cancelar"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834"
+                                    }}
+                                    titleStyle={{ fontSize: 12 }}
+                                    onPress={() => this.setState({
+                                        showModalCancel: false
+                                    })}
+
+                                ></Button>
+
+                            </View>
+                            <View style={{ flex: 2, marginBottom: 5, marginRight: 5 }}>
+
+                                <Button
+                                    title="Cancelar"
+                                    buttonStyle={{
+                                        backgroundColor: "#ff8834"
+                                    }}
+                                    titleStyle={{ fontSize: 12 }}
+                                    onPress={() => this.cancelViaje()}
+
+                                ></Button>
+
+                            </View>
+                        </View>
+
+
+                    </Modal>
+
+                </View>
+
+                {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
+
+                    <MapView
+
+                        style={{ top: "-10%", height: "110%" }}
                         region={{
                             latitude: this.state.region.latitude,
                             longitude: this.state.region.longitude,
@@ -1069,7 +948,7 @@ export default class TravelMP extends Component {
                         zoomEnabled={true}
                         showsUserLocation={true}
 
-                        >
+                    >
 
                         {/* Mi posición */}
                         <Marker
@@ -1081,7 +960,7 @@ export default class TravelMP extends Component {
                         >
                             <Icon name="car" size={20} color="orange"></Icon>
                         </Marker>
-                        
+
                         {/* Ubicación del usuario */}
                         <Marker
                             coordinate={{
@@ -1093,8 +972,8 @@ export default class TravelMP extends Component {
                             <Icon name="map-pin" size={20} color="green"></Icon>
                         </Marker>
 
-                        {   
-                            this.state.Paradas!=null?
+                        {
+                            this.state.Paradas != null ?
 
                                 this.state.Paradas.map(marker => (
 
@@ -1110,18 +989,18 @@ export default class TravelMP extends Component {
 
                                     </Marker>
                                 ))
-                            :
+                                :
 
                                 null
-                            
-                       
-                        } 
-                        
-                 
+
+
+                        }
+
+
                         {/* Primer Parada */}
-                        {this.state.routeInitial && this.state.myPosition.latitude!=0 && this.state.positionUser.longitude !=0
-                        && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude !=0?
-                        
+                        {this.state.routeInitial && this.state.myPosition.latitude != 0 && this.state.positionUser.longitude != 0
+                            && this.state.positionUser.latitude != 0 && this.state.positionUser.longitude != 0 ?
+
                             <MapViewDirections
 
 
@@ -1137,11 +1016,11 @@ export default class TravelMP extends Component {
                                 strokeWidth={1}
                                 strokeColor="blue"
                                 onReady={result => {
-                                    if(result!=null){
+                                    if (result != null) {
 
-                            
+
                                         this.setState({
-                                    
+
                                             distance: parseInt(result.distance),
                                             duration: parseInt(result.duration)
 
@@ -1152,13 +1031,13 @@ export default class TravelMP extends Component {
                                 }}
 
                             />
-                    
-                        :
+
+                            :
                             null
                         }
-                        
-                      { this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
-                      && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude !=0?
+
+                        {this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                            && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude != 0 ?
 
                             <MapViewDirections
                                 origin={{
@@ -1184,12 +1063,12 @@ export default class TravelMP extends Component {
                                 }}
 
                             />
-                        :
+                            :
                             null
-                      }
-                      {
-                        this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude !=0
-                        && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0?
+                        }
+                        {
+                            this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                                && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0 ?
 
                                 <MapViewDirections
                                     origin={{
@@ -1215,498 +1094,724 @@ export default class TravelMP extends Component {
                                     }}
 
                                 />
-                        :
-                            null
-                      }
-                    
-                     
+                                :
+                                null
+                        }
+
+
 
                         {
-                        this.state.routeParada3==true && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
-                        && keys.travelInfo.Parada3.latitude != 0 && keys.travelInfo.Parada3.longitude != 0?
+                            this.state.routeParada3 == true && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
+                                && keys.travelInfo.Parada3.latitude != 0 && keys.travelInfo.Parada3.longitude != 0 ?
 
 
-                            <MapViewDirections
-                                origin={{
-                                    latitude: this.state.myPosition.latitude,
-                                    longitude: this.state.myPosition.longitude,
-                                }}
-                                destination={{
-                                    latitude: keys.travelInfo.Parada3.latitude,
-                                    longitude: keys.travelInfo.Parada3.longitude,
-                                }}
-                                apikey={keys.GOOGLE_MAPS_APIKEY}
-                                strokeWidth={1}
-                                strokeColor="green"
-                                onReady={result => {
-                                    this.setState({
-                                        distance: parseInt(result.distance),
-                                        duration: parseInt(result.duration)
+                                <MapViewDirections
+                                    origin={{
+                                        latitude: this.state.myPosition.latitude,
+                                        longitude: this.state.myPosition.longitude,
+                                    }}
+                                    destination={{
+                                        latitude: keys.travelInfo.Parada3.latitude,
+                                        longitude: keys.travelInfo.Parada3.longitude,
+                                    }}
+                                    apikey={keys.GOOGLE_MAPS_APIKEY}
+                                    strokeWidth={1}
+                                    strokeColor="green"
+                                    onReady={result => {
+                                        this.setState({
+                                            distance: parseInt(result.distance),
+                                            duration: parseInt(result.duration)
 
-                                    })
+                                        })
 
 
 
-                                }}
+                                    }}
 
-                            />
-                    
-                        :
-                            null
+                                />
+
+                                :
+                                null
                         }
-                                
-                                
+
+
                     </MapView>
 
                     :
-                    
-                        null
-                    
-                    }
 
-                        <View>
+                    null
 
-                        <View style={{paddingLeft:210, paddingBottom:20}}>
+                }
 
-                                    <Icon name="exclamation-circle"
-                                        size={30}
-                                        color="#ff8834"
-                                        onPress={()=>this.alert()}    
-                                    ></Icon>
 
-                                </View>
+                <View style={{ flexDirection: "row", position: "absolute", top: "3%" }}>
+                    <View style={{ flex: 1 }}>
+                        <Switch
+                            value={keys.stateConductor}
 
-                        </View>
-
+                        />
                     </View>
-                    {/* Barra inferior de punto de encuentro */}
-                    {this.state.aceptViaje?
-                        <View>
+                    <View style={{ flex: 4 }}>
+                        <Text style={{ width: 100 }} >{keys.stateConductor ? "Conectado" : "Desconectado"}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}></View>
 
-                            <View style={styles.area}>
+                    <View style={
+                        {
+                            flex: 1,
+                            paddingBottom: 5
+                        }
+                    }>
+                        <Icon name="question-circle"
+                            size={30}
+                            color="#ff8834"
+                        ></Icon>
+                    </View>
+                    <View style={
+                        {
+                            flex: 1,
+                            paddingBottom: 5
+                        }
+                    }>
+                        <Icon name="cog"
+                            color="#ff8834"
+                            size={30}></Icon>
+                    </View>
+                </View>
 
-                            <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
-
-
-                            </View>
-                        <View style={styles.area}>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-
-                            </View>
-
-                            <View style={{ flex: 2 }}>
-
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
+                {/* Barra superior de punto de encuentro  */}
+                {this.state.HomeTravel ?
 
 
+
+                    <View style={{
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "10%",
+                        left: "3%"
+                    }}>
+                        <View style={{ flex: 1 }}>
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
                         </View>
-                            <View style={styles.area}>
-                                
-                                <View style={{paddingLeft:120}}>
-                                    <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
-                                    <Text>soporte@yimi.com</Text>
-                                </View>
-
-                            </View>
-                            <View>
-
-                            </View>
-                            <View style={styles.area}>
-
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 50
-                                    }
-                                }>
-                                    <Button
-
-                                        title="En el punto de encuentro"
-                                        type="clear"
-                                        onPress={() => {
-                                            this.puntoEncuentro()
-                                        }}
-                                    />
-                           
-                                </View>
-
-
-                            </View>
-
-                        </View>
-                    :
-                        null
-                    
-                    }
-                    {/* Barra inferior para aceptar el viaje  */}
-                    {this.state.HomeTravel?
-                    <View style={styles.area}>
-
-                        <Icon name="angle-double-right" size={30} style={{ paddingLeft: 10 }} color="#ff8834"></Icon>
                         <View style={
                             {
-                                paddingLeft: 85
+                                flex: 3
                             }
                         }>
-                            <Button
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+                        </View>
+                        <View style={{ flex: 2 }} >
+                            <Text style={{ fontWeight: "bold" }}>{this.state.duration}<Text style={{ fontWeight: "normal" }}> min</Text></Text>
 
-                                title="Aceptar viaje"
-                                type="clear"
-                                onPress={() => this.aceptViaje()}
-                            />
-                            <Text style={
-                                {
-                                    paddingLeft: 45
-                                }
-                            }>{this.state.timerAceptViaje} s</Text>
+                            <Text style={{ marginLeft: 5 }}>{this.state.distance} km de ti</Text>
                         </View>
 
 
                     </View>
+
+
                     :
-                        null
-                    }
-                {/* Barra inferior de inicio de viaje */}
-                {this.state.initravel ?
-                    <View>
+                    null
+                }
 
-                        <View style={styles.area}>
+                {this.state.HomeTravel ?
+                    <View style={{
+                        flexDirection: "row",
+                        position: "absolute",
+                        top: "20%",
+                        left: "3%"
+                    }}>
 
-                            <Text style={{ marginLeft: 20 }}> Por favor espera al usuario: 2:00 minutos</Text>
+                        <Icon name="chevron-right" color="green" size={15}></Icon>
 
-
-                        </View>
-                        <View style={styles.area}>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
-
-                            </View>
-
-                            <View style={{ flex: 2 }}>
-
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
+                        <Text style={{ marginLeft: 10 }}>{keys.travelInfo.puntoPartida.addressInput}</Text>
+                    </View>
+                    :
+                    null
+                }
 
 
-                        </View>
-                        <View style={styles.area}>
+                {this.state.aceptViaje || this.state.Travel ?
 
-                            <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
-                                <Text>soporte@yimi.com</Text>
-                            </View>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "12%" }}>
 
+                        <Icon name="chevron-right" color="green" size={15}></Icon>
+
+                        <View style={{ width: 280 }}>
+                            <Text style={{ marginLeft: 10 }}> {(this.state.routeInitial == true) ? keys.travelInfo.puntoPartida.addressInput : (this.state.routeParada1 == true) ? keys.travelInfo.Parada1.Direccion : (this.state.routeParada2 == true) ? keys.travelInfo.Parada2.Direccion : (this.state.routeParada3 == true) ? keys.travelInfo.Parada3.Direccion : "Test"}</Text>
+                            <Text style={{ marginLeft: 10 }}>{this.state.duration} min ({this.state.distance} km)</Text>
                         </View>
                         <View>
+                            <Icon name="chevron-up" size={30} color="#ff8834" onPress={this.Go}></Icon>
+                            <Text style={{ paddingLeft: 4 }}>Go</Text>
+                        </View>
+                    </View>
+
+                    :
+                    null
+                }
+
+                {/* Barra inferior para aceptar el viaje  */}
+                {this.state.HomeTravel ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "85%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
 
                         </View>
-                        <View style={styles.area}>
+                        <View style={
+                            {
+                                flex: 3
+                            }
+                        }>
+                            <View>
 
-                            <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop:10 }}></Icon>
-                            <View style={
-                                {
-                                    paddingLeft: 110
-                                }
-                            }>
                                 <Button
 
-                                    title="Iniciar viaje"
+                                    title="Aceptar viaje"
                                     type="clear"
                                     onPress={() => {
-                                        this.setState({
-                                            HomeTravel: false,
-                                            aceptViaje: false,
-                                            initravel: false,
-                                            Travel: true,
-
-                                        })
+                                        this.aceptViaje();
                                     }}
                                 />
+                                <View style={{ flexDirection: "row" }}>
+
+                                    <View style={{ flex: 1 }}></View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text>{this.state.timerAceptViaje}</Text>
+                                    </View>
+
+                                </View>
+
+
 
                             </View>
-
+                        </View>
+                        <View style={{ flex: 1 }}>
 
                         </View>
 
                     </View>
                     :
                     null
-
                 }
-                {this.state.Travel?
-                    <View>
 
-                        <View style={styles.area}>
+                {/* Barra inferior de punto de encuentro */}
+                {this.state.aceptViaje ?
 
-                            <Text style={{ marginLeft: 20 }}> Pago con tarjeta</Text>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "58%" }}>
 
+                        <Text style={{ marginLeft: 5 }}> Contacta al usuario si llegas después de las {this.state.infoVehicleLlegada}</Text>
+
+                    </View>
+
+                    :
+                    null
+                }
+
+                {this.state.aceptViaje ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "70%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
 
                         </View>
-                        <View style={styles.area}>
 
-                            <View style={{ flex: 1 }}>
+                        <View style={{ flex: 2 }}>
 
-                                <Image
-                                    style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
-                                ></Image>
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
 
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
+
+                        </View>
+
+
+                    </View>
+
+                    :
+                    null
+                }
+
+                {this.state.aceptViaje ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%" }}>
+
+
+                        <View style={{ flex: 6 }}>
+
+                            <View style={{ alignSelf: "center" }}>
+                                <Text >1234567890</Text>
+                                <Text>{keys.datos_usuario.numeroTelefono}</Text>
                             </View>
+
+                        </View>
+                    </View>
+
+                    :
+                    null
+
+                }
+
+                {this.state.aceptViaje ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "87%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+
+                                title="En el punto de encuentro"
+                                type="clear"
+                                onPress={() => {
+                                    this.puntoEncuentro()
+                                }}
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+
+                    </View>
+
+                    :
+                    null
+                }
+
+                {/* Barra inferior de inicio de viaje */}
+                {this.state.initravel ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+                        <Text style={{ marginLeft: 5 }}> Por favor espera al usuario: 2:00 minutos</Text>
+
+
+                    </View>
+                    :
+                    null
+
+                }
+
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "73%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
+
+                        </View>
+
+                        <View style={{ flex: 2 }}>
+
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
+
+                        </View>
+
+
+                    </View>
+
+                    :
+                    null
+                }
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "83%" }}>
+                        <View style={{ flex: 6 }}>
+
+                            <View style={{ flex: 2 }}></View>
 
                             <View style={{ flex: 2 }}>
 
-                                <Text>{keys.datos_usuario.nombreUsuario}</Text>
+                                <View style={{ alignSelf: "center", alignContent: "center" }}>
+                                    <Text >{keys.datos_usuario.numeroTelefono}</Text>
+                                    <Text>{keys.datos_usuario.correoElectronico}</Text>
+                                </View>
+
 
                             </View>
 
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="times"
-                                    color="red"
-                                    size={25}
-                                    onPress={() => this.setState({
-                                        showModalCancel: true
-                                    })}
-                                ></Icon>
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="comment-dots"
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.Chat()}
-                                ></Icon>
-
-                            </View>
-
-                            <View style={{ flex: 1 }}>
-
-                                <Icon name="phone" onPress={() => this.callPhoneFunction()}
-                                    size={25}
-                                    color="#ff8834"
-                                    onPress={() => this.callPhoneFunction()}
-                                ></Icon>
-
-                            </View>
-
+                            <View style={{ flex: 2 }}></View>
 
                         </View>
-                        <View style={styles.area}>
 
-                            <View style={{ paddingLeft: 120 }}>
-                                <Text style={{ paddingLeft: 20 }}>{keys.usuarioTelefono}</Text>
+                    </View>
+
+                    :
+                    null
+                }
+
+                {this.state.initravel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title="Iniciar viaje"
+                                type="clear"
+                                onPress={() => {
+                                    this.setState({
+                                        HomeTravel: false,
+                                        aceptViaje: false,
+                                        initravel: false,
+                                        Travel: true,
+
+                                    })
+                                }}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+
+                    :
+                    null
+                }
+
+                {this.state.Travel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+                        <Text style={{ marginLeft: 20 }}> Pago con tarjeta</Text>
+
+
+                    </View>
+                    :
+                    null
+                }
+
+                {this.state.Travel ?
+                    <View style={{ flexDirection: "row", position: "absolute", top: "67%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Image
+                                style={{ width: 50, height: 50 }}
+                                source={require("./../assets/user.png")}
+                            ></Image>
+
+                        </View>
+
+                        <View style={{ flex: 2 }}>
+
+                            <Text>{keys.datos_usuario.nombreUsuario}</Text>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="times"
+                                color="red"
+                                size={25}
+                                onPress={() => this.setState({
+                                    showModalCancel: true
+                                })}
+                            ></Icon>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="comment-dots"
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.Chat()}
+                            ></Icon>
+
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                                size={25}
+                                color="#ff8834"
+                                onPress={() => this.callPhoneFunction()}
+                            ></Icon>
+
+                        </View>
+
+
+                    </View>
+                    :
+                    null
+                }
+
+                {this.state.Travel ?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%" }}>
+
+                        <View style={{ flex: 1.5 }}>
+
+                        </View>
+                        <View style={{ flex: 3, alignContent: "center" }}>
+
+                            <View>
+                                <Text>1234567890</Text>
                                 <Text>soporte@yimi.com</Text>
                             </View>
 
                         </View>
-                        <View>
+
+                        <View style={{ flex: 1.5 }}>
 
                         </View>
 
-                        {this.state.routeInitial?
-                            <View style={styles.area}>
+                    </View>
+                    :
+                    null
+                }
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
+                {this.state.Travel && this.state.routeInitial ?
 
-                                    
-                                    <Button
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
 
-                                        title="Ir a primera parada"
-                                        type="clear"
-                                        onPress={() => this.primeraParada()}
-                                    />
-                                   
+                        <View style={{ flex: 1 }}>
 
-                                </View>
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
 
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
 
-                            </View>
-                        
-                        :
-                            null
-                        }
+                            <Button
+                                title="Ir a primera parada"
+                                type="clear"
+                                onPress={() => this.primeraParada()}
 
-                        {this.state.routeParada1 ?
-                            <View style={styles.area}>
+                            />
 
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
+                        </View>
+                        <View style={{ flex: 1 }}>
 
-
-                                    <Button
-
-                                        title="Ir a segunda parada"
-                                        type="clear"
-                                        onPress={() => this.segundaParada()}
-                                    />
-
-
-                                </View>
-
-
-                            </View>
-
-                            :
-                            null
-                        }
-
-                        {this.state.routeParada2 ?
-                            <View style={styles.area}>
-
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
-
-
-                                    <Button
-
-                                        title={"Ir a tercera parada" }
-                                        type="clear"
-                                        onPress={() =>
-                                            
-                                            this.terceraParada()
-
-                                        }
-                                    />
-
-
-                                </View>
-
-
-                            </View>
-
-                            :
-                            null
-                        }
-
-                        {this.state.routeParada3 ?
-                            <View style={styles.area}>
-
-                                <Icon name="angle-double-right" size={20} style={{ paddingLeft: 10, paddingTop: 25 }} color="#ff8834"></Icon>
-                                <View style={
-                                    {
-                                        paddingLeft: 90
-                                    }
-                                }>
-
-
-                                    <Button
-
-                                        title="Terminar Viaje"
-                                        type="clear"
-                                        onPress={() =>
-                                            this.terminarViaje()
-                                        }
-                                    />
-
-
-                                </View>
-
-
-                            </View>
-
-                            :
-                            null
-                        }
-
+                        </View>
 
                     </View>
-                :
-                null
-                }
-                  
 
+                    :
+                    null
+                }
+
+                {this.state.Travel && this.state.routeParada1?
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+
+                                title="Ir a segunda parada"
+                                type="clear"
+                                onPress={() => this.segundaParada()}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
            
-            </ScrollView>
+            
+            
+                :
+                    null
+                }
+
+
+
+                {this.state.Travel && this.state.routeParada2 ?
+
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title={"Ir a tercera parada"}
+                                type="clear"
+                                onPress={() =>
+
+                                    this.terceraParada()
+
+                                }
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+               
+
+                    :
+                    null
+                }
+
+                {this.state.Travel && this.state.routeParada3 ?
+
+
+                    <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="angle-double-right" color="#ff8834" style={{ marginTop: 15 }} size={30} ></Icon>
+
+                        </View>
+                        <View style={
+                            {
+                                flex: 5
+                            }
+                        }>
+
+                            <Button
+                                title="Terminar viaje"
+                                type="clear"
+                                onPress={() => {
+                                    this.terminarViaje()
+                                }}
+
+                            />
+
+                        </View>
+                        <View style={{ flex: 1 }}>
+
+                        </View>
+
+                    </View>
+
+                    :
+                    null
+                }
+
+
+
+
+
+
+            </View>
+
+
+
+        
         );
     }
 }

@@ -1,3 +1,4 @@
+// Importación de librerías 
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Switch, ScrollView, TextInput } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -7,12 +8,21 @@ import Modal from "react-native-modal";
 import { StackActions, NavigationActions } from 'react-navigation';
 
 
-
-
-
+/**
+ *Clase principal de Pago.js
+ *
+ * @export
+ * @class Pago
+ * @extends {Component}
+ */
 export default class Pago extends Component {
 
 
+    /** 
+     * Constructor de la clase Pago
+     * @param {*} props
+     * @memberof Pago
+     */
     constructor(props) {
         // keys.socket.on('isConnected', () => { })
         super(props);
@@ -29,24 +39,31 @@ export default class Pago extends Component {
 
 
 
+    /**
+     *Ciclo de vida para despúes de que se monta el componente
+     *
+     * @memberof Pago
+     */
     async componentDidMount() {
 
+        // Interval para cronometro de ingreso de peaje: 15 segundos
         let intervalPeaje = setInterval(() => {
 
             this.setState({ intervalPeaje });
 
             console.log(this.state.timerPeaje);
 
+            // Condición cuando el cronómetro llega a 0 
             if (this.state.timerPeaje == 0) {
 
                 clearInterval(this.state.intervalPeaje)
 
-                // Socket de punto de encuentro, socket puntoEncuentroUsuario
+                // Socket de emisión, terminación de viaje 
                 keys.socket.emit("terminarViajeChofer", {
                     id_usuario_socket: keys.id_usuario_socket,
                     Tarifa: keys.Tarifa
                 });
-
+                // Envío a la pantalla de viajefinalizado 
                 const resetAction = StackActions.reset({
                     index: 0,
                     actions: [NavigationActions.navigate({ routeName: 'viajeFinalizado'})],
@@ -59,7 +76,7 @@ export default class Pago extends Component {
 
 
             } else {
-
+                // Restar un segundo al cronometro, cuando sea mayor a 0 y no se confirme el pago
                 this.setState({
                     timerPeaje: this.state.timerPeaje - 1
                 })
@@ -69,43 +86,36 @@ export default class Pago extends Component {
         }, 1000);
     }
 
-    
-
-
-
-
+    // Barra de navegación del Pago
     static navigationOptions = {
         title: "Viaje finalizado"
     };
 
+     /**
+      *Función para realizar el pago 
+      *
+      * @memberof Pago
+      */
      realizaPago(){
-
-
-         console.log("Tarifa", this.state.Peaje);
-         console.log("Keys Tarifa", keys.Tarifa)
-
-
+        // Condici+on para verificar si el peaje es un valor númerico  
         if(!isNaN(this.state.Peaje)){
 
-            console.log(this.state.Peaje);
-    
+     
             keys.Peaje= this.state.Peaje;
     
             if(this.state.Peaje!=0){
                 keys.Tarifa = parseInt(keys.Tarifa) + parseInt(this.state.Peaje); 
             }
 
-            console.log("Tarifa",this.state.Peaje);
-            console.log("Keys Tarifa", keys.Tarifa)
-
-            // Socket de punto de encuentro, socket puntoEncuentroUsuario
+            // Socket de emisión de termino de viaje 
+            
             keys.socket.emit("terminarViajeChofer", {
                 id_usuario_socket: keys.id_usuario_socket,
                 Tarifa: keys.Tarifa
             });
-            
+            // Limpiar el intervalo de cronometro de peaje 
             clearInterval(this.state.intervalPeaje);
-    
+            // Envio a la vista de viajeFinalizado
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'viajeFinalizado' })],
@@ -113,7 +123,9 @@ export default class Pago extends Component {
             });
 
             this.props.navigation.dispatch(resetAction);
+
         }else{
+            // En caso de que no sea númerico muestra mensaje "Favor de agregar un valor númerico"
             this.setState({
                 showModal:true, 
                 Descripcion:"Favor de agregar un valor númerico"
@@ -123,11 +135,17 @@ export default class Pago extends Component {
 
 
 
+    /**
+     * Render principal del componente Chófer
+     *
+     * @returns
+     * @memberof Pago
+     */
     render() {
         return (
             <ScrollView style={{backgroundColor:"white"}}>
                 <View style={styles.container}>
-
+                    {/* Modal genérico de mensajes */}
                     <View>
 
                         <Modal
@@ -171,6 +189,7 @@ export default class Pago extends Component {
                         </Modal>
 
                     </View>
+                    {/* Barra superior switch de conexión de chófer, ayuda y configuración */}
                     <View style={styles.area}>
                         <View>
                             <Switch
@@ -207,14 +226,14 @@ export default class Pago extends Component {
                     <View style={styles.area}>
                         <Text>Pago con tarjeta</Text>
                     </View>
-                   
+                   {/* Costo del viaje  */}
                     <View style={styles.area}>
                         
                         <Text style={{ flex: 2 }}>Costo del viaje:</Text>
                         <View style={{ flex: 4 }}></View>
                         <Text style={{ flex: 1 }}>${keys.Tarifa}</Text>
                     </View>
-                   
+                   {/* Input de ingreso de Peaje */}
                     <View style={styles.area}>
                         <Text style={{flex:2}}>Peaje:</Text>
                         <View style={{flex:4}}></View>
@@ -252,7 +271,7 @@ export default class Pago extends Component {
         );
     }
 }
-
+// Estilos de componente Pago 
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#fff",

@@ -866,7 +866,7 @@ export default class Home extends Component {
     reinitializeComponents = () => {
         const resetAction = StackActions.reset({
             index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Inicio'})],
+            actions: [NavigationActions.navigate({ routeName: 'Travel'})],
             key: undefined
         });
 

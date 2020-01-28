@@ -7,7 +7,7 @@ export default keys={
     // Usuario
     datos_usuario: {
         id_usuario: 2,
-        nombreUsuario: 'Juan Hernandez',
+        nombreUsuario: 'Anónimo',
         CURP: 'GUGL970208MCMTRR05',
         numeroTelefono: "3121942513",
         correoElectronico: "15460810@itcolima.edu.mx"
@@ -66,7 +66,7 @@ export default keys={
     addressInput:"",
     Chat: [],
     HoraServicio:null,
-    urlSocket: 'http://192.168.0.13:3001', 
-    // urlSocket: 'http://35.203.42.33:3001/',
+    // urlSocket: 'http://192.168.0.13:3001', 
+    urlSocket: 'http://35.203.42.33:3001/',
 
 }

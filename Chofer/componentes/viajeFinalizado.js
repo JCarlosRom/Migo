@@ -1,16 +1,20 @@
+// Importación de librerías 
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Image, Switch, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { Button } from "react-native-elements";
 import { StackActions, NavigationActions } from 'react-navigation';
 
-
-
-
-
+// Clase principal de viajeFinalizado
 export default class viajeFinalizado extends Component {
 
 
+    /**
+     *Creates an instance of viajeFinalizado.
+     * Constructor de la clase viajeFinalizado
+     * @param {*} props
+     * @memberof viajeFinalizado
+     */
     constructor(props) {
         // keys.socket.on('isConnected', () => { })
         super(props);
@@ -26,6 +30,11 @@ export default class viajeFinalizado extends Component {
     }
 
 
+    /**
+     *Función para finalizar el viaje
+     *
+     * @memberof viajeFinalizado
+     */
     finalizarViaje(){
 
         // Socket para quitar al chófer de la cola
@@ -48,6 +57,12 @@ export default class viajeFinalizado extends Component {
 
 
 
+    /**
+     * Barra de navegación
+     *
+     * @static
+     * @memberof viajeFinalizado
+     */
     static navigationOptions = {
         title: "Viaje finalizado"
     };
@@ -55,10 +70,17 @@ export default class viajeFinalizado extends Component {
 
 
 
+    /**
+     * Render principal del componente
+     *
+     * @returns
+     * @memberof viajeFinalizado
+     */
     render() {
         return (
             <ScrollView style={{ backgroundColor: "white" }}>
                 <View style={styles.container}>
+                    {/* Barra superior del componente */}
                     <View style={styles.area}>
                         <View>
                             <Switch
@@ -94,7 +116,7 @@ export default class viajeFinalizado extends Component {
                     <View style={styles.area}>
                         <Text>Pago con tarjeta</Text>
                     </View>
-
+                    
                     <View style={styles.area}>
                         <View>
                             <Text style={{fontWeight:"bold"}}>{keys.Tarifa}MN$</Text> 
@@ -128,7 +150,7 @@ export default class viajeFinalizado extends Component {
                             </View>
                         </View>
                     </View>
-
+                    {/* Botones */}
                     <View style={{ paddingTop: 30, backgroundColor:"white"}}>
 
                         <View style={{ alignSelf: "center", width:280 }}>
@@ -169,7 +191,7 @@ export default class viajeFinalizado extends Component {
         );
     }
 }
-
+// Estilos de viajeFinalizado
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",

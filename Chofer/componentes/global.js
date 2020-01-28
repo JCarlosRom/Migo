@@ -1,3 +1,4 @@
+// Valores globales de la app.
 export default keys={
     socket:null,
     timerCoordenadas:null,
@@ -14,7 +15,8 @@ export default keys={
         Parada2: null,
         Parada3: null,
         Distancia: null, 
-        Tiempo: null
+        Tiempo: null,
+        typePay:null
     },
     positionUser:{
         longitude:null, 
@@ -35,7 +37,7 @@ export default keys={
         Matricula:'FRS408A',
         // Taxi: 1, Van: 2, Camioneta: 3
         categoriaVehiculo: 1,
-        // Estandar: 1, Lujo: 2
+        // Estandar: 1, Lujo: 2 
         tipoVehiculo:1,
         // Express: 1, Pool: 2
         tipoServicio: 1
@@ -53,6 +55,7 @@ export default keys={
     Tarifa: 0,
     Peaje:0,
     HoraServicio:null,
+    numeroSoporte:"018001234567",
     intervalBroadcastCoordinates:null,
     intervalUpdateChoferCoordinates: null,
     Chat: [],

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard } from "react-na
 import { Input, Button } from "react-native-elements";
 import keys from "./global";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { removeAllListeners } from "expo/build/AR";
 
 
 export default class Chat extends Component {
@@ -21,9 +22,18 @@ export default class Chat extends Component {
         this._keyboardDidShow = this._keyboardDidShow.bind(this);
         this._keyboardDidHide = this._keyboardDidHide.bind(this);
 
+        keys.socket.removeAllListeners("LlegoMensaje");
+
         // Función para recibir el mensaje del conductor
         keys.socket.on('chat_usuario', (num) => {
             // console.log("chat_usuario",num)
+            
+            console.log("Chat")
+
+            if (keys.Chat.length >= 5) {
+                keys.Chat.splice(0, 1);
+            }
+
             keys.Chat.push(num.Mensaje);
             this.setState({
                 Chat: keys.Chat
@@ -36,7 +46,19 @@ export default class Chat extends Component {
         })
     }
 
-    componentDidMount() {        
+    
+
+    // componentWillUnmount(){
+    //     console.log("componenwillunmountUsuario")
+    //     keys.socket.removeAllListeners("chat_usuario");
+    // }
+
+    componentDidMount() {    
+
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
+        
         if(keys.Chat.length>0){
             this.setState({
                 initChat:false,
@@ -75,11 +97,123 @@ export default class Chat extends Component {
         title: "Chat"
     };
 
+
     sendMessage(Mensaje) {
+
+        if(this.state.Mensaje!=""){
+
+            this.setState({
+                Atajo: false
+                
+            })
+    
+            if (this.state.initChat == true) {
+                this.setState({
+                    initChat: false
+                })
+            }
+    
+    
+            if(Mensaje==""){
+            
+            
+                var infoMessage = {
+                    Usuario: "Usuario",
+                    nombreUsuario: keys.datos_usuario.nombreUsuario,
+                    Mensaje: this.state.Mensaje
+                }
+        
+                this.setState({
+                    Mensaje: ""
+                })
+        
+                keys.socket.emit('room_usuario_chofer_chat',{
+                    id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+                    infoMessage: infoMessage
+                });
+    
+                if(keys.Chat.length>=5){
+                    keys.Chat.splice(0,1);
+                }
+        
+                keys.Chat.push(infoMessage);
+        
+                this.setState({
+                    Chat: keys.Chat
+                })
+            }else{
+             
+    
+    
+                var infoMessage = {
+                    Usuario: "Usuario",
+                    nombreUsuario: keys.datos_usuario.nombreUsuario,
+                    Mensaje: Mensaje
+                }
+    
+                this.setState({
+                    Mensaje: ""
+                })
+    
+                keys.socket.emit('room_usuario_chofer_chat',{
+                    id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+                    infoMessage: infoMessage
+                });
+    
+    
+                if (keys.Chat.length >= 5) {
+                    keys.Chat.splice(0, 1);
+                }
+    
+                keys.Chat.push(infoMessage);
+    
+                this.setState({
+                    Chat: keys.Chat
+                })
+            }
+    
+            console.log(infoMessage)
+        }
+
+
+        
+
+
+      
+
+    }
+
+    sendMessageAtajo(Mensaje){
+        
+        var infoMessage = {
+            Usuario: "Usuario",
+            nombreUsuario: keys.datos_usuario.nombreUsuario,
+            Mensaje: Mensaje
+        }
+
+        this.setState({
+            Mensaje: ""
+        })
+
+        keys.socket.emit('room_usuario_chofer_chat', {
+            id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
+            infoMessage: infoMessage
+        });
+
+
+        if (keys.Chat.length >= 5) {
+            keys.Chat.splice(0, 1);
+        }
+
+        keys.Chat.push(infoMessage);
+
+        this.setState({
+            Chat: keys.Chat
+        })
 
         this.setState({
             Atajo: false
-            
+
         })
 
         if (this.state.initChat == true) {
@@ -87,64 +221,6 @@ export default class Chat extends Component {
                 initChat: false
             })
         }
-
-
-        if(Mensaje==""){
-        
-        
-            var infoMessage = {
-                Usuario: "Usuario",
-                nombreUsuario: keys.datos_usuario.nombreUsuario,
-                Mensaje: this.state.Mensaje
-            }
-    
-            this.setState({
-                Mensaje: ""
-            })
-    
-            keys.socket.emit('room_usuario_chofer_chat',{
-                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
-                infoMessage: infoMessage
-            });
-    
-            keys.Chat.push(infoMessage);
-    
-            this.setState({
-                Chat: keys.Chat
-            })
-        }else{
-         
-
-
-            var infoMessage = {
-                Usuario: "Usuario",
-                nombreUsuario: keys.datos_usuario.nombreUsuario,
-                Mensaje: Mensaje
-            }
-
-            this.setState({
-                Mensaje: ""
-            })
-
-            keys.socket.emit('room_usuario_chofer_chat',{
-                id_socket_usuario: keys.id_usuario_socket, id_chofer_socket: keys.id_chofer_socket,
-                infoMessage: infoMessage
-            });
-
-            keys.Chat.push(infoMessage);
-
-            this.setState({
-                Chat: keys.Chat
-            })
-        }
-
-        console.log(infoMessage)
-
-        
-
-
-      
-
     }
 
 
@@ -251,7 +327,7 @@ export default class Chat extends Component {
                                         backgroundColor: "#ff8834",
                                     }}
                                     titleStyle={{ fontSize: 9 }}
-                                    onPress={() => this.sendMessage("Estoy aquí")}
+                                    onPress={() => this.sendMessageAtajo("Estoy aquí")}
                                 ></Button>
                             </View>
                             <View style={{flex:1}}></View>
@@ -262,7 +338,7 @@ export default class Chat extends Component {
                                       
                                     }}
                                     titleStyle={{ fontSize: 9 }}
-                                    onPress={()=>this.sendMessage("Llego Enseguida")}
+                                    onPress={() => this.sendMessageAtajo("Llego Enseguida")}
                                 ></Button>
                             </View>
                             <View style={{ flex: 1 }}></View>
@@ -273,7 +349,7 @@ export default class Chat extends Component {
                                         
                                     }}
                                     titleStyle={{ fontSize: 9 }}
-                                    onPress={() => this.sendMessage("Te estoy buscando")}
+                                    onPress={() => this.sendMessageAtajo("Te estoy buscando")}
                                 ></Button>
                             </View>
 

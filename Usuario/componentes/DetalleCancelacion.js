@@ -1,14 +1,17 @@
+// Importación de librerías 
 import React, { Component } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { createStackNavigator } from "react-navigation-stack";
 import { ScrollView } from "react-native-gesture-handler";
 import { StackActions, NavigationActions } from 'react-navigation';
-import axios from 'axios';
-import keys from "./global";
-
-
+// Clase principal del componente
 export default class DesgloseTarifa extends Component {
+    /**
+     *Creates an instance of DesgloseTarifa.
+     * Constructor de DesgloseTarifa
+     * @param {*} props
+     * @memberof DesgloseTarifa
+     */
     constructor(props) {
         super(props);
         this.state = {
@@ -21,10 +24,21 @@ export default class DesgloseTarifa extends Component {
 
     }
 
+    /**
+     * Barra de navegación de DesgloseTarifa
+     *
+     * @static
+     * @memberof DesgloseTarifa
+     */
     static navigationOptions = {
         title: "Detalles de Tarifa de Cancelación "
     };
 
+    /**
+     * Función para regresa a la vista de CancelarServicii
+     *
+     * @memberof DesgloseTarifa
+     */
     backToInicio() {
         const resetAction = StackActions.reset({
             index: 0,
@@ -36,10 +50,17 @@ export default class DesgloseTarifa extends Component {
     }
 
 
+    /**
+     * Render principal del componente
+     *
+     * @returns
+     * @memberof DesgloseTarifa
+     */
     render() {
         return (
 
             <ScrollView>
+                {/* Botón para regresar a pantalla anterior */}
                 <View style={styles.area}>
                     <View style={{ flex: 1 }}>
                         <Icon
@@ -67,7 +88,7 @@ export default class DesgloseTarifa extends Component {
         );
     }
 }
-
+// Estilos de DetalleCancelación
 const styles = StyleSheet.create({
 
     area: {

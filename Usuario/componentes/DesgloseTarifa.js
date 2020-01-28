@@ -1,30 +1,44 @@
+// Importaciones de librerías 
 import React, { Component } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { createStackNavigator } from "react-navigation-stack";
 import { ScrollView } from "react-native-gesture-handler";
 import { StackActions, NavigationActions } from 'react-navigation';
-import axios from 'axios';
 import keys from "./global";
 
-
+// Clase principal del componente
 export default class DesgloseTarifa extends Component {
+    /**
+     *Creates an instance of DesgloseTarifa.
+     * Constructor de la clase 
+     * @param {*} props
+     * @memberof DesgloseTarifa
+     */
     constructor(props) {
         super(props);
         this.state = {
           
-
-
         };
 
 
 
     }
 
+    /**
+     * Barra de navegación del componente
+     *
+     * @static
+     * @memberof DesgloseTarifa
+     */
     static navigationOptions = {
         title: "Desglose tarifa"
     };
 
+    /**
+     * Función para regresar a la pantalla terminarViaje
+     *
+     * @memberof DesgloseTarifa
+     */
     backToInicio(){
         const resetAction = StackActions.reset({
             index: 0,
@@ -36,10 +50,17 @@ export default class DesgloseTarifa extends Component {
     }
 
 
+    /**
+     * Render principal del componente
+     *
+     * @returns
+     * @memberof DesgloseTarifa
+     */
     render() {
         return (
 
             <ScrollView>
+                {/* Botón de regresar */}
                 <View style={styles.area}>
                     <View style={{flex:1}}>
                         <Icon
@@ -56,7 +77,7 @@ export default class DesgloseTarifa extends Component {
                     <Text style={{fontWeight:"bold", fontSize:1}}>Recibo de MiGo</Text>
 
                 </View>
-           
+                {/* Bloque de consulta del desglose de la tarifa */}
                 <View style={styles.area}>
                     <View style={{flex:2}}>
                         <Text>Tarifa Base</Text>
@@ -171,6 +192,7 @@ export default class DesgloseTarifa extends Component {
 
                     </View>
                 </View>
+                {/* Fin del bloque */}
 
                 <View style={styles.area}>
                     <View style={{flex:3}}>
@@ -203,7 +225,7 @@ export default class DesgloseTarifa extends Component {
         );
     }
 }
-
+// Estilos de Usuario
 const styles = StyleSheet.create({
  
     area: {
