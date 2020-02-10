@@ -197,12 +197,12 @@ export default class TravelNoDestination extends Component {
     * @memberof TravelNoDestination
     */
     aceptViaje() {
+
+        clearInterval(this.state.intervaltimerAceptViaje);
         // Generar la hora límite para generar la cancelación del servicio 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
 
-
-        clearInterval(this.state.intervaltimerAceptViaje);
         // Socket para emitir la aceptación del viaje 
         keys.socket.emit('chofer_accept_request', {
             id_usuario_socket: keys.id_usuario_socket,
@@ -328,6 +328,9 @@ export default class TravelNoDestination extends Component {
     * @memberof TravelNoDestination
     */
     async componentWillMount() {
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
         // Bloque para asignar markers y trazos de rutas
         Flag = this.props.navigation.getParam('Flag', false);
 
@@ -372,7 +375,7 @@ export default class TravelNoDestination extends Component {
 
             this.setState({ intervaltimerAceptViaje });
 
-            console.log(this.state.intervaltimerAceptViaje);
+            console.log("timerAceptViajeTND",this.state.timerAceptViaje);
 
             if (this.state.timerAceptViaje == 0) {
 
@@ -426,9 +429,24 @@ export default class TravelNoDestination extends Component {
 
         }, 1000);
 
+  
+
 
 
     }
+
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+    }
+
 
     /**
     * Función para empezar el viaje por google maps y Waze
@@ -706,6 +724,8 @@ export default class TravelNoDestination extends Component {
                 this.setState({
                     FinTimeTravelUsuario: true
                 })
+
+                clearInterval(keys.intervalTimeTravel)
             }
 
             console.log("timeTravelUsuario", this.state.timeTravelUsuario)
@@ -729,7 +749,7 @@ export default class TravelNoDestination extends Component {
 
         try {
             // Generar la tarifa
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -893,7 +913,7 @@ export default class TravelNoDestination extends Component {
 
         return (
             <View>
-                <NavigationEvents onDidFocus={() => console.log('I am triggered')} />
+                <NavigationEvents  />
                 <TouchableHighlight
 
                     onPress={() => this.setDirectionInput(item.description)}
@@ -1376,7 +1396,7 @@ export default class TravelNoDestination extends Component {
                         <View style={{ flex: 1 }}>
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
                         </View>
                         <View style={
@@ -1503,7 +1523,7 @@ export default class TravelNoDestination extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1642,7 +1662,7 @@ export default class TravelNoDestination extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1780,7 +1800,7 @@ export default class TravelNoDestination extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>

@@ -14,7 +14,7 @@ export default keys={
 
     },
     categoriaVehiculo:1,
-    tipoVehiculo:null, 
+    tipoVehiculo:null,
     tipoServicio:null,
     // Chofer
     datos_vehiculo: {
@@ -39,8 +39,6 @@ export default keys={
         Parada1:null,
         Parada2:null,
         Parada3:null,
-     
-
     },
     Tarifa:{
         Solicitud: 0,
@@ -67,6 +65,6 @@ export default keys={
     Chat: [],
     HoraServicio:null,
     // urlSocket: 'http://192.168.0.13:3001', 
-    urlSocket: 'http://35.203.42.33:3001/',
+    urlSocket: 'http://35.203.57.92:3001/',
 
 }

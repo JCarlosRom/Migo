@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, BackHandler } from "react-native";
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -18,6 +18,26 @@ export default class TravelNoDestination extends Component {
    
 
     constructor(props) {
+
+        // Socket para asignar los ids de socket en caso de cambio
+        keys.socket.on('getIdSocket', (num) => {
+
+            keys.id_usuario_socket = num.id;
+
+            //console.log("Usuario", keys.id_usuario_socket);
+
+            // Envio de id nuevo a chofer
+            keys.socket.emit("WSsendIdUsuarioChofer", {
+                id_usuario_socket: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
+            })
+
+
+        })
+        // Socket para recibir el id nuevo del chofer
+        keys.socket.on("sendIdChoferUsuario", (num) => {
+            keys.id_chofer_socket = num.id_socket_chofer;
+            //console.log("Recibí id de chofer", keys.id_chofer_socket)
+        })
 
         super(props);
 
@@ -133,18 +153,13 @@ export default class TravelNoDestination extends Component {
                 Vehicles: num
             })
 
-            // console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
+            // //console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
 
 
         })
         keys.socket.removeAllListeners("chat_usuario");
 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
+ 
         // Chat del chofer
         keys.socket.on('chat_usuario', (num) => {
 
@@ -155,7 +170,7 @@ export default class TravelNoDestination extends Component {
 
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
-            console.log('Llego respuesta: ', num);
+            //console.log('Llego respuesta: ', num);
             // this.state.id_recorrido = num;
             // this.setState({
 
@@ -163,8 +178,8 @@ export default class TravelNoDestination extends Component {
             keys.id_servicio = num.servicio;
             keys.id_recorrido = num.recorrdio;
 
-            console.log("idServicio", keys.id_servicio);
-            console.log("idRecorrido", keys.id_recorrido);
+            //console.log("idServicio", keys.id_servicio);
+            //console.log("idRecorrido", keys.id_recorrido);
 
 
 
@@ -186,6 +201,8 @@ export default class TravelNoDestination extends Component {
 
         keys.socket.on("cancelViajeUsuario", num => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
             keys.Chat = [];
 
             const resetAction = StackActions.reset({
@@ -199,7 +216,10 @@ export default class TravelNoDestination extends Component {
    
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
-            console.log('conductor_sendInfo');
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+
+            //console.log('conductor_sendInfo');
 
             var d = new Date(); // get current date
             d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
@@ -222,7 +242,8 @@ export default class TravelNoDestination extends Component {
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
                 Reconocimientos: num.datos_chofer.Reconocimientos,
-                Telefono: num.datos_chofer.Telefono
+                Telefono: num.datos_chofer.Telefono,
+                imgChofer: num.datos_chofer.imgChofer
             }
 
             keys.datos_vehiculo={
@@ -231,6 +252,7 @@ export default class TravelNoDestination extends Component {
                 Matricula: num.datos_vehiculo.Matricula,
                 tipoVehiculo: num.datos_vehiculo.tipoVehiculo,
                 categoriaVehiculo: num.datos_vehiculo.categoriaVehiculo,
+                imgVehiculo: num.datos_vehiculo.imgVehiculo
             }
 
             this.setState({
@@ -260,7 +282,7 @@ export default class TravelNoDestination extends Component {
         // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
 
-            console.log(num.coordenadas_chofer);
+            // //console.log(num.coordenadas_chofer);
    
             this.setState({
                 positionChofer:{
@@ -285,9 +307,11 @@ export default class TravelNoDestination extends Component {
 
         keys.socket.on('terminarViajeUsuario', (num) => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
             keys.Chat = []
             keys.Tarifa.Total = num.Tarifa;
-            console.log('terminarViajeUsuario', keys.Tarifa.Total);
+            //console.log('terminarViajeUsuario', keys.Tarifa.Total);
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "terminarViaje" } })],
@@ -356,10 +380,10 @@ export default class TravelNoDestination extends Component {
         keys.tipoVehiculo = tipoVehiculo;
 
 
-        console.log("Categoria vehiculo get");
-        console.log(keys.categoriaVehiculo);
-        console.log("Tipo Vehiculo Get");
-        console.log(keys.tipoVehiculo);
+        //console.log("Categoria vehiculo get");
+        //console.log(keys.categoriaVehiculo);
+        //console.log("Tipo Vehiculo Get");
+        //console.log(keys.tipoVehiculo);
 
     }
 
@@ -387,12 +411,12 @@ export default class TravelNoDestination extends Component {
         keys.tipoServicio = tipoServicio;
 
 
-        console.log("Categoria vehiculo get");
-        console.log(keys.categoriaVehiculo);
-        console.log("Tipo de vehiculo");
-        console.log(keys.tipoVehiculo);
-        console.log("Tipo Servicio Get");
-        console.log(keys.tipoServicio);
+        //console.log("Categoria vehiculo get");
+        //console.log(keys.categoriaVehiculo);
+        //console.log("Tipo de vehiculo");
+        //console.log(keys.tipoVehiculo);
+        //console.log("Tipo Servicio Get");
+        //console.log(keys.tipoServicio);
     }
     callPhoneFunction() {
         const args = {
@@ -405,15 +429,15 @@ export default class TravelNoDestination extends Component {
 
     async setPrimeraParada1Usuario(num) {
 
-        console.log("num", num);
+        // //console.log("num", num);
 
-        // console.log("setPrimeraParada1Usuario",num.Parada.Direccion);
+        // //console.log("setPrimeraParada1Usuario",num.Parada.Direccion);
 
         if (num.Flag =="PrimeraParada"){
     
             let Parada1 = await Location.geocodeAsync(num.Info.Direccion);
     
-            console.log("Parada 1", Parada1);
+            //console.log("Parada 1", Parada1);
     
             Paradas = [];
     
@@ -501,11 +525,11 @@ export default class TravelNoDestination extends Component {
 
     async getTarifas(){
         try {
-            console.log("Distancia",this.state.distance);
-            console.log("Duración",this.state.duration);
-            console.log("Categoria",keys.categoriaVehiculo)
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            //console.log("Distancia",this.state.distance);
+            //console.log("Duración",this.state.duration);
+            //console.log("Categoria",keys.categoriaVehiculo)
+            ////console.log(this.props.switchValue);
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -606,7 +630,7 @@ export default class TravelNoDestination extends Component {
 
             
         } catch (e) {
-            console.log(e);
+            //console.log(e);
             this.setState({
                 showModal: true,
                 Descripcion: "Servicio no disponible, Intente más tarde",
@@ -660,11 +684,17 @@ export default class TravelNoDestination extends Component {
 
     async componentWillMount() {
 
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
        
-        console.log("keys.travelInfo",keys.travelInfo.puntoPartida.addressInput);
+        //console.log("keys.travelInfo",keys.travelInfo.puntoPartida.addressInput);
 
-        console.log("primeraParada",primeraParada);
+        //console.log("primeraParada",primeraParada);
 
         this.setState({
             myPosition: {
@@ -683,7 +713,7 @@ export default class TravelNoDestination extends Component {
 
         });
 
-        console.log(this.state.region);
+        //console.log(this.state.region);
 
       
         // let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
@@ -706,6 +736,23 @@ export default class TravelNoDestination extends Component {
 
         // keys.Paradas= this.state.Paradas;
 
+    }
+
+    componentDidFocus() {
+        //console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+
+        if (this.state.Onway == true) {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+        }
     }
 
 
@@ -739,9 +786,9 @@ export default class TravelNoDestination extends Component {
 
 
             })
-            console.log(this.state.Express_Estandar)
-            console.log("------")
-            console.log(this.state.infoVehicleTarifa)
+            //console.log(this.state.Express_Estandar)
+            //console.log("------")
+            //console.log(this.state.infoVehicleTarifa)
 
             this.setState({
                 infoVehicleTarifa: {
@@ -855,6 +902,7 @@ export default class TravelNoDestination extends Component {
 
     Chat() {
 
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
     }
@@ -872,14 +920,22 @@ export default class TravelNoDestination extends Component {
 
     } 
 
+    handleBackButton() {
+        console.log("BackTravelND");
+
+        return true;
+    }
+
     cancelarServicio() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
         horaActual = d.toLocaleTimeString()
 
-        console.log("Hora Actual", horaActual);
-        console.log("Hora Servicio", keys.HoraServicio);
+        ////console.log("Hora Actual", horaActual);
+        //console.log("Hora Servicio", keys.HoraServicio);
 
         keys.Chat = [];
 
@@ -1028,7 +1084,7 @@ export default class TravelNoDestination extends Component {
                             <View>
                                 <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera 3 minutos después de haber</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
                                 <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
@@ -1780,11 +1836,11 @@ export default class TravelNoDestination extends Component {
                     < View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "71%" }}>
                         <Image
                             style={{ width: 50, height: 50 }}
-                            source={require("./../assets/user.png")}
+                            source={{ uri: keys.datos_chofer.imgChofer }}
                         ></Image>
                         <Image
                             style={{ width: 50, height: 50 }}
-                            source={require("./../assets/Auto.png")}
+                            source={{ uri: keys.datos_vehiculo.imgVehiculo }}
                         ></Image>
                         <View style={{ paddingLeft: 120 }}>
                             <Text>{keys.datos_vehiculo.modelo}</Text>

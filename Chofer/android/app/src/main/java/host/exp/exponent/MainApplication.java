@@ -1,5 +1,5 @@
 package host.exp.exponent;
-
+import com.airbnb.android.react.maps.MapsPackage;
 import com.facebook.react.ReactPackage;
 
 import org.unimodules.core.interfaces.Package;
@@ -13,12 +13,22 @@ import okhttp3.OkHttpClient;
 
 // Needed for `react-native link`
 // import com.facebook.react.ReactApplication;
+import com.ocetnik.timer.BackgroundTimerPackage;
 
 public class MainApplication extends ExpoApplication implements AppLoaderPackagesProviderInterface<ReactPackage> {
 
   @Override
   public boolean isDebug() {
     return BuildConfig.DEBUG;
+  }
+
+  @Override
+  protected List<ReactPackage> getPackages() {
+    return Arrays.<ReactPackage>asList(
+        new MainReactPackage(),
+            new BackgroundTimerPackage(),
+        new MapsPackage()
+    );
   }
 
   // Needed for `react-native link`

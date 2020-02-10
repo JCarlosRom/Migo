@@ -8,21 +8,25 @@ import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
-import * as Permissions from 'expo-permissions';
 
-
+// Clase principal de ViewSetUbication
 export default class ViewSetUbication extends Component {
 
 
+    /**
+     *Creates an instance of ViewSetUbication.
+     * Constructor de la clase ViewSetUbication
+     * @param {*} props
+     * @memberof ViewSetUbication
+     */
     constructor(props) {
-
-        
+        // Conexión a socket
         if (keys.socket == null) {
             
             keys.socket = SocketIOClient(keys.urlSocket);
             
         }
-        
+        // verificación de Conductor On Line 
         keys.socket.on('isConnected', () => { })
 
 
@@ -50,7 +54,7 @@ export default class ViewSetUbication extends Component {
 
 
     }
-
+    // Barra de navegación 
     static navigationOptions = {
         title: "Inicio"
     };
@@ -58,10 +62,12 @@ export default class ViewSetUbication extends Component {
 
 
 
+    /**
+    *
+    *Ciclo de vida para antes de que se monte el componente
+    * @memberof ViewSetUbication
+    */
     async componentWillMount() {
-
-        // console.log("keys.travelInfo",keys.travelInfo);
-
 
         // Posición de chófer 
         const myLocation = await Location.getCurrentPositionAsync({});
@@ -96,6 +102,11 @@ export default class ViewSetUbication extends Component {
 
     }
 
+    /**
+     * Función para autocompletar el destino
+     *
+     * @param {*} destination
+     */
     autocompleteGoogle= async destination => {
         this.setState({
            destination:destination
@@ -220,7 +231,7 @@ export default class ViewSetUbication extends Component {
         return (
             <View>
 
-            
+                {/* Input de cambio de dirección */}
                 <View>
 
                     <View style={{ flexDirection: "row", paddingTop: 10, paddingLeft: 10, paddingRight: 10 }}>
@@ -357,6 +368,7 @@ export default class ViewSetUbication extends Component {
 
     }
 }
+// Estilos de componente ViewSetUbication
 
 const styles = StyleSheet.create({
     container: {

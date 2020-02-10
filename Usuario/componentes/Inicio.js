@@ -1,6 +1,7 @@
 // Importación de librerías 
+import BackgroundTimer from 'react-native-background-timer';
 import React, { Component } from "react";
-import { Text, View, StyleSheet, TextInput, Button } from "react-native";
+import { Text, View, StyleSheet, TextInput, Button, BackHandler } from "react-native";
 import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -20,6 +21,9 @@ export default class Inicio extends Component {
      * @memberof Inicio
      */
     constructor(props) {
+        var num = 1; 
+
+        
         // Eliminación de sockets
         keys.socket.removeAllListeners("getIdSocket");
         keys.socket.removeAllListeners("sendIdChoferUsuario");
@@ -66,7 +70,9 @@ export default class Inicio extends Component {
      */
     componentDidMount(){
 
+      
         this.setPropina(keys.typePropina);
+        
 
     }
 
@@ -76,10 +82,20 @@ export default class Inicio extends Component {
      * @memberof Inicio
      */
     async componentWillMount () {
+
+        
+        // BackHandler.addEventListener("hardwareBackPress", function (params) {
+        //     console.log("backInicio")
+        //     return false;
+
+        // })
+
         // Elimina el socket 
         keys.socket.removeAllListeners("recorrido_id_usuario");
         // Inicializa el chat
         keys.Chat = [];
+
+        keys.socket.removeAllListeners("LlegoMensaje");
         
         Flag = this.props.navigation.getParam('Flag', false);
 
@@ -115,12 +131,12 @@ export default class Inicio extends Component {
             }
         }
         // Permisos de uso de GPS
-        let { status } = await Permissions.askAsync(Permissions.LOCATION);
-        if (status !== 'granted') {
-            this.setState({
-                errorMessage: 'Permission to access location was denied',
-            });
-        }
+        // let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        // if (status !== 'granted') {
+        //     this.setState({
+        //         errorMessage: 'Permission to access location was denied',
+        //     });
+        // }
 
         let location = await Location.getCurrentPositionAsync({});
 
@@ -233,6 +249,12 @@ export default class Inicio extends Component {
             keys.Tarifa.Total = keys.Tarifa.Total + keys.Tarifa.Propina;
 
             console.log(keys.Tarifa.Total);
+
+            // Generación de la fecha actual 
+            var date = new Date();
+            var fechaTransaccion = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+            console.log(fechaTransaccion);
+            
             // generación de la transacción del pago 
             keys.socket.emit("generar_transaccion",{
                 id_chofer_socket: keys.id_chofer_socket,
@@ -244,7 +266,8 @@ export default class Inicio extends Component {
                 in_id_recorrido: keys.id_recorrido,
                 in_id_servicio: keys.id_servicio,
                 isPropina: (keys.typePropina != 1)? true: false,
-                Propina: keys.Tarifa.Propina
+                Propina: keys.Tarifa.Propina, 
+                fechaTransaccion: fechaTransaccion
                 
     
             })

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, handleBackButton } from "react-native";
 import { StackActions, NavigationActions } from 'react-navigation';
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
@@ -103,12 +103,6 @@ export default class TravelMPChange extends Component {
 
         keys.socket.removeAllListeners("chat_usuario");
 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
         // Chat del chofer
         keys.socket.on('chat_usuario', (num) => {
 
@@ -119,6 +113,9 @@ export default class TravelMPChange extends Component {
 
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+
 
             var d = new Date(); // get current date
             d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
@@ -169,7 +166,7 @@ export default class TravelMPChange extends Component {
                 showTimeChofer: true
             })
 
-            
+           
 
         });
 
@@ -267,6 +264,8 @@ export default class TravelMPChange extends Component {
 
         keys.socket.on('terminarViajeUsuario', (num) => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
             keys.Chat = []
             // console.log('terminarViajeUsuario');
             const resetAction = StackActions.reset({
@@ -280,6 +279,8 @@ export default class TravelMPChange extends Component {
         })
 
         keys.socket.on("cancelViajeUsuario", num => {
+
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
             keys.Chat = []
 
@@ -422,7 +423,7 @@ export default class TravelMPChange extends Component {
             console.log(this.state.distance);
             console.log(this.state.duration);
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -589,7 +590,9 @@ export default class TravelMPChange extends Component {
 
     async componentWillMount() {
 
-         
+            this.subs = [
+                this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+            ]; 
             // Generar las coordenadas por medio del nombre de la ubicación recibida
             let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
             let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
@@ -730,7 +733,29 @@ export default class TravelMPChange extends Component {
     
     }
 
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
 
+        })
+
+        if (this.state.Onway == true) {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+        }
+    }
+
+    handleBackButton() {
+        console.log("BackTravelMP");
+
+        return true;
+    }
+    
     static navigationOptions = {
         title: "Viaje",
         headerLeft: null
@@ -817,6 +842,8 @@ export default class TravelMPChange extends Component {
 
     Chat() {
 
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
     }
@@ -835,6 +862,8 @@ export default class TravelMPChange extends Component {
     } 
 
     cancelarServicio() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);

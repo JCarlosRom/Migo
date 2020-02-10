@@ -355,7 +355,7 @@
     <!-- ADD GOOGLE MAPS CONFIG HERE -->
     <!-- BEGIN GOOGLE MAPS CONFIG -->
     <meta-data
-      android:name="com.google.android.geo.API_KEY"
+      android:name="com.google.android.geo.AIzaSyDh7eDB9snEFSYtf-k0gfxA45HFoR0L--I"
       android:value="AIzaSyDh7eDB9snEFSYtf-k0gfxA45HFoR0L--I"/>
     <!-- END GOOGLE MAPS CONFIG -->
 

@@ -1,11 +1,11 @@
+// Importación de librerías 
 import React, { Component } from "react";
-import { Image,View, Text, StyleSheet, Switch, ScrollView } from "react-native";
+import { Image,View, Text, StyleSheet, Switch } from "react-native";
 import Modal from "react-native-modal";
 import { Button  } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, { Marker, AnimatedRegion } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import axios from 'axios';
-import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
+import MapView, { Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import { StackActions, NavigationActions } from 'react-navigation';
 import MapViewDirections from 'react-native-maps-directions';
 import getDirections from 'react-native-google-maps-directions';
 import { showLocation } from 'react-native-map-link'
@@ -13,45 +13,100 @@ import keys from './global';
 import * as Location from "expo-location";
 import * as Permissions from 'expo-permissions';
 import call from 'react-native-phone-call'
-
+// Clase principal de Componente de Travel MP 
 export default class TravelMP2 extends Component {
+    /**
+    *Creates an instance of TravelMP.
+    * Constructor de de la clase TRAVELMP2
+    * @param {*} props
+    * @memberof TravelMP2
+    */
     constructor(props) {
 
+        // Socket para asignar los ids de socket en caso de cambio
+        keys.socket.on('getIdSocket', (num) => {
+
+            // Asignación de nuevo socket
+            keys.id_chofer_socket = num.id;
+
+            // Socket de emisión de Id de Chofer a usuario
+            keys.socket.emit("WSsendIdChoferUsuario", {
+                id_socket_usuario: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
+            })
+
+        })
+        // Socket para escuchar el cambio de id de usuario
+        keys.socket.on('sendIdUsuarioChofer', (num) => {
+            // Asignación de id del usuario, en variable global 
+            keys.id_usuario_socket = num.id_socket_usuario;
+        })
+
+        // Socket para recibir ids de recorrido y servicio, en caso de inserción 
+        keys.socket.on('recorrido_id_conductor', num => {
+            console.log('Llego respuesta: ', num);
+
+            keys.id_servicio = num.servicio;
+            keys.id_recorrido = num.recorrdio;
+
+            console.log("idServicio", keys.id_servicio);
+            console.log("idRecorrido", keys.id_recorrido);
+      
+
+        });
+        // Socket receptor, verificador de chófer On Line 
         keys.socket.on('isConnected', () => {})
         
         super(props);
+        // Estados de componente
          this.state = {
-            id_usuario: "2",
+             // Estados de navegación
             puntoEncuentro:false,
             HomeTravel:true,
             aceptViaje:false,
             initravel:false,
             Travel: false,
             showMapDirections:false,
-            positionUser: null,
-        
+             // Posición del usuario 
+             positionUser: {
+                 latitude: 0,
+                 longitude: 0,
+
+             },
+            // Coordenadas fijas para consulta de direcciones, google directions
             latitude: 19.273247,
             longitude: -103.715795,
             myPosition:null,
             distance:0,
             duration:0,
+            // Estados de las rutas de cada destino del viaje 
             routeInitial: true,
             routeParada1: false,
             routeParada2: false,
             routeParada3: false,
             location:null,
-             region: {
-                 latitude: 0,
-                 longitude: 0,
-                 longitudeDelta: 0,
-                 latitudeDelta: 0
+            // Coordenadas de la región inicial del mapa
+            region: {
+                latitude: 0,
+                longitude: 0,
+                longitudeDelta: 0,
+                latitudeDelta: 0
 
-             },
+            },
             timerAceptViaje: 15,
             intervaltimerAceptViaje: null,
             showModal:false, 
             Description: "",
-            infoVehicleLlegada:0
+            infoVehicleLlegada:0,
+             // Cronometers
+             minutosUsuario: 2,
+             segundosUsuario: 0,
+             timeUsuario: "",
+             finTimerUsuario: false,
+             // TimerTravel
+             minutosTravelUsuario: 0,
+             segundosTravelUsuario: 0,
+             timeTravelUsuario: "",
+             FinTimeTravelUsuario: false
      
     
 
@@ -61,10 +116,8 @@ export default class TravelMP2 extends Component {
         keys.socket.on('changeDestinoChofer', num => {
 
             clearInterval(keys.intervalBroadcastCoordinates);
-            // this.state.datos_solicitud = num;
-
-            console.log("Datos Solicitud", num);
-
+            
+            // Asignación de datos del nuevo viaje en variables globales de Chofer
             if (num != null) {
 
                 keys.datos_usuario = {
@@ -110,12 +163,7 @@ export default class TravelMP2 extends Component {
 
                 keys.Tarifa = num.Tarifa;
 
-
-
-
-                // console.log("Socket del chofer", keys.id_chofer_socket)
-
-
+                // Limpiar intervalos de coordenadas de usuario 
 
                 clearInterval(this.state.timer);
                 clearInterval(keys.timerCoordenadas);
@@ -128,7 +176,7 @@ export default class TravelMP2 extends Component {
                     // tiempoLlegada: d.toLocaleTimeString(
 
                 });
-
+                // Sección de navegación por tipo de viaje
                 if (keys.type == "Unico") {
 
                     const resetAction = StackActions.reset({
@@ -138,8 +186,6 @@ export default class TravelMP2 extends Component {
                     });
 
                     this.props.navigation.dispatch(resetAction);
-
-
 
                 } else {
 
@@ -152,8 +198,6 @@ export default class TravelMP2 extends Component {
                         });
 
                         this.props.navigation.dispatch(resetAction);
-
-
 
                     } else {
 
@@ -187,27 +231,22 @@ export default class TravelMP2 extends Component {
 
 
                 }
-
+                // Fin de sección
             }
 
         });
-
+        // Detiene el socket de chat 
         keys.socket.removeAllListeners("chat_chofer");
 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
-
+      
+        // Socket para recibir nuevo mensaje de chat
         keys.socket.on('chat_chofer', (num) => {
 
             keys.Chat.push(num.Mensaje);
 
 
         })
-
+        // Socket para detectar la cancelación del servicio por parte del usuario
         keys.socket.on('cancelViajeChofer', () => {
 
             clearInterval(keys.intervalBroadcastCoordinates);
@@ -227,6 +266,11 @@ export default class TravelMP2 extends Component {
         
     };
 
+    /**
+     * Función para llamar al teléfono del usuario
+     *
+     * @memberof TravelMP2
+     */
     callPhoneFunction() {
         const args = {
             number: keys.datos_usuario.numeroTelefono, // String value with the number to call
@@ -236,8 +280,27 @@ export default class TravelMP2 extends Component {
         call(args).catch(console.error)
     }
 
-    componentDidMount() {
+    /** Función para llamar al teléfono de soporte
+    *
+    *
+    * @memberof TravelMP2
+    */
+    callPhoneSoporte() {
+        const args = {
+            number: keys.numeroSoporte, // String value with the number to call
+            prompt: false // Optional boolean property. Determines if the user should be prompt prior to the call 
+        }
 
+        call(args).catch(console.error)
+    }
+
+    /**
+    *Ciclo de vida para despúes de que se monta el componente
+    *
+    * @memberof TravelMP2
+    */
+    componentDidMount() {
+        // Bloque para accionar funciones como Aceptación del viaje o cambio de destino 
         Flag = this.props.navigation.getParam('Flag', false);
         console.log(Flag)
 
@@ -315,10 +378,17 @@ export default class TravelMP2 extends Component {
     }
     
     
-
-
-
+    /**
+    *
+    *Ciclo de vida para antes de que se monte el componente
+    * @memberof TravelMP2
+    */
     async componentWillMount() {
+
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
         
         Flag = this.props.navigation.getParam('Flag', false);
 
@@ -329,7 +399,7 @@ export default class TravelMP2 extends Component {
             })
         }
 
-        // Check my current position
+        // Bloque para pedir permisos de GPS
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -337,7 +407,8 @@ export default class TravelMP2 extends Component {
                 errorMessage: 'Permisos denegados por el usuario'
             });
         }
-
+        // Fin del bloque
+        // Bloque para la asignación de mi posición, paradas, y del usuario 
         let location = await Location.getCurrentPositionAsync({});
 
         this.setState({ location });
@@ -401,18 +472,29 @@ export default class TravelMP2 extends Component {
             Paradas
         })
 
-        // this.chofer_setPosition();
-
-        console.log('Paradas',Paradas);
-        
+        // Fin del bloque 
         
     }
 
-    
-    
-    // Función para aceptar el viaje
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+    }
+    /**
+    * Función para aceptar el viaje
+    *
+    * @memberof TravelMP2
+    */
     aceptViaje() {
 
+        // Generar la hora límite para generar la cancelación del servicio 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + 3, 0, 0);
         keys.HoraServicio = d.toLocaleTimeString()
@@ -424,21 +506,21 @@ export default class TravelMP2 extends Component {
 
 
         clearInterval(this.state.intervaltimerAceptViaje);
-
+        // Socket para emitir la aceptación del viaje 
         keys.socket.emit('chofer_accept_request', {
             id_usuario_socket: keys.id_usuario_socket,
             id_chofer_socket: keys.id_chofer_socket,
             datos_vehiculo: keys.datos_vehiculo, datos_chofer: keys.datos_chofer,
             positionChofer: this.state.myPosition
         });
-
+        // Socket para generar el servicio 
         keys.socket.emit('generar_servicio', {
             id_conductor_socket: keys.id_chofer_socket,
             id_usuario_socket: keys.id_usuario_socket,
             distancia_destino_usuario: keys.travelInfo.Distancia,
             tiempo_viaje_destino: keys.travelInfo.Tiempo,
-            latitud_usuario: keys.positionUser.usuario_latitud,
-            longitud_usuario: keys.positionUser.usuario_longitud,
+            latitud_usuario: this.state.positionUser.latitude,
+            longitud_usuario: this.state.positionUser.longitude,
             latitud_usuario_destino: keys.travelInfo.Parada2.latitude,
             longitud_usuario_destino: keys.travelInfo.Parada2.longitude,
             geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
@@ -447,10 +529,9 @@ export default class TravelMP2 extends Component {
             id_unidad: keys.datos_vehiculo.id_unidad,
             id_conductor: keys.datos_vehiculo.id_chofer
         })
-
+         // Inicio de transmisión de coordenadas al usuario 
         this.fleet_chofer_usuario();
-
-
+        // Cambio de estado de componente a viaje aceptado 
         this.setState({
             HomeTravel: false,
             aceptViaje: true,
@@ -512,7 +593,13 @@ export default class TravelMP2 extends Component {
         this.setState({ timer_chofer });
     }
 
+    /**
+     * Función para enviar la posición del chofer al usuario (Con socket)
+     *
+     * Retorno de coordenadas de chófer, transmisión
+     */
     findCurrentLocationAsync = async () => {
+        // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -524,10 +611,13 @@ export default class TravelMP2 extends Component {
         let location = await Location.getCurrentPositionAsync({});
         this.setState({ location });
     };
-
-
+    /**
+    * Función para empezar el viaje por google maps y Waze
+    *
+    * @memberof TravelMP
+    */
     Go = () => {
-
+        // Bloque de asignación de coordenadas de la posición del usuario y las paradas
         coordinates = {
             latitude: 0,
             longitude: 0
@@ -555,8 +645,9 @@ export default class TravelMP2 extends Component {
                 longitude: keys.travelInfo.Parada2.longitude,
             }
         }
+        // Fin del bloque 
 
-
+        // Asignación de coordenadas para usar el viaje con google maps 
         if (keys.travelType == true) {
 
             const data = {
@@ -609,6 +700,12 @@ export default class TravelMP2 extends Component {
 
     }
 
+    /**
+    *Barra de navegación de TravelMP
+    *
+    * @static
+    * @memberof TravelMP2
+    */
     static navigationOptions = {
         title: "Viaje",
         headerLeft: null
@@ -616,7 +713,13 @@ export default class TravelMP2 extends Component {
 
   
 
+    /**
+     * Función para iniciar en el punto de encuentro
+     *
+     * @memberof TravelMP
+     */
     puntoEncuentro(){
+        // Asignación de estado de componentes iniciar el viaje 
         this.setState({
             HomeTravel: false,
             aceptViaje: false,
@@ -633,14 +736,53 @@ export default class TravelMP2 extends Component {
         keys.socket.emit("puntoEncuentro", {
             id_socket_usuario: keys.id_usuario_socket
         });
+        // Interval para el cronometro de 2 minutos de manera regresiva 
+        let intervalEsperaUsuario = setInterval(() => {
+            if (this.state.segundosUsuario == 0) {
+                this.setState({
+                    segundosUsuario: 59,
+                    minutosUsuario: this.state.minutosUsuario - 1
+
+                })
+            } else {
+                this.setState({
+                    segundosUsuario: this.state.segundosUsuario - 1
+                })
+            }
+
+            if (this.state.segundosUsuario < 10) {
+
+                this.setState({
+                    timeUsuario: this.state.minutosUsuario + ":0" + this.state.segundosUsuario
+                })
+            } else {
+                this.setState({
+                    timeUsuario: this.state.minutosUsuario + ":" + this.state.segundosUsuario
+                })
+            }
+            if (this.state.minutosUsuario == 0 && this.state.segundosUsuario == 0) {
+                clearInterval(intervalEsperaUsuario)
+                this.setState({
+                    finTimerUsuario: true
+                })
+            }
+            console.log("timeUsuario", this.state.timeUsuario)
+        }, 1000)
+
+        keys.intervalEsperaUsuario = intervalEsperaUsuario;
 
 
     }
 
 
-   
+    /**
+     *Función para terminar el viaje
+    *
+    * @memberof TravelMP2
+    */
     terminarViaje(){
-
+        // Limpiar intervals de cronometro del viaje y de la transmisión de coordenadas 
+        clearInterval(keys.intervalTimeTravel)
         clearInterval(keys.intervalBroadcastCoordinates);
 
         keys.Chat = [];
@@ -650,19 +792,24 @@ export default class TravelMP2 extends Component {
 
     }
 
+    /**
+    * Función para cancelar el viaje
+    *
+    * @memberof TravelMP2
+    */
     cancelViaje() {
 
-   
+        // Limpiar chat 
         keys.Chat = []
-
+        // Limpíar el intervalo de transmisión de coordenas
         clearInterval(keys.intervalBroadcastCoordinates);
-
+        // Socket para hacer la transacción de la cancelación del viaje 
         keys.socket.emit("cancelaConductor", { id: keys.id_servicio })
-
+        // Emisión de la cancelación al usuario 
         keys.socket.emit("cancelViajeChofer", {
             id_socket_usuario: keys.id_usuario_socket
         });
-
+        // Cambio de pantalla a Home 
         const resetAction = StackActions.reset({
             index: 0,
             actions: [NavigationActions.navigate({ routeName: 'Home', params: { Flag: "CancelarServicioChofer" } })],
@@ -673,7 +820,11 @@ export default class TravelMP2 extends Component {
 
         
     }
-
+    /**
+    * Función para actualizar la región del mapa
+    *
+    * @param {*} region
+    */
     onRegionChange = async region => {
 
 
@@ -683,19 +834,69 @@ export default class TravelMP2 extends Component {
 
 
     } 
-
+    /**
+    * Función para la primera parada
+    *
+    * @memberof TravelMP2
+    */
     primeraParada(){
+        // Asignar estados de primera parada, reiniciar timer de viaje 
         this.setState({
             routeInitial: false,
             routeParada1: true,
             routeParada2: false,
+            FinTimeTravelUsuario: false,
+            segundosTravelUsuario: 0,
+            minutosTravelUsuario: 0
         })
+        clearInterval(keys.intervalTimeTravel);
+        // Iniciar intervalo de cronometro, de tiempo de viaje 
+
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
+
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
 
 
     }
-
+    /**
+     * Función para la segunda parada
+     *
+     * @memberof TravelMP2
+     */
     segundaParada(){
-
+        // Asignar estados de segunda parada, reiniciar timer de viaje 
+        clearInterval(keys.intervalTimeTravel);
 
         Paradas = [];
 
@@ -710,6 +911,9 @@ export default class TravelMP2 extends Component {
             routeInitial: false,
             routeParada1: false,
             routeParada2: true,
+            FinTimeTravelUsuario: false,
+            segundosTravelUsuario: 0,
+            minutosTravelUsuario: 0
  
         })
 
@@ -717,20 +921,122 @@ export default class TravelMP2 extends Component {
         keys.socket.emit("segundaParada", {
             id_socket_usuario: keys.id_usuario_socket
         });
-    }
+        // Iniciar intervalo de cronometro, de tiempo de viaje 
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
 
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
+    }
+    /**
+    * Función para el Chat
+    *
+    * @memberof TravelMP2
+    */
     Chat() {
 
         keys.socket.removeAllListeners("chat_chofer");
         this.props.navigation.navigate("Chat")
     }
+    /**
+    * Función para iniciar el viaje
+    *
+    * @memberof TravelMP2
+    */
+    async iniciarViaje() {
+        // Limpiar el intervalo de la espera de usuario 
+        clearInterval(keys.intervalEsperaUsuario)
 
 
+        this.setState({
+            HomeTravel: false,
+            aceptViaje: false,
+            initravel: false,
+            Travel: true,
+
+
+        })
+        // Intervalo para generar el cronometro del tiempo de viaje 
+        let intervalTimeTravel = setInterval(() => {
+            if (this.state.segundosTravelUsuario == 59) {
+                this.setState({
+                    segundosTravelUsuario: 0,
+                    minutosTravelUsuario: this.state.minutosTravelUsuario + 1
+
+                })
+            } else {
+                this.setState({
+                    segundosTravelUsuario: this.state.segundosTravelUsuario + 1
+                })
+            }
+
+            if (this.state.segundosTravelUsuario < 10) {
+
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":0" + this.state.segundosTravelUsuario
+                })
+            } else {
+                this.setState({
+                    timeTravelUsuario: this.state.minutosTravelUsuario + ":" + this.state.segundosTravelUsuario
+                })
+            }
+
+            if (this.state.minutosTravelUsuario == this.state.duration) {
+                this.setState({
+                    FinTimeTravelUsuario: true
+                })
+            }
+
+            console.log("timeTravelUsuario", this.state.timeTravelUsuario)
+        }, 1000)
+
+        keys.intervalTimeTravel = intervalTimeTravel;
+
+
+
+    }
+
+    /**
+    * Render principal del componente
+    *
+    * @returns
+    * @memberof TravelMP2
+    */
     render() {
         return (
 
 
             <View style={{ flex: 1 }}>
+                {/* Modal genérico de mensajes   */}
                 <View>
 
                     <Modal
@@ -775,7 +1081,7 @@ export default class TravelMP2 extends Component {
 
                 </View>
 
-
+                {/* Modal de cancelación  */}
                 <View >
 
                     <Modal
@@ -920,7 +1226,7 @@ export default class TravelMP2 extends Component {
 
                 </View>
 
-          
+                    {/* Mapa */}
                     {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 && this.state.positionUser != null ?
 
                         <MapView
@@ -1026,7 +1332,7 @@ export default class TravelMP2 extends Component {
                                 :
                                 null
                             }
-
+                            {/* Ruta de mi posición a la parada 1 */}
                             {this.state.routeParada1 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
                                 && keys.travelInfo.Parada1.latitude != 0 && keys.travelInfo.Parada1.longitude != 0 ?
 
@@ -1057,6 +1363,7 @@ export default class TravelMP2 extends Component {
                                 :
                                 null
                             }
+                            {/* Ruta de mi posición a parada 2 */}
                             {
                                 this.state.routeParada2 && this.state.myPosition.latitude != 0 && this.state.myPosition.longitude != 0
                                     && keys.travelInfo.Parada2.latitude != 0 && keys.travelInfo.Parada2.longitude != 0 ?
@@ -1103,7 +1410,7 @@ export default class TravelMP2 extends Component {
                         null
 
                     }
-
+                {/* Barra superior del componente  */}
                     <View>
 
                         <View style={{ paddingLeft: 210, paddingBottom: 20 }}>
@@ -1119,7 +1426,7 @@ export default class TravelMP2 extends Component {
                     </View>
 
              
-
+                {/* Barra superior de punto de encuentro  */}
                 <View style={{ flexDirection: "row", position: "absolute", top: "3%" }}>
                     <View style={{ flex: 1 }}>
                         <Switch
@@ -1157,9 +1464,6 @@ export default class TravelMP2 extends Component {
 
                 {/* Barra superior de punto de encuentro  */}
                 {this.state.HomeTravel ?
-
-
-
                     <View style={{
                         flexDirection: "row",
                         position: "absolute",
@@ -1192,7 +1496,7 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Componente de muestra de punto de partida */}
                 {this.state.HomeTravel ?
                     <View style={{
                         flexDirection: "row",
@@ -1209,7 +1513,7 @@ export default class TravelMP2 extends Component {
                     null
                 }
 
-
+                {/* Nombre de los destinos, tiempo y distancia, funcón de viaje en waze o Google Maps */}
                 {this.state.aceptViaje || this.state.Travel ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "12%" }}>
@@ -1288,7 +1592,7 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
                 {this.state.aceptViaje ?
                     <View style={{ flexDirection: "row", position: "absolute", top: "70%" }}>
 
@@ -1344,19 +1648,24 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Llamada a soporte */}
                 {this.state.aceptViaje ?
 
-                    <View style={{ flexDirection: "row", position: "absolute", top: "80%" }}>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%", left:"3%" }}>
 
 
-                        <View style={{ flex: 6 }}>
+                        <View style={{ flex: 1 }}>
 
-                            <View style={{ alignSelf: "center" }}>
-                                <Text >1234567890</Text>
-                                <Text>{keys.datos_usuario.numeroTelefono}</Text>
-                            </View>
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
 
+                            ></Icon>
+
+                        </View>
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
                         </View>
                     </View>
 
@@ -1364,7 +1673,7 @@ export default class TravelMP2 extends Component {
                     null
 
                 }
-
+                {/* Botón de punto de encuentro  */}
                 {this.state.aceptViaje ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "87%" }}>
@@ -1403,17 +1712,25 @@ export default class TravelMP2 extends Component {
 
                 {/* Barra inferior de inicio de viaje */}
                 {this.state.initravel ?
-                    <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+                    this.state.finTimerUsuario ?
+                        <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
 
-                        <Text style={{ marginLeft: 5 }}> Por favor espera al usuario: 2:00 minutos</Text>
+                            <Text style={{ marginLeft: 5 }}> El usuario está retrasado pongase en contacto para confirmar el horario</Text>
 
 
-                    </View>
+                        </View>
+                        :
+                        <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
+
+                            <Text style={{ marginLeft: 5 }}> Por favor espera al usuario: {this.state.timeUsuario} minutos</Text>
+
+
+                        </View>
                     :
                     null
 
                 }
-
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
                 {this.state.initravel ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "73%" }}>
@@ -1470,25 +1787,22 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
+                {/* Llamada a soporte */}
                 {this.state.initravel ?
 
-                    <View style={{ flexDirection: "row", position: "absolute", top: "83%" }}>
-                        <View style={{ flex: 6 }}>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "83%", left:"3%" }}>
+                        <View style={{ flex: 1 }}>
 
-                            <View style={{ flex: 2 }}></View>
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
 
-                            <View style={{ flex: 2 }}>
+                            ></Icon>
 
-                                <View style={{ alignSelf: "center", alignContent: "center" }}>
-                                    <Text >{keys.datos_usuario.numeroTelefono}</Text>
-                                    <Text>{keys.datos_usuario.correoElectronico}</Text>
-                                </View>
-
-
-                            </View>
-
-                            <View style={{ flex: 2 }}></View>
-
+                        </View>
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
                         </View>
 
                     </View>
@@ -1496,7 +1810,7 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Botón para iniciar el viaje */}
                 {this.state.initravel ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
@@ -1515,15 +1829,7 @@ export default class TravelMP2 extends Component {
                             <Button
                                 title="Iniciar viaje"
                                 type="clear"
-                                onPress={() => {
-                                    this.setState({
-                                        HomeTravel: false,
-                                        aceptViaje: false,
-                                        initravel: false,
-                                        Travel: true,
-
-                                    })
-                                }}
+                                onPress={() =>this.iniciarViaje()}
 
                             />
 
@@ -1538,19 +1844,30 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Tipo de pago y tiempo de viaje  */}
                 {this.state.Travel ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "62%" }}>
 
-                        <Text style={{ marginLeft: 20 }}> Pago con tarjeta</Text>
+
+                        <View style={{ flex: 5 }}>
+
+                            <Text> Pago con tarjeta</Text>
+
+                        </View>
+
+
+                        <View style={{ flex: 1 }}>
+
+                            <Text style={{ color: (this.state.FinTimeTravelUsuario == false) ? "green" : "red" }}>{this.state.timeTravelUsuario}</Text>
+                        </View>
 
 
                     </View>
                     :
                     null
                 }
-
+                {/* Foto de perfil y Nombre del usuario, cancelación, chat y llamada  */}
                 {this.state.Travel ?
                     <View style={{ flexDirection: "row", position: "absolute", top: "67%" }}>
 
@@ -1605,32 +1922,30 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Llamada a soporte */}
                 {this.state.Travel ?
 
-                    <View style={{ flexDirection: "row", position: "absolute", top: "80%" }}>
+                    <View style={{ flexDirection: "row", position: "absolute", top: "80%", left:"3%" }}>
 
-                        <View style={{ flex: 1.5 }}>
+                        <View style={{ flex: 1 }}>
+
+                            <Icon name="phone"
+                                onPress={() => this.callPhoneSoporte()}
+                                size={30}
+                                color="#ff8834"
+
+                            ></Icon>
 
                         </View>
-                        <View style={{ flex: 3, alignContent: "center" }}>
-
-                            <View>
-                                <Text>1234567890</Text>
-                                <Text>soporte@yimi.com</Text>
-                            </View>
-
-                        </View>
-
-                        <View style={{ flex: 1.5 }}>
-
+                        <View style={{ flex: 3 }}>
+                            <Text >Soporte YiMi</Text>
                         </View>
 
                     </View>
                     :
                     null
                 }
-
+                {/* Botón de finalización del viaje  */}
                 {this.state.Travel && this.state.routeInitial ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
@@ -1663,7 +1978,7 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
+                {/* Botón de segunda parada */}
                 {this.state.Travel && this.state.routeParada1 ?
 
                     <View style={{ flexDirection: "row", position: "absolute", top: "92%" }}>
@@ -1699,8 +2014,7 @@ export default class TravelMP2 extends Component {
                     :
                     null
                 }
-
-
+                {/* Botón para terminar viaje */}
                 {this.state.Travel && this.state.routeParada2 ?
 
 
@@ -1752,7 +2066,7 @@ export default class TravelMP2 extends Component {
 }
 
 
-
+// Estilos de TravelMP2
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",

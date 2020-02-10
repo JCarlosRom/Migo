@@ -23,12 +23,13 @@ export default class Travel_Integrado extends Component {
      */
     constructor(props) {
 
+        
         // Socket para asignar los ids de socket en caso de cambio
         keys.socket.on('getIdSocket', (num) => {
-
+            
             // Asignación de nuevo socket
             keys.id_chofer_socket = num.id;
-
+            
             // Socket de emisión de Id de Chofer a usuario
             keys.socket.emit("WSsendIdChoferUsuario",{
                 id_socket_usuario: keys.id_usuario_socket ,idSocketChofer: keys.id_chofer_socket
@@ -42,9 +43,9 @@ export default class Travel_Integrado extends Component {
         })
         // Socket receptor, verificador de chófer On Line 
         keys.socket.on('isConnected', () => { })
-
-  
-
+        
+        
+        
         super(props);
         // Estados de componente
         this.state = {
@@ -60,7 +61,7 @@ export default class Travel_Integrado extends Component {
             positionUser: {
                 latitude: 0,
                 longitude: 0,
-
+                
             },
             // Coordenadas fijas para consulta de direcciones, google directions
             latitude: 19.273247,
@@ -81,7 +82,7 @@ export default class Travel_Integrado extends Component {
                 longitude: 0,
                 longitudeDelta: 0,
                 latitudeDelta: 0
-
+                
             },
             // Distancia y duración a destinos
             distance: 0,
@@ -109,13 +110,14 @@ export default class Travel_Integrado extends Component {
             segundosTravelUsuario: 0,
             timeTravelUsuario: "",
             FinTimeTravelUsuario:false
-
+            
             
         };
-
+        
+        clearInterval(this.state.intervaltimerAceptViaje);
         // Socket para escuchar nueva solicitud de usuario a conductor y guardado de información 
         keys.socket.on('changeDestinoChofer', num => {
-
+            
             clearInterval(keys.intervalBroadcastCoordinates);
            
             // Asignación de datos del nuevo viaje en variables globales de Chofer
@@ -247,13 +249,7 @@ export default class Travel_Integrado extends Component {
         // Remover el socket de chat del chófer 
         keys.socket.removeAllListeners("chat_chofer");
 
-        // Socket para mostrar mensaje cuando llegue mensaje 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
+   
         // Socket para recibir nuevo mensaje de chat
         keys.socket.on('chat_chofer', (num) => {
 
@@ -317,7 +313,7 @@ export default class Travel_Integrado extends Component {
         try {
        
             // Método para consultar las tarifas por un http request 
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -371,6 +367,7 @@ export default class Travel_Integrado extends Component {
         keys.HoraServicio = d.toLocaleTimeString()
 
         clearInterval(this.state.intervaltimerAceptViaje);
+
         
         // Socket para emitir la aceptación del viaje 
         keys.socket.emit('chofer_accept_request', {
@@ -508,14 +505,15 @@ export default class Travel_Integrado extends Component {
         // Bloque para accionar funciones como Aceptación del viaje o cambio de destino  
 
         Flag = this.props.navigation.getParam('Flag', false);
-        console.log(Flag)
+        console.log("Flag",Flag)
         
         if (Flag =="Acept"){
+
             let intervaltimerAceptViaje = setInterval(() => {
 
                 this.setState({ intervaltimerAceptViaje });
 
-                console.log(this.state.intervaltimerAceptViaje);
+                console.log("timerAceptViajeTI",this.state.timerAceptViaje);
 
                 if (this.state.timerAceptViaje == 0) {
 
@@ -591,6 +589,10 @@ export default class Travel_Integrado extends Component {
     */
     async componentWillMount() {
 
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
         // Bloque de asignación de la posición del usuario, parada 1 y posición actual 
         let usuarioPosition = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
 
@@ -627,6 +629,18 @@ export default class Travel_Integrado extends Component {
         
     }
 
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+    }
+
     /**
      * Función para empezar el viaje por google maps y Waze
      *
@@ -646,7 +660,7 @@ export default class Travel_Integrado extends Component {
                     longitude: this.state.positionUser.longitude,
                 }
 
-                console.log(coordinates);
+                console.log("Coordenadas",coordinates);
                
         }else{
             if (this.state.Travel == true) {
@@ -810,6 +824,7 @@ export default class Travel_Integrado extends Component {
 
         this.setState({
             HomeTravel: false,
+            
             aceptViaje: false,
             initravel: false,
             Travel: true,
@@ -1410,7 +1425,7 @@ export default class Travel_Integrado extends Component {
                             <View style={{flex:1}}>
                                 <Image
                                     style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
+                                    source={{ uri: keys.datos_usuario.imgChofer }}
                                 ></Image>
                             </View>
                             <View style={
@@ -1537,7 +1552,7 @@ export default class Travel_Integrado extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1675,7 +1690,7 @@ export default class Travel_Integrado extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1812,7 +1827,7 @@ export default class Travel_Integrado extends Component {
 
                                 <Image
                                     style={{ width: 50, height: 50 }}
-                                    source={require("./../assets/user.png")}
+                                    source={{ uri: keys.datos_usuario.imgChofer }}
                                 ></Image>
 
                             </View>

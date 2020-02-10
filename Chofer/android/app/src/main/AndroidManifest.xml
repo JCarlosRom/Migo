@@ -355,8 +355,8 @@
     <!-- ADD GOOGLE MAPS CONFIG HERE -->
     <!-- BEGIN GOOGLE MAPS CONFIG -->
     <meta-data
-      android:name="com.google.android.geo.API_KEY"
-      android:value="AIzaSyDh7eDB9snEFSYtf-k0gfxA45HFoR0L--I"/>
+      android:name="com.google.android.maps.v2.API_KEY"
+      android:value="AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY"/>
     <!-- END GOOGLE MAPS CONFIG -->
 
     <!-- ADD BRANCH CONFIG HERE -->

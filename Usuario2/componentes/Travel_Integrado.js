@@ -1,10 +1,10 @@
+// Importación de librerías 
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, BackHandler  } from "react-native";
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import { ScrollView } from "react-native-gesture-handler";
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from "expo-location";
 import { StackActions, NavigationActions } from 'react-navigation';
@@ -12,31 +12,35 @@ import axios from 'axios';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
 import call from 'react-native-phone-call'
-import SendSMS from 'react-native-sms'
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY';
+// Clase principa Travel_Integrado
 export default class Travel_Integrado extends Component {
    
 
+    /**
+     *Creates an instance of Travel_Integrado.
+     * Constructor de la clase Travel_Integrado
+     * @param {*} props
+     * @memberof Travel_Integrado
+     */
     constructor(props) {
-
+        
         // Socket para asignar los ids de socket en caso de cambio
         keys.socket.on('getIdSocket', (num) => {
-
-            // console.log(num);
-
+            
             keys.id_usuario_socket = num.id;
-
+            
             console.log("Usuario", keys.id_usuario_socket);
-
-
+            
+            // Envio de id nuevo a chofer
             keys.socket.emit("WSsendIdUsuarioChofer", {
                 id_usuario_socket: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
             })
-
-
+            
+            
         })
-
+        // Socket para recibir el id nuevo del chofer
         keys.socket.on("sendIdChoferUsuario",(num)=>{
             keys.id_chofer_socket = num.id_socket_chofer;
             console.log("Recibí id de chofer",keys.id_chofer_socket)
@@ -44,6 +48,8 @@ export default class Travel_Integrado extends Component {
 
         super(props);
 
+     
+        // States del componente
         this.state = {
 
             myPosition: {
@@ -65,6 +71,7 @@ export default class Travel_Integrado extends Component {
             helperPay: false,
             Pay: false,
             Onway: false,
+            showOnway:false,
             showModalCancel: false,
             showModalAcept: false,
             showModal:false,
@@ -76,7 +83,7 @@ export default class Travel_Integrado extends Component {
             timeChofer:0,
             distance: 0,
             duration: 0,
-
+            // Tarifas por tipo de vehículo
             Express_Estandar: {
                 categoria_servicio: 0,
                 nombre_categoria: "",
@@ -126,6 +133,7 @@ export default class Travel_Integrado extends Component {
                 Solicitud: 0,
                 tarifa_cancelacion: 0
             },
+
             isNextVehicles: true,
             routeParada1: true,
             routeChoferDestino: false,
@@ -133,6 +141,7 @@ export default class Travel_Integrado extends Component {
             creditPay: false,
             infoVehicleTipo: "",
             infoVehicleLlegada: "",
+            // Estado tarifa final
             infoVehicleTarifa: {
                 Tarifa:0,
                 tarifaBase: 0,
@@ -150,7 +159,7 @@ export default class Travel_Integrado extends Component {
         };
 
         
-
+        // Inicio de consulta de vehículos 
         if (keys.categoriaVehiculo == null || keys.tipoVehiculo == null) {
 
             this.getVehiclesInit(1, 1);
@@ -167,20 +176,18 @@ export default class Travel_Integrado extends Component {
                 Vehicles: num
             })
 
-            // console.log("Vehiculos Travel 1",this.state.Vehicles, "-----");
-
 
         })
 
         keys.socket.removeAllListeners("chat_usuario");
+        // // Socket de notificación de mensaje nuevo 
+        // keys.socket.on("LlegoMensaje", (num)=>{
+        //     this.setState({
+        //         showModal: true,
+        //         Descripcion: "Te llegó un mensaje",
+        //     })
 
-        keys.socket.on("LlegoMensaje", (num)=>{
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-
-        })
+        // })
  
         // Chat de Usuario
         keys.socket.on('chat_usuario', (num) => {
@@ -201,7 +208,9 @@ export default class Travel_Integrado extends Component {
                 routeParada1:false,
                 routeChoferDestino:true,
                 showModalLlegada:true,
-                showTimeChofer: false
+                showTimeChofer: false,
+                showOnway:false,
+                
               
             })
             
@@ -212,18 +221,12 @@ export default class Travel_Integrado extends Component {
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
             console.log('Llego respuesta: ', num);
-            // this.state.id_recorrido = num;
-            // this.setState({
-
-            // });
+  
             keys.id_servicio = num.servicio;
             keys.id_recorrido = num.recorrdio;
 
             console.log("idServicio", keys.id_servicio);
             console.log("idRecorrido", keys.id_recorrido);
-
-            // alert('EL conductor acepto tu solicitud, espera a tu chofer ');
-            // Desactivar animación 
         
         });
         // Recepción de la información del chofer cuando se acepta la solicitud
@@ -247,7 +250,7 @@ export default class Travel_Integrado extends Component {
                 showVehicles:false
             })
 
-
+            // Asignación de información 
             keys.datos_chofer={
                 idChofer: num.datos_chofer.idChofer,
                 nombreChofer: num.datos_chofer.nombreChofer,
@@ -277,15 +280,22 @@ export default class Travel_Integrado extends Component {
 
             this.setState({
                 Onway: true,
+                showOnway:true,
                 ConductorMapDirection:true,
                 showEstimations: false,
                 Home: false,
                 showTimeChofer:true
             })
 
-      
-          
+           
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+
+    
         });
+
+
+
 
         // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
@@ -298,7 +308,6 @@ export default class Travel_Integrado extends Component {
                 }
             })
 
-            // console.log("USUARIO: Posición del chófer", this.state.positionChofer);
         
         });
     
@@ -317,9 +326,12 @@ export default class Travel_Integrado extends Component {
         // Socket para terminar el viaje
         keys.socket.on('terminarViajeUsuario', num => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+          
             keys.Chat=[];
             keys.Tarifa.Total = num.Tarifa;
-            console.log('terminarViajeUsuario', keys.Tarifa.Total);
+      
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "terminarViaje" } })],
@@ -328,9 +340,12 @@ export default class Travel_Integrado extends Component {
 
             this.props.navigation.dispatch(resetAction);
         });
-
+        // Socket para cancelación por chofer
         keys.socket.on("cancelViajeUsuario", num =>{
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+         
             keys.Chat = [];
 
             const resetAction = StackActions.reset({
@@ -373,18 +388,29 @@ export default class Travel_Integrado extends Component {
         });
     }
 
+    handleBackButton() {
+        console.log("BackTravel");
+        
+        return true;
+    }
+    
+    /**
+     * Función para consulta de los vehiculos en la primera renderización del componente
+     *
+     * @param {*} categoriaVehiculo
+     * @param {*} tipoVehiculo
+     * @memberof Travel_Integrado
+     */
     async getVehiclesInit(categoriaVehiculo, tipoVehiculo) {
-
-
 
         clearInterval(this.timer_Vehicles);
 
         clearInterval(this.timer_VehiclesConsult);
-
+        // Emit de consulta 
         keys.socket.emit('vehiclesConsult', {
             categoriaVehiculo: categoriaVehiculo, tipoVehiculo: tipoVehiculo, id_usuario_socket: keys.id_usuario_socket
         });
-
+        // Interval de consulta
         this.timer_VehiclesConsult = setInterval(() => {
 
             keys.socket.emit('vehiclesConsult', {
@@ -398,14 +424,15 @@ export default class Travel_Integrado extends Component {
 
         keys.tipoVehiculo = tipoVehiculo;
 
-
-        console.log("Categoria vehiculo get");
-        console.log(keys.categoriaVehiculo);
-        console.log("Tipo Vehiculo Get");
-        console.log(keys.tipoVehiculo);
-
     }
 
+    /**
+     *Función para consulta según los parametros de llegada
+     *
+     * @param {*} tipoVehiculo
+     * @param {*} tipoServicio
+     * @memberof Travel_Integrado
+     */
     async getVehicles( tipoVehiculo, tipoServicio ){
 
         clearInterval(this.timer_Vehicles);
@@ -429,16 +456,15 @@ export default class Travel_Integrado extends Component {
 
         keys.tipoServicio = tipoServicio;
 
-
-        console.log("Categoria vehiculo get");
-        console.log(keys.categoriaVehiculo);
-        console.log("Tipo de vehiculo");
-        console.log(keys.tipoVehiculo);
-        console.log("Tipo Servicio Get");
-        console.log(keys.tipoServicio);
     }
 
 
+  
+    /**
+     * Llamada al telefono de chófer
+     *
+     * @memberof Travel_Integrado
+     */
     callPhoneFunction() {
         const args = {
             number: keys.datos_chofer.Telefono, // String value with the number to call
@@ -448,6 +474,11 @@ export default class Travel_Integrado extends Component {
         call(args).catch(console.error)
     }
 
+    /**
+     * Función para ver el tipo de pago 
+     *
+     * @memberof Travel_Integrado
+     */
     showPay(){
         if(this.state.showEstimations==true){
 
@@ -471,6 +502,11 @@ export default class Travel_Integrado extends Component {
         }
     }
 
+    /**
+     * Función para ocultar el tipo de pago 
+     *
+     * @memberof Travel_Integrado
+     */
     closePay(){
         if(this.state.helperPay==true){
             this.setState({
@@ -487,12 +523,17 @@ export default class Travel_Integrado extends Component {
         }
     }
 
+    /**
+     * Función para generar las tarifas
+     *
+     * @memberof Travel_Integrado
+     */
     async getTarifas(){
         try {
             console.log(this.state.distance);
             console.log(this.state.duration);
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -592,6 +633,10 @@ export default class Travel_Integrado extends Component {
         }
     }
 
+    /**
+     * Función para generar la solicitud
+     *
+     */
     generarSolicitud = () => {
 
         keys.Tarifa.Total = this.state.infoVehicleTarifa.Tarifa;
@@ -602,8 +647,10 @@ export default class Travel_Integrado extends Component {
         keys.Tarifa.Solicitud = this.state.infoVehicleTarifa.Solicitud;
         keys.Tarifa.Gob = this.state.infoVehicleTarifa.Gob;
         keys.Tarifa.tarifa_cancelacion= this.state.infoVehicleTarifa.tarifa_cancelacion;
-
         console.log("keys", keys.Tarifa)
+        
+        
+        keys.travelInfo.typePay = keys.typePay;
 
 
         usuario_latitud = this.state.myPosition.latitude;
@@ -617,7 +664,7 @@ export default class Travel_Integrado extends Component {
         Tiempo= this.state.duration
         
         
-
+        // Envio de solicitud al chófer
         keys.socket.emit('usuario_solicitud', {
             usuario_latitud: usuario_latitud, usuario_longitud: usuario_longitud, 
             datos_usuario: datos_usuario, infoTravel: infoTravel, Paradas: keys.Paradas, type: type, 
@@ -628,8 +675,12 @@ export default class Travel_Integrado extends Component {
         });
     }
     
+    /**
+     * Función para generar las coordenadas del GPS del dispositivo Móvil
+     *
+     */
     findCurrentLocationAsync = async () => {
-
+        // Permisos para el GPS
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -643,26 +694,23 @@ export default class Travel_Integrado extends Component {
     };
 
     
-    
-
-
-
+    /**
+     * Ciclo de vida para antes de que se monte el componente
+     *
+     * @memberof Travel_Integrado
+     */
     async componentWillMount() {
 
-        Change = this.props.navigation.getParam('change', false);
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
-        if(Change ==true){
-            this.setState({
-                Change:true
-            })
-        }
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
 
-        console.log("Travel Integrado");
-
+        // Asignación de coordenadas mi posición y región
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
         
-        
-
+    
         this.setState({
             myPosition: {
 
@@ -681,9 +729,7 @@ export default class Travel_Integrado extends Component {
 
         });
 
-        console.log(this.state.region);
-
-      
+        // Generación de información de parada 1
         if (keys.type !="SinDestino"){
             
             let Parada1 = await Location.geocodeAsync(keys.travelInfo.Parada1);
@@ -711,11 +757,34 @@ export default class Travel_Integrado extends Component {
 
     }
 
-   
 
+    componentDidFocus(){
+      console.log("focus")  
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+
+        if (this.state.Onway == true) {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+        }
+    }
+    /**
+     * Barra de navegación
+     *
+     * @static
+     * @memberof Travel_Integrado
+     */
     static navigationOptions = {
         title: "Viaje",
-        headerLeft: null
+        headerLeft: null,
+
+      
         
     };
 
@@ -725,6 +794,12 @@ export default class Travel_Integrado extends Component {
 
 
 
+    /**
+     * Abrir modal de cancelación 
+     *
+     * @param {*} visible
+     * @memberof Travel_Integrado
+     */
     setModalAceptCancel(visible) {
 
         this.setState({ ModalAceptCancel: visible });
@@ -733,22 +808,27 @@ export default class Travel_Integrado extends Component {
 
     }
     
+    /**
+     * Función para asignar y mostrar la información del vehículo
+     *
+     * @param {*} typeVehicle
+     * @memberof Travel_Integrado
+     */
     showInfoVehicle(typeVehicle){
+
+
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
     
     
-        if(typeVehicle=="Express Estandar"){
+        if (typeVehicle == "Express Estandar" && this.state.Express_Estandar.out_costo_viaje !=0){
+           
             this.setState({
                 infoVehicleTipo: "Express Estandar",
                 infoVehicleLlegada: d.toLocaleTimeString(),
-             
-
+            
             })
-            console.log(this.state.Express_Estandar)
-            console.log("------")
-            console.log(this.state.infoVehicleTarifa)
 
             this.setState({
                 infoVehicleTarifa: {
@@ -771,7 +851,7 @@ export default class Travel_Integrado extends Component {
 
 
         }else{
-            if(typeVehicle=="Express Lujo"){
+            if (typeVehicle == "Express Lujo" && this.state.Express_Lujo.out_costo_viaje!=0){
                 this.setState({
                     infoVehicleTipo: "Express Lujo",
                     infoVehicleLlegada: d.toLocaleTimeString(),
@@ -797,7 +877,7 @@ export default class Travel_Integrado extends Component {
 
                 this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
             }else{
-                if(typeVehicle=="Pool Estandar"){
+                if (typeVehicle == "Pool Estandar" && this.state.Pool_Estandar.out_costo_viaje!=0 ){
                     this.setState({
                         infoVehicleTipo: "Pool Estandar",
                         infoVehicleLlegada: d.toLocaleTimeString(),
@@ -822,7 +902,7 @@ export default class Travel_Integrado extends Component {
                     this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
 
                 }else{
-                    if(typeVehicle=="Pool Lujo"){
+                    if (typeVehicle == "Pool Lujo" && this.state.Pool_Lujo.out_costo_viaje!=0){
                         this.setState({
                             infoVehicleTipo: "Pool Lujo",
                             infoVehicleLlegada: d.toLocaleTimeString(),
@@ -851,21 +931,36 @@ export default class Travel_Integrado extends Component {
         }
 
         
-  
+        console.log("Tarifa", this.state.infoVehicleTarifa.Tarifa);
+        if (this.state.infoVehicleTarifa.Tarifa!=0){
 
-        this.setState({
-            showEstimations: true,
-            Home: false
-        })
+            this.setState({
+                showEstimations: true,
+                Home: false
+            })
+
+        }
     }
 
 
+    /**
+     * Función para el Chat
+     *
+     * @memberof Travel_Integrado
+     */
     Chat() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
     }
 
+    /**
+     * Función para el cambio de región por evento de Desplazamiento
+     *
+     * @param {*} region
+     */
     onRegionChange = async region => {
         latitude = region.latitude;
         longitude = region.longitude;
@@ -881,7 +976,14 @@ export default class Travel_Integrado extends Component {
 
     } 
 
+    /**
+     * Función para cancelar el servicio 
+     *
+     * @memberof Travel_Integrado
+     */
     cancelarServicio(){
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
@@ -899,11 +1001,12 @@ export default class Travel_Integrado extends Component {
 
             
         })
-
+        // Emit para enviar al chofe que se canceló el viaje 
         keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
 
         if(horaActual<keys.HoraServicio){
-            
+            // Después de 3 minutos
+            // Emit para la cancelación el viaje 
             keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
 
             const resetAction = StackActions.reset({
@@ -915,7 +1018,7 @@ export default class Travel_Integrado extends Component {
             this.props.navigation.dispatch(resetAction);
             
         }else{
-            
+            // Antes de 3 minutos
             keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
             const resetAction = StackActions.reset({
                 index: 0,
@@ -929,23 +1032,14 @@ export default class Travel_Integrado extends Component {
 
     }
 
-    // sendSMS() {
-
-    //     Descripcion = 'Pagar tarifa de cancelación: MX$'
-
-    //     SendSMS.send({
-    //         body: Descripcion,
-    //         recipients: [keys.datos_usuario.numeroTelefono],
-    //         successTypes: ['sent', 'queued'],
-    //         allowAndroidSendWithoutReadPermission: true
-    //     }, (completed, cancelled, error) => {
-
-    //         console.log('SMS Callback: completed: ' + completed + ' cancelled: ' + cancelled + 'error: ' + error);
-
-    //     });
-    // }
 
  
+    /**
+     * Render principal de Travel_Integrado
+     *
+     * @returns
+     * @memberof Travel_Integrado
+     */
     render() {
         return (
             <View style={{ flex: 1 }}>
@@ -1146,6 +1240,7 @@ export default class Travel_Integrado extends Component {
                     </Modal>
 
                 </View>
+                {/* Mapa */}
                 {this.state.region.latitude != 0 && this.state.region.longitude != 0 && this.state.region.latitudeDelta != 0 && this.state.region.longitudeDelta != 0 ?
 
                     <MapView
@@ -1164,6 +1259,7 @@ export default class Travel_Integrado extends Component {
                         showsUserLocation={true}
                         showsMyLocationButton={true}
                     >
+                        {/* Marcador de la posición del usuario  */}
                         <Marker
                             coordinate={{
                                 latitude: this.state.myPosition.latitude,
@@ -1173,7 +1269,7 @@ export default class Travel_Integrado extends Component {
                         >
                             <Icon name="map-pin" size={20} color="green"></Icon>
                         </Marker>
-
+                        {/* Bloque para la consulta de vehiculos */}
                         {this.state.Vehicles != null && this.state.showVehicles ?
 
 
@@ -1197,7 +1293,8 @@ export default class Travel_Integrado extends Component {
                             null
 
                         }
-
+                        {/* Fin del bloque */}
+                        {/* Primera parada */}
                         {
                             this.state.Paradas!=null?
 
@@ -1216,7 +1313,7 @@ export default class Travel_Integrado extends Component {
                             null
                         }
 
-
+                        {/* Marcador del vehículo */}
                         {this.state.Onway?
                             <Marker
                                 coordinate={{
@@ -1238,6 +1335,7 @@ export default class Travel_Integrado extends Component {
                         && this.state.myPosition.latitude != 0
                         && this.state.myPosition.longitude !=0 
                         ?
+                        // ruta de la posición del chófer a la posición del usuario 
                             <MapViewDirections
 
                                 origin={{
@@ -1281,7 +1379,7 @@ export default class Travel_Integrado extends Component {
                                 && this.state.Paradas[0]["latitude"] !=0
                                 && this.state.Paradas[0]["longitude"] !=0
                                 ?
-
+                                    // Ruta de mi posición a la parada 1 
                                     <MapViewDirections
 
 
@@ -1379,7 +1477,7 @@ export default class Travel_Integrado extends Component {
                 :
                     null
                 }
-
+                {/* Botón para regresar a la pantalla anterior  */}
                 {this.state.showBackButton?
                 
                     <View style={{
@@ -1406,7 +1504,7 @@ export default class Travel_Integrado extends Component {
                 :
                     null
                 }
-
+                {/* Tiempo de llegada estimado del conductor */}
                {this.state.showTimeChofer ?
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "1%"}}>
                         <View style={{ flex: 1, height: 20 }}>
@@ -1437,7 +1535,7 @@ export default class Travel_Integrado extends Component {
                     null
 
                 }   
-
+                {/* Información del taxi */}
                 {this.state.showEstimations?
                 
                         <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "77%" }}>
@@ -1457,7 +1555,7 @@ export default class Travel_Integrado extends Component {
                 :
                     null
                 }
-
+                {/* Tipo de pago  */}
                 {this.state.showEstimations?
                 
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "87%" }}>
@@ -1472,7 +1570,7 @@ export default class Travel_Integrado extends Component {
                     null
                 }
 
-                    
+                {/* Botón de confirmar */}
                 {!this.state.Pay && this.state.showEstimations?
 
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "92%" }}>
@@ -1490,7 +1588,7 @@ export default class Travel_Integrado extends Component {
                     null
                 }
 
-
+                {/* Bloque Catalogo de vehiculos */}
                 {this.state.Home?
 
                     <View style={{ position: "absolute", left: "3%", top: "70%" }}>
@@ -1612,7 +1710,8 @@ export default class Travel_Integrado extends Component {
                 :
                     null
                 }
-
+                {/* Fin del bloque */}
+                {/* Tipo de pago */}
                 {this.state.Home?
                 
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "87%" }}>
@@ -1634,7 +1733,7 @@ export default class Travel_Integrado extends Component {
                 :
                     null
                 }
-
+                {/* Bloque de pago */}
                 {this.state.Pay?
                         
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "70%" }}>
@@ -1745,6 +1844,9 @@ export default class Travel_Integrado extends Component {
                     null
                 }
 
+                {/* Fin de bloque */}
+
+                {/* Estado En camino */}
                 {this.state.Onway?
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "60%" }}>
                         <View style={{flex:2.5}}></View>
@@ -1763,7 +1865,7 @@ export default class Travel_Integrado extends Component {
                     null
                 }
 
-                {this.state.Onway ?
+                {this.state.showOnway ?
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "65%" }}>
                   
                         <Text style={{fontWeight:"bold", fontSize:14, alignSelf:"center"}}>Tu conductor está en camino, espera un momento</Text>
@@ -1862,15 +1964,16 @@ export default class Travel_Integrado extends Component {
 
 
 
-
+                {/* Fin del bloque */}
             </View>
+            
 
   
         
         );
     }
 }
-
+// Estilos de Travel_Integrado
 const styles = StyleSheet.create({
     container: {
 

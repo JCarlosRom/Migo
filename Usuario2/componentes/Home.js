@@ -1,3 +1,4 @@
+// Importación de librerías 
 import React, { Component } from "react";
 import { Text, View, StyleSheet, FlatList, TouchableHighlight } from "react-native";
 import { Divider, CheckBox, Button, Input } from "react-native-elements";
@@ -9,13 +10,15 @@ import { ScrollView } from "react-native-gesture-handler";
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import keys from "./global";
 import * as Permissions from 'expo-permissions';
-import SocketIOClient from 'socket.io-client/dist/socket.io.js';
-
-// import keys from "../../config/Keys";
-
+// Clase principal del componente Home
 export default class Home extends Component {
 
-
+    /**
+     *Creates an instance of Home.
+     * constructor de la clase Home
+     * @param {*} props
+     * @memberof Home
+     */
     constructor(props) {
         
         super(props);
@@ -62,8 +65,6 @@ export default class Home extends Component {
             showModal:false, 
             Descripcion:""
 
-
-
         };
 
         showNewArrival = false;
@@ -72,52 +73,70 @@ export default class Home extends Component {
 
         // Función para recibir el mensaje del conductor
         keys.socket.on('chat_usuario', (num) => {
-
-            console.log("chat_usuario", num)
-
+            // Se agrega el mensaje al array global del chat
             keys.Chat.push(num.Mensaje);
-
+            // Se agrega al State del chat
             this.setState({
                 Chat: keys.Chat
             })
 
-            console.log(keys.Chat);
-
         })
-
-     
-
-
-
 
     }
  
 
+    /**
+     * Función para ir a pantalla de configuración del viaje 
+     *
+     * @memberof Home
+     */
     async changetoConfigureTravel(){
 
-        const AddressCoordinates = await Location.geocodeAsync(this.state.myPosition.addressInput);
+        console.log(this.state.myPosition.addressInput);
+        
 
-        const resetAction = StackActions.reset({
-            index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Travel', params: { 
-                Address: this.state.myPosition.addressInput,
-                Latitude: AddressCoordinates[0]["latitude"],
-                Longitude: AddressCoordinates[0]["longitude"]
-            } })],
-            key:undefined
-        });
+        if(this.state.myPosition.addressInput!="" && this.state.myPosition.addressInput!=null){
 
-        this.props.navigation.dispatch(resetAction);
+            // Se genera una constante con los datos de la dirección de punto de partida
+            const AddressCoordinates = await Location.geocodeAsync(this.state.myPosition.addressInput);
+            // Se navega hacia el componente travel, con los parametros de la dirección (String) y Coordenadas
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Travel', params: { 
+                    Address: this.state.myPosition.addressInput,
+                    Latitude: AddressCoordinates[0]["latitude"],
+                    Longitude: AddressCoordinates[0]["longitude"]
+                } })],
+                key:undefined
+            });
+    
+            this.props.navigation.dispatch(resetAction);
+        }else{
+            this.setState({
+                showModal: true,
+                Descripcion: "Punto de encuentro no válido"
+            })
+        }
     }
 
-    // Function to show the buttons of position of arrivals
+    
+    /**
+     * Función para mostrar los botones de la posición de las paradas
+     *
+     * @memberof Home
+     */
     showPositionArrival() {
         this.state = {
             showPositionArrival: false
         };
     }
 
-    // Function to hide the field of stops
+  
+    /**
+     * Función para ocultar los inputs de llegada
+     *
+     * @memberof Home
+     */
     hideArrival() {
 
         if (showNewArrival == true) {
@@ -147,7 +166,12 @@ export default class Home extends Component {
         }
 
     }
-    // Hide the delete buttons
+   
+    /**
+     * Ocultar los botones de borrado
+     *
+     * @memberof Home
+     */
     hideDeleteButtons() {
      
         if (showNewArrival == true) {
@@ -173,7 +197,13 @@ export default class Home extends Component {
         }
     }
 
-    // Asignar el orden de las paradas a los inputs
+    
+    /**
+     * Asignación del orden de las paradas en los inputs
+     *
+     * @param {*} place
+     * @memberof Home
+     */
     setplaceArrival(place) {
 
 
@@ -258,6 +288,12 @@ export default class Home extends Component {
         })
     }
 
+    /**
+     * Barra de navegación de Home
+     *
+     * @static
+     * @memberof Home
+     */
     static navigationOptions = {
         title: "Solicitar taxi"
     };
@@ -265,11 +301,15 @@ export default class Home extends Component {
   
 
 
+    /**
+     * Ciclo de vida para antes de que se monte el componente
+     *
+     * @memberof Home
+     */
     async componentWillMount() {     
 
-    
+        // Bloque para asignar la dirección en el input de punto de partida
         let location = await Location.getCurrentPositionAsync({});
-    
 
         try {
             var locationAddress = await Location.reverseGeocodeAsync({
@@ -278,19 +318,16 @@ export default class Home extends Component {
             });
 
             Address = this.props.navigation.getParam('Address', 'No Address');
-
-            console.log(Address);
-            console.log(keys.tipoVehiculo);
-
+            // Si se envia un valor en pantalla de configurar, este se asigna
             if (Address != 'No Address') {
 
                 locationStr = Address;
             
             }else{
-
+                // De lo contario se genera la dirección segun la posición del usuario 
                 locationStr = locationAddress[0]["street"] + " #" + locationAddress[0]["na e"] + " " + locationAddress[0]["city"] + " " + locationAddress[0]["region"];
             }
-
+            // Asignación de valores estado de la posición del usuario 
             this.setState({
                 myPosition:{
                     address:locationAddress,
@@ -307,7 +344,7 @@ export default class Home extends Component {
         // Método para consultar destinos
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
                 id_usuario: this.state.id_usuario
             });
 
@@ -338,6 +375,11 @@ export default class Home extends Component {
 
   
 
+    /**
+     * Función de autocomplete de direcciones: Input 1
+     *
+     * @param {*} destination
+     */
     autocompleteGoogle1 = async destination => {
         this.setState({ 
             myPosition:{
@@ -378,7 +420,11 @@ export default class Home extends Component {
             console.error(error);
         }
     };
-
+    /**
+    * Función de autocomplete de direcciones: Input 2
+    *
+    * @param {*} destination
+    */
     autocompleteGoogle2 = async destination2 => {
         this.setState({ 
             destination2:destination2});
@@ -411,7 +457,11 @@ export default class Home extends Component {
             console.error(error);
         }
     };
-
+    /**
+    * Función de autocomplete de direcciones: Input 3
+    *
+    * @param {*} destination
+    */
     autocompleteGoogle3 = async destination3 => {
         this.setState({ 
             destination3:destination3
@@ -446,8 +496,11 @@ export default class Home extends Component {
             console.error(error);
         }
     };
-
-
+    /**
+    * Función de autocomplete de direcciones: Input 4
+    *
+    * @param {*} destination
+    */
     autocompleteGoogle4 = async destination4 => {
         this.setState({ destination4:destination4 });
 
@@ -483,6 +536,12 @@ export default class Home extends Component {
 
 
 
+    /**
+     * Función para reenderizar las predicciones de las direcciones en una lista 
+     *
+     * @param {*} { item }
+     * @returns
+     */
     Item = ({ item }) => {
      
 
@@ -510,6 +569,11 @@ export default class Home extends Component {
     };
 
 
+    /**
+     * Función para asignar la predicción al input en el que se ingresa la dirección
+     *
+     * @param {*} description
+     */
     setDirectionInput =(description)=>{
         if(this.state.flagDestino=="1"){
             this.setState({
@@ -556,6 +620,11 @@ export default class Home extends Component {
 
   
 
+    /**
+     * Cambiar el focus al nuevo input generado
+     *
+     * @param {*} e
+     */
     showArrival = (e) => {
 
        
@@ -591,6 +660,10 @@ export default class Home extends Component {
        
     }
 
+    /**
+     *  Función para limpiar el input principal
+     *
+     */
     clear = () => {
         this.setState({ 
             myPosition:{
@@ -600,28 +673,24 @@ export default class Home extends Component {
     };
 
 
+    /**
+     * Función para iniciar viaje con destino favorito 
+     *
+     * @param {*} Destino
+     * @memberof Home
+     */
     async DestinosFavoritosTravel(Destino){
 
 
-   
-
         if(this.state.myPosition.addressInput!=""){
 
-
-
             try {
-                
-                // console.log(this.state.myPosition.addressInput)
-                // console.log(Destino);
-    
+                // Creación de las coordenadas de punto de partida y destino
                 let puntoPartida = await Location.geocodeAsync(this.state.myPosition.addressInput);  
                 
                 let DestinoCords = await Location.geocodeAsync(Destino);
-    
-                // console.log(puntoPartida);
-    
-                // console.log(DestinoCords);
-                
+
+                // Mensaje en caso de dirección incorrecta 
                 if(puntoPartida.length==0 ){
                     this.setState({
                         showModal:true,
@@ -637,7 +706,7 @@ export default class Home extends Component {
                         })
                    
                     }else{
-    
+                        // Iniciar viaje integrado
                         keys.travelInfo.puntoPartida = this.state.myPosition;
                         keys.travelInfo.Parada1 = Destino;
                         keys.type="Unico"
@@ -652,24 +721,21 @@ export default class Home extends Component {
 
 
         }else{
-
+            
             this.setState({
                 showModal: true,
                 Descripcion: "Favor de ingresar un punto de partida válido"
             })
 
-         
-
         }
     }
 
    
-
-    // Función para iniciar el viaje 
+    /**
+     * Función para iniciar el viaje 
+     *
+     */
     Travel = () =>{
-
-        
-
 
         if (keys.categoriaVehiculo == null) {
             this.setState({
@@ -678,7 +744,7 @@ export default class Home extends Component {
             })
 
         } else {
-
+            // Validación viaje sin destino
             if (this.state.myPosition.addressInput != "" && this.state.destination4 == "" && this.state.showNewArrival == false && this.state.showNewArrival2 == false){
                
                 keys.travelInfo.puntoPartida = this.state.myPosition;
@@ -698,11 +764,10 @@ export default class Home extends Component {
                     
                     }else{
         
-                    
+                        // Validación de viaje integrado
                         keys.travelInfo.puntoPartida = this.state.myPosition;
                         keys.travelInfo.Parada1 = this.state.destination4;
-        
-                        
+    
                         keys.type = "Unico"
             
                         this.props.navigation.navigate("Travel_Integrado");
@@ -768,7 +833,7 @@ export default class Home extends Component {
                                                         })
                                                      
                                                     }else{
-        
+                                                        // validación de viaje Multiple
                                                         keys.travelInfo.puntoPartida = this.state.myPosition;
                                                         keys.travelInfo.Parada1 = this.state.destination2;
                                                         keys.travelInfo.Parada2 = this.state.destination3;
@@ -817,7 +882,7 @@ export default class Home extends Component {
                                             
                                             if(this.state.destination4!=""){
         
-        
+                                                // Validación viaje multiple 2 paradas
                                                 keys.travelInfo.puntoPartida = this.state.myPosition;
                                                 keys.travelInfo.Parada1 = this.state.destination2;
                                                 keys.travelInfo.Parada3 = this.state.destination4;
@@ -863,6 +928,10 @@ export default class Home extends Component {
         
     }
     
+    /**
+     * Reiniciar el componente
+     *
+     */
     reinitializeComponents = () => {
         const resetAction = StackActions.reset({
             index: 0,
@@ -873,6 +942,12 @@ export default class Home extends Component {
         this.props.navigation.dispatch(resetAction);
     }
 
+    /**
+     * Render principal del componente
+     *
+     * @returns
+     * @memberof Home
+     */
     render() {
 
         return (
@@ -1043,6 +1118,7 @@ export default class Home extends Component {
                    
 
                     </View>
+                    {/* Lista de predicciones */}
                     {this.state.showListdestination ? (
                         <FlatList
                             style={{
@@ -1126,7 +1202,7 @@ export default class Home extends Component {
 
                             </View>
 
-
+                            {/* Botones de eliminar */}
                             {!this.state.showButtonsDelete ?
 
                                 <View style={{ width: 25 }}>
@@ -1145,6 +1221,7 @@ export default class Home extends Component {
 
 
                         </View>
+                        {/* Ver lista de predicciones  */}
                         {this.state.showListdestination2 ? (
                             <FlatList
                                 style={{
@@ -1227,7 +1304,7 @@ export default class Home extends Component {
                             </View>
 
 
-
+                            {/* Botones de delete */}
                             {!this.state.showButtonsDelete ?
 
                                 <View style= {{width: 25 }}>
@@ -1246,6 +1323,7 @@ export default class Home extends Component {
 
 
                         </View>
+                        {/* Ver lista de predicciones */}
                         {this.state.showListdestination3 ? (
                             <FlatList
                                 style={{
@@ -1320,9 +1398,7 @@ export default class Home extends Component {
                             }   
 
                         </View>
-
-
-
+                        {/* Botones de delete */}
                         {!this.state.showButtonsDelete ?
                             
                             <View style={{ width: 25 }}>
@@ -1357,6 +1433,7 @@ export default class Home extends Component {
                         } */}
 
                     </View>
+                    {/* Ver lista de predicciones  */}
                     {this.state.showListdestination4 ? (
                         <FlatList
                             style={{
@@ -1408,7 +1485,7 @@ export default class Home extends Component {
                     </View>
 
                 </View>
-
+                {/* Botones de añadir casa y trabajo */}
                 <Divider style={styles.line} />
                 {this.state.showViewOptions ?
                     <View>
@@ -1598,7 +1675,7 @@ export default class Home extends Component {
                                 null}
 
 
-
+                        {/* Configurar lugar en el mapa y Visualizar vehículos por radio */}
                         <View style={{
                             flexDirection: "row",
                             backgroundColor: "#fff",
@@ -1644,12 +1721,7 @@ export default class Home extends Component {
                                     color="#ff8834"
                                     onPress={() => this.changetoConfigureTravel()}
                                     size={20}
-                                    // style={
-                                    //     {
-                                    //         paddingLeft: 70,
-                                    //         paddingTop: 7
-                                    //     }
-                                    // }
+                          
                                     ></Icon>
 
                             </View>
@@ -1712,7 +1784,7 @@ export default class Home extends Component {
                 }
 
            
-
+                {/* Botón de configurar */}
                     <View style={{ backgroundColor: "white", position:"relative", marginTop:50 }}>
 
                         <Button title="Confirmar"
@@ -1723,21 +1795,14 @@ export default class Home extends Component {
 
                     </View>
                  
-
-
                 <Divider style={styles.block} />
-         
-
-
-
-       
      
             </ScrollView>
         );
 
     }
 }
-
+// Estilos de Home
 const styles = StyleSheet.create({
     container: {
         paddingTop: 20,

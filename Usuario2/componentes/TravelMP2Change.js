@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, BackHandler } from "react-native";
 import Modal from "react-native-modal";
 import { StackActions, NavigationActions } from 'react-navigation';
 import { Button } from "react-native-elements";
@@ -97,13 +97,7 @@ export default class TravelMP2Change extends Component {
         super(props);
 
         keys.socket.removeAllListeners("chat_usuario");
-        
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
+ 
         // Chat del chofer
         keys.socket.on('chat_usuario', (num) => {
 
@@ -140,6 +134,8 @@ export default class TravelMP2Change extends Component {
         })
 
         keys.socket.on('terminarViajeUsuario', (num) => {
+
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
             // console.log('terminarViajeUsuario');
             keys.Chat = [];
             const resetAction = StackActions.reset({
@@ -154,6 +150,8 @@ export default class TravelMP2Change extends Component {
 
         // Cancelación de viaje desde chófer
         keys.socket.on("cancelViajeUsuario", num => {
+
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
             keys.Chat = [];
             const resetAction = StackActions.reset({
                 index: 0,
@@ -227,7 +225,7 @@ export default class TravelMP2Change extends Component {
                 showTimeChofer: true
             })
 
-            // this.fleet_usuario_chofer();
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
           
         });
 
@@ -350,6 +348,13 @@ export default class TravelMP2Change extends Component {
         });
     }
 
+
+    handleBackButton() {
+        console.log("BackTravel");
+
+        return true;
+    }
+
     callPhoneFunction() {
         const args = {
             number: keys.datos_chofer.Telefono, // String value with the number to call
@@ -365,7 +370,7 @@ export default class TravelMP2Change extends Component {
             console.log(this.state.distance);
             console.log(this.state.duration);
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -487,6 +492,8 @@ export default class TravelMP2Change extends Component {
     }
 
     cancelarServicio() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
@@ -627,8 +634,9 @@ export default class TravelMP2Change extends Component {
 
     async componentWillMount() {
 
-        console.log("TravelMP2");
-
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
       
         // Generar las coordenadas por medio del nombre de la ubicación recibida
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
@@ -720,6 +728,20 @@ export default class TravelMP2Change extends Component {
     }
 
 
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+
+        BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+    }
+
     static navigationOptions = {
         title: "Viaje",
         headerLeft: null
@@ -805,6 +827,8 @@ export default class TravelMP2Change extends Component {
 
 
     Chat() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
@@ -918,7 +942,7 @@ export default class TravelMP2Change extends Component {
                             <View>
                                 <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera 3 minutos después de haber</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
                                 <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>

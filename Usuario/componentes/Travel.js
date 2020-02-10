@@ -1,3 +1,4 @@
+import BackgroundTimer from 'react-native-background-timer';
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Image, TextInput, ScrollView, Slider, TouchableWithoutFeedback } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -13,11 +14,6 @@ import keys from "./global";
 export default class Travel extends Component {
     constructor(props) {
 
-
-    //    alert("Actualizada");
-
-        // Socket para asignar automáticamente el id desde el servidor 
-      
 
         if (keys.socket == null) {
 
@@ -102,6 +98,13 @@ export default class Travel extends Component {
     }
 
     async componentDidMount(){
+
+        const intervalId = BackgroundTimer.setInterval(() => {
+            // this will be executed every 200 ms
+            // even when app is the the background
+            console.log('tic');
+        }, 1000);
+
         const myLocation = await Location.getCurrentPositionAsync({});
         latitude = myLocation.coords.latitude;
         longitude = myLocation.coords.longitude;
@@ -468,19 +471,23 @@ export default class Travel extends Component {
 
     saveConfiguration(){
 
-        clearInterval(this.timer_Vehicles);
+        if(this.state.location!=""){
 
-        clearInterval(this.timer_VehiclesConsult);
-
-        keys.socket.removeAllListeners("getIdSocket");
-
-        const resetAction = StackActions.reset({
-            index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Home', params:{Address:this.state.location} })],
-            key: undefined
-        });
-
-        this.props.navigation.dispatch(resetAction);
+            
+            clearInterval(this.timer_Vehicles);
+    
+            clearInterval(this.timer_VehiclesConsult);
+    
+            keys.socket.removeAllListeners("getIdSocket");
+    
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Home', params:{Address:this.state.location} })],
+                key: undefined
+            });
+    
+            this.props.navigation.dispatch(resetAction);
+        }
 
     }
 

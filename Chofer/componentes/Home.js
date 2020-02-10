@@ -1,6 +1,7 @@
 // Importaciones de librerías 
 import React, { Component } from "react";
 import Modal from "react-native-modal";
+import { StackActions, NavigationActions } from 'react-navigation';
 import { View, Text, StyleSheet, Switch, Image } from "react-native";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -41,6 +42,7 @@ export default class Home extends Component {
      * @memberof Home
      */
     constructor(props) {
+        // alert("Actualizada")
 
         super(props);
         // Verificación de si se hace una conexión por socket 
@@ -58,8 +60,6 @@ export default class Home extends Component {
         keys.socket.on("TransaccionSatisfactoria", (num) => {
 
      
-
-
             if (num.isPropina == true) {
 
                 this.setState({
@@ -91,8 +91,11 @@ export default class Home extends Component {
                     nombreUsuario: num.datos_usuario.nombreUsuario,
                     CURP: num.datos_usuario.CURP,
                     numeroTelefono: num.datos_usuario.numeroTelefono,
-                    correoElectronico: num.datos_usuario.correoElectronico
+                    correoElectronico: num.datos_usuario.correoElectronico,
+                    imgUsuario: num.datos_usuario.imgUsuario
                 }
+
+                console.log("CHOFER: datosUsuario", keys.datos_usuario);
                 
                 keys.type= num.type;
 
@@ -143,21 +146,55 @@ export default class Home extends Component {
 
                 if (keys.type == "Unico" ) {
 
-                    this.props.navigation.navigate("Travel_Integrado", { Flag: "Acept" });
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'Travel_Integrado', params: { Flag: "Acept" } })],
+                        key: undefined
+                    });
+
+                    this.props.navigation.dispatch(resetAction);
+
+       
 
                 } else {
 
                     if(keys.type=="Multiple"){
+
+                        const resetAction = StackActions.reset({
+                            index: 0,
+                            actions: [NavigationActions.navigate({ routeName: 'TravelMP', params: { Flag: "Acept" } })],
+                            key: undefined
+                        });
+
+                        this.props.navigation.dispatch(resetAction);
                         
-                        this.props.navigation.navigate("TravelMP", { Flag: "Acept" });
+                       
 
                     }else{
                        
                         if(keys.type=="Multiple 2 paradas"){
-                            this.props.navigation.navigate("TravelMP2", { Flag: "Acept" });
+
+                            const resetAction = StackActions.reset({
+                                index: 0,
+                                actions: [NavigationActions.navigate({ routeName: 'TravelMP2', params: { Flag: "Acept" } })],
+                                key: undefined
+                            });
+
+                            this.props.navigation.dispatch(resetAction);
+
+                         
                         }else{
                             if(keys.type=="SinDestino"){
-                                this.props.navigation.navigate("TravelNoDestination", {Flag:"Acept"});
+
+                                const resetAction = StackActions.reset({
+                                    index: 0,
+                                    actions: [NavigationActions.navigate({ routeName: 'TravelNoDestination', params: { Flag: "Acept" } })],
+                                    key: undefined
+                                });
+
+                                this.props.navigation.dispatch(resetAction);
+
+                           
                             }
                         }
                         
@@ -203,6 +240,8 @@ export default class Home extends Component {
 
         // Remueve el socket de recorrido_id_conductor
         keys.socket.removeAllListeners("recorrido_id_conductor");
+
+        keys.socket.removeAllListeners("LlegoMensaje");
 
         // Toma el valor mandado por la navegación y lo asigna a Flag
         Flag = this.props.navigation.getParam('Flag', false);
@@ -518,6 +557,7 @@ export default class Home extends Component {
                     </Modal>
 
                 </View>
+                
                 {/*MAPA*/}
                 <MapView
 

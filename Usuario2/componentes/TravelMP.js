@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, BackHandler } from "react-native";
 import { StackActions, NavigationActions } from 'react-navigation';
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
@@ -125,12 +125,31 @@ export default class TravelMP extends Component {
         creditPay:false,
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
-        infoVehicleTarifa:0,
         Vehicles: null,
         showVehicles:true
     };
 
     constructor(props) {
+        // Socket para asignar los ids de socket en caso de cambio
+        keys.socket.on('getIdSocket', (num) => {
+
+            keys.id_usuario_socket = num.id;
+
+            console.log("Usuario", keys.id_usuario_socket);
+
+            // Envio de id nuevo a chofer
+            keys.socket.emit("WSsendIdUsuarioChofer", {
+                id_usuario_socket: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
+            })
+
+
+        })
+        // Socket para recibir el id nuevo del chofer
+        keys.socket.on("sendIdChoferUsuario", (num) => {
+            keys.id_chofer_socket = num.id_socket_chofer;
+            console.log("Recibí id de chofer", keys.id_chofer_socket)
+        })
+
         super(props);
 
         if (keys.categoriaVehiculo == null || keys.tipoVehiculo == null) {
@@ -154,13 +173,6 @@ export default class TravelMP extends Component {
 
         })
         keys.socket.removeAllListeners("chat_usuario");
-
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
         // Chat de chófer
         keys.socket.on('chat_usuario', (num) => {
 
@@ -171,6 +183,7 @@ export default class TravelMP extends Component {
 
         // Recepción de la información del chofer cuando se acepta la solicitud
         keys.socket.on('conductor_sendInfo', num => {
+
 
 
             clearInterval(this.timer_Vehicles);
@@ -228,6 +241,8 @@ export default class TravelMP extends Component {
                 showTimeChofer: true
             })
 
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+
             
 
         });
@@ -276,6 +291,8 @@ export default class TravelMP extends Component {
 
         keys.socket.on('terminarViajeUsuario', (num) => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
             keys.Chat = []
             keys.Tarifa.Total = num.Tarifa; 
             // console.log('terminarViajeUsuario');
@@ -291,6 +308,8 @@ export default class TravelMP extends Component {
 
         keys.socket.on("cancelViajeUsuario", num => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
             keys.Chat = []
 
             const resetAction = StackActions.reset({
@@ -304,11 +323,16 @@ export default class TravelMP extends Component {
     
         // Aqui se acepta el recorrido
         keys.socket.on('recorrido_id_usuario', num => {
-            // console.log('Llego respuesta: ', num);
-            this.state.id_recorrido = num;
-            this.setState({
+            console.log('Llego respuesta: ', num);
+            // this.state.id_recorrido = num;
+            // this.setState({
 
-            });
+            // });
+            keys.id_servicio = num.servicio;
+            keys.id_recorrido = num.recorrdio;
+
+            console.log("idServicio", keys.id_servicio);
+            console.log("idRecorrido", keys.id_recorrido);
 
             // alert('EL conductor acepto tu solicitud, espera a tu chofer ');
             // Desactivar animación 
@@ -384,6 +408,13 @@ export default class TravelMP extends Component {
             }, 2000);
         });
     }
+
+    handleBackButton() {
+        console.log("BackTravelMP");
+
+        return true;
+    }
+
 
     async getVehicles(tipoVehiculo, tipoServicio) {
 
@@ -502,107 +533,111 @@ export default class TravelMP extends Component {
     }
 
     async getTarifas() {
-        try {
-            console.log(this.state.distance);
-            console.log(this.state.duration);
-            //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
-                distancia_km: this.state.distance,
-                tiempo_min: this.state.duration
-            });
 
-            res.data.datos.forEach(element => {
+        if(this.state.routeParada1== true && this.state.routeParada2 ==true && this.state.routeParada3 ==true){
 
-                if (element["categoria_servicio"] == 1) {
-
-                    this.setState({
-
-                        Express_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                            tarifaBase: parseInt(element["tarifa_base"]),
-                            tarifaMinima: parseInt(element["tarifa_minima"]),
-                            porKilometro: parseInt(element["distancia"]),
-                            porMinuto: parseInt(element["tiempo"]),
-                            Gob: element["cuota_gob"],
-                            Solicitud: element["cuota_solicitud"],
-                            tarifa_cancelacion: element["tarifa_cancelacion"]
-                        }
-
-
-
-                    })
-                }
-
-                if (element["categoria_servicio"] == 2) {
-
-                    this.setState({
-                        Express_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                            tarifaBase: parseInt(element["tarifa_base"]),
-                            tarifaMinima: parseInt(element["tarifa_minima"]),
-                            porKilometro: parseInt(element["distancia"]),
-                            porMinuto: parseInt(element["tiempo"]),
-                            Gob: element["cuota_gob"],
-                            Solicitud: element["cuota_solicitud"],
-                            tarifa_cancelacion: element["tarifa_cancelacion"]
-                        }
-                    })
-                }
-
-                if (element["categoria_servicio"] == 3) {
-
-                    this.setState({
-                        Pool_Estandar: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                            tarifaBase: parseInt(element["tarifa_base"]),
-                            tarifaMinima: parseInt(element["tarifa_minima"]),
-                            porKilometro: parseInt(element["distancia"]),
-                            porMinuto: parseInt(element["tiempo"]),
-                            Gob: element["cuota_gob"],
-                            Solicitud: element["cuota_solicitud"],
-                            tarifa_cancelacion: element["tarifa_cancelacion"]
-                        }
-
-                    })
-                }
-
-                if (element["categoria_servicio"] == 4) {
-
-                    this.setState({
-                        Pool_Lujo: {
-                            categoria_servicio: element["categoria_servicio"],
-                            nombre_categoria: element["nombre_categoria"],
-                            out_costo_viaje: parseInt(element["out_costo_viaje"]),
-                            tarifaBase: parseInt(element["tarifa_base"]),
-                            tarifaMinima: parseInt(element["tarifa_minima"]),
-                            porKilometro: parseInt(element["distancia"]),
-                            porMinuto: parseInt(element["tiempo"]),
-                            Gob: element["cuota_gob"],
-                            Solicitud: element["cuota_solicitud"],
-                            tarifa_cancelacion: element["tarifa_cancelacion"]
-                        }
-                    })
-
-
-                }
-
-
-
-            });
-
-        } catch (e) {
-            console.log(e);
-            this.setState({
-                showModal: true,
-                Descripcion: "Servicio no disponible, Intente más tarde",
-            })
-
+            try {
+                console.log(this.state.distance);
+                console.log(this.state.duration);
+                //console.log(this.props.switchValue);
+                const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+                    distancia_km: this.state.distance,
+                    tiempo_min: this.state.duration
+                });
+    
+                res.data.datos.forEach(element => {
+    
+                    if (element["categoria_servicio"] == 1) {
+    
+                        this.setState({
+    
+                            Express_Estandar: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+                            }
+    
+    
+    
+                        })
+                    }
+    
+                    if (element["categoria_servicio"] == 2) {
+    
+                        this.setState({
+                            Express_Lujo: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+                            }
+                        })
+                    }
+    
+                    if (element["categoria_servicio"] == 3) {
+    
+                        this.setState({
+                            Pool_Estandar: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+                            }
+    
+                        })
+                    }
+    
+                    if (element["categoria_servicio"] == 4) {
+    
+                        this.setState({
+                            Pool_Lujo: {
+                                categoria_servicio: element["categoria_servicio"],
+                                nombre_categoria: element["nombre_categoria"],
+                                out_costo_viaje: parseInt(element["out_costo_viaje"]),
+                                tarifaBase: parseInt(element["tarifa_base"]),
+                                tarifaMinima: parseInt(element["tarifa_minima"]),
+                                porKilometro: parseInt(element["distancia"]),
+                                porMinuto: parseInt(element["tiempo"]),
+                                Gob: element["cuota_gob"],
+                                Solicitud: element["cuota_solicitud"],
+                                tarifa_cancelacion: element["tarifa_cancelacion"]
+                            }
+                        })
+    
+    
+                    }
+    
+    
+    
+                });
+    
+            } catch (e) {
+                console.log(e);
+                this.setState({
+                    showModal: true,
+                    Descripcion: "Servicio no disponible, Intente más tarde",
+                })
+    
+            }
         }
     }
 
@@ -658,6 +693,9 @@ export default class TravelMP extends Component {
 
     async componentWillMount() {
 
+            this.subs = [
+                this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+            ]; 
          
             // Generar las coordenadas por medio del nombre de la ubicación recibida
             let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
@@ -800,6 +838,24 @@ export default class TravelMP extends Component {
     }
 
 
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+
+        if (this.state.Onway == true) {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+        }
+    
+    }
+
     static navigationOptions = {
         title: "Viaje",
         headerLeft: null
@@ -823,18 +879,11 @@ export default class TravelMP extends Component {
         d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
 
 
-        if (typeVehicle == "Express Estandar") {
-            this.setState({
+        if (typeVehicle == "Express Estandar" && this.state.Express_Estandar.out_costo_viaje != 0) {
+
+            this.setState({ 
                 infoVehicleTipo: "Express Estandar",
                 infoVehicleLlegada: d.toLocaleTimeString(),
-
-
-            })
-            console.log(this.state.Express_Estandar)
-            console.log("------")
-            console.log(this.state.infoVehicleTarifa)
-
-            this.setState({
                 infoVehicleTarifa: {
                     Tarifa: this.state.Express_Estandar.out_costo_viaje,
                     tarifaBase: this.state.Express_Estandar.tarifaBase,
@@ -845,17 +894,31 @@ export default class TravelMP extends Component {
                     Solicitud: this.state.Express_Estandar.Solicitud,
                     tarifa_cancelacion: this.state.Express_Estandar.tarifa_cancelacion
                 },
-            })
-            // Estandar
-            keys.tipoVehiculo = 1;
-            // Express
-            keys.tipoServicio = 1;
+            
+            }, function () {
+                
+                console.log("Tarifa 1", this.state.infoVehicleTarifa);
+      
+                // Estandar
+                keys.tipoVehiculo = 1;
+                // Express
+                keys.tipoServicio = 1;
 
-            this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                if (this.state.infoVehicleTarifa.Tarifa != 0 && this.state.infoVehicleTarifa.Tarifa != undefined) {
 
+                    this.setState({
+                        showEstimations: true,
+                        Home: false
+                    })
+
+                }
+    
+   
+            });
+                
 
         } else {
-            if (typeVehicle == "Express Lujo") {
+            if (typeVehicle == "Express Lujo" && this.state.Express_Lujo.out_costo_viaje != 0) {
                 this.setState({
                     infoVehicleTipo: "Express Lujo",
                     infoVehicleLlegada: d.toLocaleTimeString(),
@@ -870,18 +933,31 @@ export default class TravelMP extends Component {
                         tarifa_cancelacion: this.state.Express_Lujo.tarifa_cancelacion
                     }
 
+                }, function () {
+                    
+                    // Lujo
+                    keys.tipoVehiculo = 2;
+                    // Express
+                    keys.tipoServicio = 1;
+                    
+                    this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                    
+                    if (this.state.infoVehicleTarifa.Tarifa != 0 && this.state.infoVehicleTarifa.Tarifa != undefined) {
+
+                        this.setState({
+                            showEstimations: true,
+                            Home: false
+                        })
+
+                    }
+
                 })
 
 
 
-                // Lujo
-                keys.tipoVehiculo = 2;
-                // Express
-                keys.tipoServicio = 1;
 
-                this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
             } else {
-                if (typeVehicle == "Pool Estandar") {
+                if (typeVehicle == "Pool Estandar" && this.state.Pool_Estandar.out_costo_viaje != 0) {
                     this.setState({
                         infoVehicleTipo: "Pool Estandar",
                         infoVehicleLlegada: d.toLocaleTimeString(),
@@ -896,17 +972,28 @@ export default class TravelMP extends Component {
                             tarifa_cancelacion: this.state.Pool_Estandar.tarifa_cancelacion
                         }
 
+                    }, function () {
+                        console.log("Tarifa 3", this.state.infoVehicleTarifa);
+                        // Estandar
+                        keys.tipoVehiculo = 1;
+                        // Pool
+                        keys.tipoServicio = 2;
+
+                        if (this.state.infoVehicleTarifa.Tarifa != 0 && this.state.infoVehicleTarifa.Tarifa != undefined) {
+
+                            this.setState({
+                                showEstimations: true,
+                                Home: false
+                            })
+
+                        }
                     })
 
-                    // Estandar
-                    keys.tipoVehiculo = 1;
-                    // Pool
-                    keys.tipoServicio = 2;
 
-                    this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                
 
                 } else {
-                    if (typeVehicle == "Pool Lujo") {
+                    if (typeVehicle == "Pool Lujo" && this.state.Pool_Lujo.out_costo_viaje != 0) {
                         this.setState({
                             infoVehicleTipo: "Pool Lujo",
                             infoVehicleLlegada: d.toLocaleTimeString(),
@@ -921,30 +1008,40 @@ export default class TravelMP extends Component {
                                 tarifa_cancelacion: this.state.Pool_Lujo.tarifa_cancelacion
                             }
 
+                        }, function () {
+                            console.log("Tarifa 3", this.state.infoVehicleTarifa);
+                            // Lujo
+                            keys.tipoVehiculo = 2;
+                            // Pool
+                            keys.tipoServicio = 2;
+
+                            if (this.state.infoVehicleTarifa.Tarifa != 0 && this.state.infoVehicleTarifa.Tarifa != undefined) {
+
+                                this.setState({
+                                    showEstimations: true,
+                                    Home: false
+                                })
+
+                            }
+    
+                        
                         })
 
-                        // Lujo
-                        keys.tipoVehiculo = 2;
-                        // Pool
-                        keys.tipoServicio = 2;
 
-                        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+                       
                     }
                 }
             }
         }
 
-
-
-
-        this.setState({
-            showEstimations: true,
-            Home: false
-        })
+        this.getVehicles(keys.tipoVehiculo, keys.tipoServicio)
+     
     }
 
 
     Chat() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
@@ -964,6 +1061,8 @@ export default class TravelMP extends Component {
     } 
 
     cancelarServicio() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
@@ -1117,7 +1216,7 @@ export default class TravelMP extends Component {
                             <View>
                                 <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>Cancelación de servicio</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10 }}>¿Está seguro de cancelar el servicio de taxi?</Text>
-                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera x minutos después de haber</Text>
+                                <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Recuerde que si supera 3 minutos después de haber</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 10, marginRight: 10, textAlign: "justify" }}>Solicitado</Text>
                                 <Text style={{ alignSelf: "center", fontSize: 12, marginLeft: 15, marginRight: 10, paddingTop: 5 }}> su servicio, se le cobrará la tarifa de cancelación</Text>
                                 <Icon name="clock" size={35} style={{ alignSelf: "center", marginTop: 15 }}></Icon>
@@ -1361,7 +1460,7 @@ export default class TravelMP extends Component {
 
                                     });
 
-                                    this.getTarifas();
+                                 
 
 
                                 }}
@@ -1400,7 +1499,7 @@ export default class TravelMP extends Component {
 
                                             });
 
-                                            this.getTarifas();
+                                       
 
 
                                         }}
@@ -1445,7 +1544,7 @@ export default class TravelMP extends Component {
 
                                             })
 
-                                            this.getTarifas();
+                                          
 
                                         }}
 
@@ -1489,6 +1588,8 @@ export default class TravelMP extends Component {
                                             })
 
                                             this.getTarifas();
+
+                                            
 
                                         }}
 
@@ -1890,7 +1991,7 @@ export default class TravelMP extends Component {
                     null
                 }
 
-                {this.state.Onway ?
+                {this.state.showTimeChofer ?
                     <View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "65%" }}>
 
                         <Text style={{ fontWeight: "bold", fontSize: 14, alignSelf: "center" }}>Tu conductor está en camino, espera un momento</Text>

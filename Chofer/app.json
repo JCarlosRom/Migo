@@ -24,14 +24,21 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.kiotrack.chofer"
+      "bundleIdentifier": "com.kiotrack.chofer",
+          "config": {
+            "googleMapsApiKey": "AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY"
+          }
+      
     },
     "android": {
       "package": "com.kiotrack.chofer",
-      "publishBundlePath": "android\\app\\src\\main\\assets\\shell-app.bundle",
-      "publishManifestPath": "android\\app\\src\\main\\assets\\shell-app-manifest.json"
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY"
+        }
+      }
     },
-    "isDetached": true,
+    "isDetached": false,
     "detach": {
       "androidExpoViewUrl": "https://s3.amazonaws.com/exp-exponent-view-code/android-v2.12.2-sdk34.0.0-767c7d3b-87b6-4f80-a9af-92ce67e2a49d.tar.gz"
     },

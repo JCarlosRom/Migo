@@ -1,6 +1,6 @@
 // Importación de librerías 
 import React, { Component } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, BackHandler  } from "react-native";
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -25,20 +25,20 @@ export default class Travel_Integrado extends Component {
      * @memberof Travel_Integrado
      */
     constructor(props) {
-
+        
         // Socket para asignar los ids de socket en caso de cambio
         keys.socket.on('getIdSocket', (num) => {
-
+            
             keys.id_usuario_socket = num.id;
-
+            
             console.log("Usuario", keys.id_usuario_socket);
-
+            
             // Envio de id nuevo a chofer
             keys.socket.emit("WSsendIdUsuarioChofer", {
                 id_usuario_socket: keys.id_usuario_socket, idSocketChofer: keys.id_chofer_socket
             })
-
-
+            
+            
         })
         // Socket para recibir el id nuevo del chofer
         keys.socket.on("sendIdChoferUsuario",(num)=>{
@@ -47,6 +47,8 @@ export default class Travel_Integrado extends Component {
         })
 
         super(props);
+
+     
         // States del componente
         this.state = {
 
@@ -178,14 +180,14 @@ export default class Travel_Integrado extends Component {
         })
 
         keys.socket.removeAllListeners("chat_usuario");
-        // Socket de notificación de mensaje nuevo 
-        keys.socket.on("LlegoMensaje", (num)=>{
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
+        // // Socket de notificación de mensaje nuevo 
+        // keys.socket.on("LlegoMensaje", (num)=>{
+        //     this.setState({
+        //         showModal: true,
+        //         Descripcion: "Te llegó un mensaje",
+        //     })
 
-        })
+        // })
  
         // Chat de Usuario
         keys.socket.on('chat_usuario', (num) => {
@@ -254,8 +256,10 @@ export default class Travel_Integrado extends Component {
                 nombreChofer: num.datos_chofer.nombreChofer,
                 Estrellas: num.datos_chofer.Estrellas,
                 Reconocimientos: num.datos_chofer.Reconocimientos,
-                Telefono: num.datos_chofer.Telefono
+                Telefono: num.datos_chofer.Telefono,
+                imgChofer : num.datos_chofer.imgChofer
             }
+            
 
             keys.datos_vehiculo={
                 id_unidad: num.datos_vehiculo.id_unidad ,
@@ -263,7 +267,12 @@ export default class Travel_Integrado extends Component {
                 Matricula: num.datos_vehiculo.Matricula,
                 tipoVehiculo: num.datos_vehiculo.tipoVehiculo,
                 categoriaVehiculo: num.datos_vehiculo.categoriaVehiculo,
+                imgVehiculo: num.datos_vehiculo.imgVehiculo
             }
+
+            console.log("USUARIO: datos_chofer", keys.datos_chofer);
+
+            console.log("USUARIO: datos_vehiculo",keys.datos_vehiculo)
 
             this.setState({
                 positionChofer:{
@@ -285,9 +294,15 @@ export default class Travel_Integrado extends Component {
                 showTimeChofer:true
             })
 
-      
-          
+           
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+
+    
         });
+
+
+
 
         // Socket para hacer el tracking del chofer
         keys.socket.on('seguimiento_chofer', num => {
@@ -318,6 +333,9 @@ export default class Travel_Integrado extends Component {
         // Socket para terminar el viaje
         keys.socket.on('terminarViajeUsuario', num => {
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+          
             keys.Chat=[];
             keys.Tarifa.Total = num.Tarifa;
       
@@ -332,6 +350,9 @@ export default class Travel_Integrado extends Component {
         // Socket para cancelación por chofer
         keys.socket.on("cancelViajeUsuario", num =>{
 
+            BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+         
             keys.Chat = [];
 
             const resetAction = StackActions.reset({
@@ -372,6 +393,12 @@ export default class Travel_Integrado extends Component {
                 
             }, 2000);
         });
+    }
+
+    handleBackButton() {
+        console.log("BackTravel");
+        
+        return true;
     }
     
     /**
@@ -513,7 +540,7 @@ export default class Travel_Integrado extends Component {
             console.log(this.state.distance);
             console.log(this.state.duration);
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
                 distancia_km: this.state.distance,
                 tiempo_min: this.state.duration
             });
@@ -681,6 +708,12 @@ export default class Travel_Integrado extends Component {
      */
     async componentWillMount() {
 
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
         // Asignación de coordenadas mi posición y región
         let primeraParada = await Location.geocodeAsync(keys.travelInfo.puntoPartida.addressInput);
         
@@ -731,8 +764,23 @@ export default class Travel_Integrado extends Component {
 
     }
 
-   
 
+    componentDidFocus(){
+      console.log("focus")  
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+
+        if (this.state.Onway == true) {
+
+            BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
+        }
+    }
     /**
      * Barra de navegación
      *
@@ -741,7 +789,9 @@ export default class Travel_Integrado extends Component {
      */
     static navigationOptions = {
         title: "Viaje",
-        headerLeft: null
+        headerLeft: null,
+
+      
         
     };
 
@@ -773,18 +823,19 @@ export default class Travel_Integrado extends Component {
      */
     showInfoVehicle(typeVehicle){
 
+
+
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes() + this.state.duration, 0, 0);
     
     
-        if(typeVehicle=="Express Estandar"){
+        if (typeVehicle == "Express Estandar" && this.state.Express_Estandar.out_costo_viaje !=0){
+           
             this.setState({
                 infoVehicleTipo: "Express Estandar",
                 infoVehicleLlegada: d.toLocaleTimeString(),
-             
-
+            
             })
-
 
             this.setState({
                 infoVehicleTarifa: {
@@ -807,7 +858,7 @@ export default class Travel_Integrado extends Component {
 
 
         }else{
-            if(typeVehicle=="Express Lujo"){
+            if (typeVehicle == "Express Lujo" && this.state.Express_Lujo.out_costo_viaje!=0){
                 this.setState({
                     infoVehicleTipo: "Express Lujo",
                     infoVehicleLlegada: d.toLocaleTimeString(),
@@ -833,7 +884,7 @@ export default class Travel_Integrado extends Component {
 
                 this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
             }else{
-                if(typeVehicle=="Pool Estandar"){
+                if (typeVehicle == "Pool Estandar" && this.state.Pool_Estandar.out_costo_viaje!=0 ){
                     this.setState({
                         infoVehicleTipo: "Pool Estandar",
                         infoVehicleLlegada: d.toLocaleTimeString(),
@@ -858,7 +909,7 @@ export default class Travel_Integrado extends Component {
                     this.getVehicles( keys.tipoVehiculo, keys.tipoServicio)
 
                 }else{
-                    if(typeVehicle=="Pool Lujo"){
+                    if (typeVehicle == "Pool Lujo" && this.state.Pool_Lujo.out_costo_viaje!=0){
                         this.setState({
                             infoVehicleTipo: "Pool Lujo",
                             infoVehicleLlegada: d.toLocaleTimeString(),
@@ -887,12 +938,15 @@ export default class Travel_Integrado extends Component {
         }
 
         
-  
+        console.log("Tarifa", this.state.infoVehicleTarifa.Tarifa);
+        if (this.state.infoVehicleTarifa.Tarifa!=0){
 
-        this.setState({
-            showEstimations: true,
-            Home: false
-        })
+            this.setState({
+                showEstimations: true,
+                Home: false
+            })
+
+        }
     }
 
 
@@ -902,6 +956,8 @@ export default class Travel_Integrado extends Component {
      * @memberof Travel_Integrado
      */
     Chat() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
@@ -933,6 +989,8 @@ export default class Travel_Integrado extends Component {
      * @memberof Travel_Integrado
      */
     cancelarServicio(){
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
@@ -1849,11 +1907,11 @@ export default class Travel_Integrado extends Component {
                     < View style={{ flexDirection: "row", position: "absolute", left: "3%", top: "71%" }}>
                         <Image
                             style={{ width: 50, height: 50 }}
-                            source={require("./../assets/user.png")}
+                            source={{uri:keys.datos_chofer.imgChofer}}
                         ></Image>
                         <Image
                             style={{ width: 50, height: 50 }}
-                            source={require("./../assets/Auto.png")}
+                            source={{uri:keys.datos_vehiculo.imgVehiculo}}
                         ></Image>
                         <View style={{paddingLeft:120}}>
                             <Text>{keys.datos_vehiculo.modelo}</Text>

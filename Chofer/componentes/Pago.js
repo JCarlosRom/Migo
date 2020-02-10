@@ -31,7 +31,7 @@ export default class Pago extends Component {
           showModal:false,
           Descripcion:"",
           intervalPeaje:null,
-          timerPeaje:15
+          timerPeaje:30
         }
 
 
@@ -56,21 +56,45 @@ export default class Pago extends Component {
             // Condición cuando el cronómetro llega a 0 
             if (this.state.timerPeaje == 0) {
 
+                if (this.state.Peaje!="" && !isNaN(this.state.Peaje)) {
+
+                    keys.Peaje = this.state.Peaje;
+
+                    if (this.state.Peaje != 0) {
+                        keys.Tarifa = parseInt(keys.Tarifa) + parseInt(this.state.Peaje);
+                    }
+
+                    // Socket de emisión, terminación de viaje 
+                    keys.socket.emit("terminarViajeChofer", {
+                        id_usuario_socket: keys.id_usuario_socket,
+                        Tarifa: keys.Tarifa
+                    });
+                    // Envío a la pantalla de viajefinalizado 
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'viajeFinalizado'})],
+                        key: undefined
+                    });
+    
+                    this.props.navigation.dispatch(resetAction);
+                }else{
+                    // Socket de emisión, terminación de viaje 
+                    keys.socket.emit("terminarViajeChofer", {
+                        id_usuario_socket: keys.id_usuario_socket,
+                        Tarifa: keys.Tarifa
+                    });
+                    // Envío a la pantalla de viajefinalizado 
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'viajeFinalizado' })],
+                        key: undefined
+                    });
+
+                    this.props.navigation.dispatch(resetAction);
+                }
+
                 clearInterval(this.state.intervalPeaje)
 
-                // Socket de emisión, terminación de viaje 
-                keys.socket.emit("terminarViajeChofer", {
-                    id_usuario_socket: keys.id_usuario_socket,
-                    Tarifa: keys.Tarifa
-                });
-                // Envío a la pantalla de viajefinalizado 
-                const resetAction = StackActions.reset({
-                    index: 0,
-                    actions: [NavigationActions.navigate({ routeName: 'viajeFinalizado'})],
-                    key: undefined
-                });
-
-                this.props.navigation.dispatch(resetAction);
 
 
 

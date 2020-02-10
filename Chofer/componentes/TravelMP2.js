@@ -66,8 +66,12 @@ export default class TravelMP2 extends Component {
             initravel:false,
             Travel: false,
             showMapDirections:false,
-            // Posición del usuario 
-            positionUser: null,
+             // Posición del usuario 
+             positionUser: {
+                 latitude: 0,
+                 longitude: 0,
+
+             },
             // Coordenadas fijas para consulta de direcciones, google directions
             latitude: 19.273247,
             longitude: -103.715795,
@@ -234,13 +238,7 @@ export default class TravelMP2 extends Component {
         // Detiene el socket de chat 
         keys.socket.removeAllListeners("chat_chofer");
 
-        // Socket para mostrar mensaje cuando llegue mensaje 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
+      
         // Socket para recibir nuevo mensaje de chat
         keys.socket.on('chat_chofer', (num) => {
 
@@ -386,6 +384,11 @@ export default class TravelMP2 extends Component {
     * @memberof TravelMP2
     */
     async componentWillMount() {
+
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
         
         Flag = this.props.navigation.getParam('Flag', false);
 
@@ -471,6 +474,18 @@ export default class TravelMP2 extends Component {
 
         // Fin del bloque 
         
+    }
+
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
     }
     /**
     * Función para aceptar el viaje
@@ -1395,7 +1410,7 @@ export default class TravelMP2 extends Component {
                         null
 
                     }
-                {/* Barra superior del componente  */}}
+                {/* Barra superior del componente  */}
                     <View>
 
                         <View style={{ paddingLeft: 210, paddingBottom: 20 }}>
@@ -1458,7 +1473,7 @@ export default class TravelMP2 extends Component {
                         <View style={{ flex: 1 }}>
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
                         </View>
                         <View style={
@@ -1585,7 +1600,7 @@ export default class TravelMP2 extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1724,7 +1739,7 @@ export default class TravelMP2 extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1860,7 +1875,7 @@ export default class TravelMP2 extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>

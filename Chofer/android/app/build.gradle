@@ -111,6 +111,7 @@ apply from: 'expo.gradle'
 apply from: "../../node_modules/react-native-unimodules/gradle.groovy"
 
 dependencies {
+    implementation project(':react-native-background-timer')
   
   implementation project(':react-native-vector-icons')
   implementation project(':react-native-screens')
@@ -120,7 +121,15 @@ dependencies {
   implementation project(':@react-native-community_netinfo')
   implementation project(':@react-native-community_geolocation')
 
-  implementation project(':react-native-maps')
+  implementation(project(':react-native-maps')){
+      exclude group: 'com.google.android.gms', module: 'play-services-base'
+      exclude group: 'com.google.android.gms', module: 'play-services-maps'
+  }
+
+
+  implementation 'com.google.android.gms:play-services-base:10.0.1'
+  implementation 'com.google.android.gms:play-services-maps:10.0.1'
+   
 
   implementation fileTree(dir: 'libs', include: ['*.jar'])
 
@@ -223,6 +232,3 @@ dependencies {
   ])
   
 }
-
-// This has to be down here for some reason
-apply plugin: 'com.google.gms.google-services'

@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import axios from 'axios';
 import * as Location from "expo-location";
+import * as Permissions from 'expo-permissions';
 import { StackActions, NavigationActions } from 'react-navigation';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js';
 import keys from "./global";
@@ -12,10 +13,6 @@ import keys from "./global";
 export default class Travel extends Component {
     constructor(props) {
 
-    //    alert("Actualizada");
-
-        // Socket para asignar automáticamente el id desde el servidor 
-      
 
         if (keys.socket == null) {
 
@@ -123,6 +120,13 @@ export default class Travel extends Component {
   
 
     async componentWillMount() {
+
+        let { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            this.setState({
+                errorMessage: 'Permission to access location was denied',
+            });
+        }
 
         // console.log("componentWillMount Categoria Vehiculo");
         // console.log(keys.categoriaVehiculo);
@@ -459,19 +463,23 @@ export default class Travel extends Component {
 
     saveConfiguration(){
 
-        clearInterval(this.timer_Vehicles);
+        if(this.state.location!=""){
 
-        clearInterval(this.timer_VehiclesConsult);
-
-        keys.socket.removeAllListeners("getIdSocket");
-
-        const resetAction = StackActions.reset({
-            index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Home', params:{Address:this.state.location} })],
-            key: undefined
-        });
-
-        this.props.navigation.dispatch(resetAction);
+            
+            clearInterval(this.timer_Vehicles);
+    
+            clearInterval(this.timer_VehiclesConsult);
+    
+            keys.socket.removeAllListeners("getIdSocket");
+    
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Home', params:{Address:this.state.location} })],
+                key: undefined
+            });
+    
+            this.props.navigation.dispatch(resetAction);
+        }
 
     }
 

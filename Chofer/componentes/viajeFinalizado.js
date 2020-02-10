@@ -1,6 +1,7 @@
 // Importación de librerías 
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Image, Switch, ScrollView } from "react-native";
+import Modal from "react-native-modal";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { Button } from "react-native-elements";
 import { StackActions, NavigationActions } from 'react-navigation';
@@ -21,10 +22,37 @@ export default class viajeFinalizado extends Component {
         this.state = {
             id_usuario: null,
             Tarifa: 0,
-            nombreUsuario:""
+            nombreUsuario:"",
+            showModal: false,
+            Description: ""
      
 
         };
+
+        // Socket receptor en caso de que se lleve a cabo una transacción del usuario, es decir 
+        // Pago de viaje 
+        keys.socket.on("TransaccionSatisfactoria", (num) => {
+
+
+
+
+            if (num.isPropina == true) {
+
+                this.setState({
+                    showModal: true,
+                    Description: "Pago realizado correctamente, has recibido $" + num.Propina + ".00 de propina"
+                })
+            } else {
+                if (num.isPropina == false) {
+                    this.setState({
+                        showModal: true,
+                        Description: "Pago realizado correctamente"
+                    })
+                }
+            }
+            keys.socket.removeAllListeners("TransaccionSatisfactoria");
+
+        })
 
 
     }
@@ -44,6 +72,8 @@ export default class viajeFinalizado extends Component {
         });
         // Limpia el intervalo de transmisión de coordenadas de chofer a usuario
         clearInterval(keys.intervalBroadcastCoordinates);
+
+        keys.socket.removeAllListeners("TransaccionSatisfactoria");
 
         const resetAction = StackActions.reset({
             index: 0,
@@ -80,6 +110,51 @@ export default class viajeFinalizado extends Component {
         return (
             <ScrollView style={{ backgroundColor: "white" }}>
                 <View style={styles.container}>
+
+                    <View>
+
+                        <Modal
+                            isVisible={this.state.showModal}
+
+                        >
+                            <View style={{ marginTop: 22, backgroundColor: "#fff" }}>
+                                <View>
+
+                                    <Text style={{ alignSelf: "center", fontWeight: "bold", fontSize: 16 }}>{this.state.Description}</Text>
+
+                                </View>
+                                <View style={{
+                                    flexDirection: "row",
+                                    paddingTop: 5,
+                                    marginBottom: 5
+
+                                }}>
+                                    <View style={{ flex: 2 }}></View>
+
+
+                                    <View style={{ flex: 2, paddingBottom: 5 }}>
+
+                                        <Button
+                                            title="Ok"
+                                            buttonStyle={{
+                                                backgroundColor: "#ff8834"
+                                            }}
+                                            onPress={() => this.setState({
+                                                showModal: false
+                                            })}
+                                        ></Button>
+
+
+                                    </View>
+                                    <View style={{ flex: 2 }}></View>
+                                </View>
+                            </View>
+
+
+                        </Modal>
+
+                    </View>
+
                     {/* Barra superior del componente */}
                     <View style={styles.area}>
                         <View>

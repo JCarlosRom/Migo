@@ -67,7 +67,11 @@ export default class TravelMP extends Component {
             Travel: false,
             showMapDirections:false,
             // Posición del usuario 
-            positionUser: null,
+             positionUser: {
+                 latitude: 0,
+                 longitude: 0,
+
+             },
             // Coordenadas fijas para consulta de direcciones, google directions
             latitude: 19.273247,
             longitude: -103.715795,
@@ -236,13 +240,7 @@ export default class TravelMP extends Component {
         // Detiene el socket de chat 
         keys.socket.removeAllListeners("chat_chofer");
 
-        // Socket para mostrar mensaje cuando llegue mensaje 
-        keys.socket.on("LlegoMensaje", (num) => {
-            this.setState({
-                showModal: true,
-                Descripcion: "Te llegó un mensaje",
-            })
-        })
+  
         // Socket para recibir nuevo mensaje de chat
         keys.socket.on('chat_chofer', (num) => {
 
@@ -313,7 +311,7 @@ export default class TravelMP extends Component {
 
                 this.setState({ intervaltimerAceptViaje });
 
-                console.log(this.state.intervaltimerAceptViaje);
+                console.log("timerAceptViajeMP",this.state.timerAceptViaje);
 
                 if (this.state.timerAceptViaje == 0) {
 
@@ -388,6 +386,11 @@ export default class TravelMP extends Component {
     * @memberof TravelMP
     */
     async componentWillMount() {
+
+        this.subs = [
+            this.props.navigation.addListener('didFocus', (payload) => this.componentDidFocus(payload)),
+        ]; 
+
 
         // Bloque para pedir permisos de GPS
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -465,6 +468,18 @@ export default class TravelMP extends Component {
         // Fin del bloque
         
     }
+
+    componentDidFocus() {
+        console.log("focus")
+        // Socket de notificación de mensaje nuevo 
+        keys.socket.on("LlegoMensaje", (num) => {
+            this.setState({
+                showModal: true,
+                Descripcion: "Te llegó un mensaje",
+            })
+
+        })
+    }
     
     /**
      * Función para aceptar el viaje
@@ -472,6 +487,8 @@ export default class TravelMP extends Component {
      * @memberof TravelMP
     */
     aceptViaje() {
+
+     
 
         // Generar la hora límite para generar la cancelación del servicio 
         var d = new Date(); // get current date
@@ -500,8 +517,8 @@ export default class TravelMP extends Component {
             id_usuario_socket: keys.id_usuario_socket,
             distancia_destino_usuario: keys.travelInfo.Distancia,
             tiempo_viaje_destino: keys.travelInfo.Tiempo,
-            latitud_usuario: this.state.positionUser.latitude,
-            longitud_usuario: this.state.positionUser.longitude,
+            latitud_usuario: (this.state.positionUser.latitude == 0) ? 0 : this.state.positionUser.latitude,
+            longitud_usuario: (this.state.positionUser.longitude == 0) ? 0 : this.state.positionUser.longitude,
             latitud_usuario_destino: keys.travelInfo.Parada1.latitude,
             longitud_usuario_destino: keys.travelInfo.Parada1.longitude,
             geocoder_origen: keys.travelInfo.puntoPartida.addressInput,
@@ -1090,7 +1107,7 @@ export default class TravelMP extends Component {
         return (
 
             <View style={{ flex: 1 }}>
-                {/* Modal genérico de mensajes   */}
+                {/* Modal genérico de mensajes*/}
                 <View>
 
                     <Modal
@@ -1493,7 +1510,7 @@ export default class TravelMP extends Component {
 
                 }
 
-                {/* Barra superior del componente  */}}
+                {/* Barra superior del componente  */}
                 <View style={{ flexDirection: "row", position: "absolute", top: "3%" }}>
                     <View style={{ flex: 1 }}>
                         <Switch
@@ -1541,7 +1558,7 @@ export default class TravelMP extends Component {
                         <View style={{ flex: 1 }}>
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
                         </View>
                         <View style={
@@ -1668,7 +1685,7 @@ export default class TravelMP extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1702,7 +1719,7 @@ export default class TravelMP extends Component {
 
                         <View style={{ flex: 1 }}>
 
-                            <Icon name="phone" onPress={() => this.callPhoneFunction()}
+                            <Icon name="phone" 
                                 size={25}
                                 color="#ff8834"
                                 onPress={() => this.callPhoneFunction()}
@@ -1807,7 +1824,7 @@ export default class TravelMP extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>
@@ -1945,7 +1962,7 @@ export default class TravelMP extends Component {
 
                             <Image
                                 style={{ width: 50, height: 50 }}
-                                source={require("./../assets/user.png")}
+                                source={{ uri: keys.datos_usuario.imgChofer }}
                             ></Image>
 
                         </View>

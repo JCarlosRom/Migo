@@ -1,6 +1,6 @@
 // Importaciones de librería 
 import React, { Component } from "react";
-import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard, BackHandler } from "react-native";
 import { Input, Button } from "react-native-elements";
 import keys from "./global";
 import Icon from "react-native-vector-icons/FontAwesome5";
@@ -80,6 +80,8 @@ export default class Chat extends Component {
     * @memberof Chat
     */
     componentDidMount() {    
+
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
         // Verificación de que el chat no tenga mas de 5 mensajes 
         if (keys.Chat.length >= 5) {
             keys.Chat.splice(0, 1);
@@ -96,6 +98,14 @@ export default class Chat extends Component {
             Chat: keys.Chat
         })
     }
+
+
+    handleBackButton() {
+        console.log("Chat");
+
+        return true;
+    }
+
 
     /**
     *

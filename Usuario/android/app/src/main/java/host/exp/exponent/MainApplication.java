@@ -13,6 +13,8 @@ import okhttp3.OkHttpClient;
 
 // Needed for `react-native link`
 // import com.facebook.react.ReactApplication;
+import com.tkporter.sendsms.SendSMSPackage;
+import com.ocetnik.timer.BackgroundTimerPackage;
 import com.oblador.vectoricons.VectorIconsPackage;
 import com.swmansion.rnscreens.RNScreensPackage;
 import com.swmansion.reanimated.ReanimatedPackage;
@@ -28,6 +30,15 @@ public class MainApplication extends ExpoApplication implements AppLoaderPackage
     return BuildConfig.DEBUG;
   }
 
+  @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
+          new VectorIconsPackage(),
+          new BackgroundTimerPackage()
+      );
+    }
+
   // Needed for `react-native link`
   public List<ReactPackage> getPackages() {
     return Arrays.<ReactPackage>asList(
@@ -36,6 +47,8 @@ public class MainApplication extends ExpoApplication implements AppLoaderPackage
 
         // Needed for `react-native link`
         // new MainReactPackage(),
+            SendSMSPackage.getInstance(),
+            new BackgroundTimerPackage(),
             new VectorIconsPackage(),
             new RNScreensPackage(),
             new ReanimatedPackage(),

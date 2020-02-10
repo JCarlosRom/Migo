@@ -1,13 +1,14 @@
+// Importaciones de librerías 
 import React, { Component } from "react";
 import Modal from "react-native-modal";
-import { View, Text, StyleSheet, Switch, ScrollView, Image } from "react-native";
-import { Button, Input } from "react-native-elements";
+import { StackActions, NavigationActions } from 'react-navigation';
+import { View, Text, StyleSheet, Switch, Image } from "react-native";
+import { Button } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import BottomNavigation, {
+import MapView from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import {
     FullTab
 } from 'react-native-material-bottom-navigation'
-import axios from 'axios';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import SocketIOClient from 'socket.io-client/dist/socket.io.js'
@@ -17,6 +18,12 @@ import keys from './global';
 
 export default class Home extends Component {
 
+    /**
+     *Clase principal para el componente de Home
+     *
+     * @memberof Home
+     */
+    // Estados del componente de Chófer 
     state = {
         errorMessage: null,
         location: null,
@@ -29,45 +36,56 @@ export default class Home extends Component {
 
     };
 
+    /** Constructor de la clase
+     *Creates an instance of Home.
+     * @param {*} props
+     * @memberof Home
+     */
     constructor(props) {
-
         // alert("Actualizada")
 
         super(props);
-
-    
-
+        // Verificación de si se hace una conexión por socket 
         if(keys.socket==null){
-
+            // En caso de que sea null, se crea una nueva conexión 
             keys.socket = SocketIOClient(keys.socketUrl);
-            console.log("Chofer",keys.socketUrl)
+  
         }
 
+        // Socket receptor para verificar que el usuario siga On-Line
         keys.socket.on('isConnected', () => { })
 
+        // Socket receptor en caso de que se lleve a cabo una transacción del usuario, es decir 
+        // Pago de viaje 
+        keys.socket.on("TransaccionSatisfactoria", (num) => {
 
-        keys.socket.on("TransacciónSatisfactoria", (num) => {
+     
+            if (num.isPropina == true) {
 
-            console.log("Transaccion Satisfactoria")
-
-            this.setState({
-                showModal: true,
-                Description: "Pago realizado correctamente"
-            })
+                this.setState({
+                    showModal: true,
+                    Description: "Pago realizado correctamente, has recibido $" + num.Propina+".00 de propina"
+                })
+            } else {
+                if (num.isPropina == false) {
+                    this.setState({
+                        showModal: true,
+                        Description: "Pago realizado correctamente"
+                    })
+                }
+            }
+            keys.socket.removeAllListeners("TransaccionSatisfactoria");
 
         })
   
-        console.log('APP CONDUCTOR');
-
+    
         // Socket para escuchar nueva solicitud de usuario a conductor y guardado de información 
         keys.socket.on('conductor_request', num => {
     
-            // this.state.datos_solicitud = num;
-
-            console.log("Datos Solicitud",num);
-
+            // Verifica que la información que recepta sea diferente null
             if(num!=null){
-    
+
+                // Asigna la información que manda el usuario a la información de conductor para iniciar el viaje 
                 keys.datos_usuario={
                     id_usuario: num.datos_usuario.id_usuario,
                     nombreUsuario: num.datos_usuario.nombreUsuario,
@@ -88,6 +106,7 @@ export default class Home extends Component {
                         Parada3: num.Paradas[2],
                         Distancia: num.Distancia, 
                         Tiempo: num.Tiempo,
+                        typePay: num.infoTravel.typePay
 
                         // Distancia: num.Distancia, 
                         // Tiempo: num.Tiempo
@@ -96,8 +115,11 @@ export default class Home extends Component {
                 }else{
                     keys.travelInfo = {
                         puntoPartida: num.infoTravel.puntoPartida,
+                        typePay: num.infoTravel.typePay
                     }
                 }
+
+        
     
     
                 keys.positionUser={
@@ -111,33 +133,65 @@ export default class Home extends Component {
 
                 keys.Tarifa = num.Tarifa;
 
+                // Quita al chófer de la cola, para que no pueda recibir solicitudes mientras lleva a cabo el viaje
                 keys.socket.emit("popChofer", { id_chofer_socket: keys.id_chofer_socket,});
-
-                
-                // console.log("Socket del chofer", keys.id_chofer_socket)
-
-
 
                 clearInterval(this.state.timer);
                 clearInterval(keys.timerCoordenadas);
 
+                // Navegación hacia pantallas, el valor Flag: en Acept sirve para señalar que es un viaje normal
+
                 if (keys.type == "Unico" ) {
 
-                    this.props.navigation.navigate("Travel_Integrado", { Flag: "Acept" });
+                    const resetAction = StackActions.reset({
+                        index: 0,
+                        actions: [NavigationActions.navigate({ routeName: 'Travel_Integrado', params: { Flag: "Acept" } })],
+                        key: undefined
+                    });
+
+                    this.props.navigation.dispatch(resetAction);
+
+       
 
                 } else {
 
                     if(keys.type=="Multiple"){
+
+                        const resetAction = StackActions.reset({
+                            index: 0,
+                            actions: [NavigationActions.navigate({ routeName: 'TravelMP', params: { Flag: "Acept" } })],
+                            key: undefined
+                        });
+
+                        this.props.navigation.dispatch(resetAction);
                         
-                        this.props.navigation.navigate("TravelMP", { Flag: "Acept" });
+                       
 
                     }else{
                        
                         if(keys.type=="Multiple 2 paradas"){
-                            this.props.navigation.navigate("TravelMP2", { Flag: "Acept" });
+
+                            const resetAction = StackActions.reset({
+                                index: 0,
+                                actions: [NavigationActions.navigate({ routeName: 'TravelMP2', params: { Flag: "Acept" } })],
+                                key: undefined
+                            });
+
+                            this.props.navigation.dispatch(resetAction);
+
+                         
                         }else{
                             if(keys.type=="SinDestino"){
-                                this.props.navigation.navigate("TravelNoDestination", {Flag:"Acept"});
+
+                                const resetAction = StackActions.reset({
+                                    index: 0,
+                                    actions: [NavigationActions.navigate({ routeName: 'TravelNoDestination', params: { Flag: "Acept" } })],
+                                    key: undefined
+                                });
+
+                                this.props.navigation.dispatch(resetAction);
+
+                           
                             }
                         }
                         
@@ -151,11 +205,13 @@ export default class Home extends Component {
         });
 
 
-
-
-
     }
 
+    /**
+     *
+     *
+     * @memberof Home
+     */
     setTravel(){
         keys.travelType = !keys.travelInfo
 
@@ -166,14 +222,29 @@ export default class Home extends Component {
 
  
 
+    /**
+     *Ciclo de vida para antes de que se monte el componente
+     *
+     * @memberof Home
+     */
     async componentWillMount() {
+        // Limpia de intervals de los cronometros de tiempo de viaje, y el tiempo de espera de usario
+        clearInterval(keys.intervalTimeTravel)
+        clearInterval(keys.intervalEsperaUsuario)
 
+        // Limpia el array de chat
         keys.Chat=[]
 
+        // Remueve el socket de recorrido_id_conductor
+        keys.socket.removeAllListeners("recorrido_id_conductor");
+
+        keys.socket.removeAllListeners("LlegoMensaje");
+
+        // Toma el valor mandado por la navegación y lo asigna a Flag
         Flag = this.props.navigation.getParam('Flag', false);
 
-        console.log(Flag);
-
+        // En caso de que sea true, es decir que anteriormente hubo un viaje, transmite coordenadas del chófer,
+        // Y se agrega como activo
         if(Flag!=false){
 
             if (keys.id_chofer != null) {
@@ -209,7 +280,8 @@ export default class Home extends Component {
             }
         }
 
-
+        // Si la bandera es cancelar servicio, se canceló anteriormente un viaje, muestra un modal con el mensaje
+        // "Viaje cancelado por usuarr"
         if (Flag == "CancelarServicio") {
 
      
@@ -221,11 +293,13 @@ export default class Home extends Component {
             })
 
         }else{
+            // Condición en caso de detectar finalización del viaje 
             if (Flag =="finalizarViaje"){
                 this.setState({
                     stateConductor: keys.stateConductor
                 })
             }else{
+                // Condición para cancelar el servicio del chófer
                 if (Flag =="CancelarServicioChofer"){
                    
                     this.setState({
@@ -234,6 +308,7 @@ export default class Home extends Component {
                         stateConductor: keys.stateConductor
                     })
                 }else{
+                    // Condición en caso de cancelación automaticamente
                     if(Flag=="CancelarServicioAutomatico"){
                         
                         this.setState({
@@ -247,7 +322,7 @@ export default class Home extends Component {
         }
 
 
-
+        // Bloque para los permisos de acceder al gps del dispositivo
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
             if (status !== 'granted') {
             this.setState({
@@ -257,7 +332,7 @@ export default class Home extends Component {
 
             let location = await Location.getCurrentPositionAsync({});
 
-        
+            // Asignación de coordenadas al estado myPosition
             this.setState({ 
                 myPosition:{
                     latitude: location.coords.latitude,
@@ -271,6 +346,11 @@ export default class Home extends Component {
     }
 
 
+    /**
+     *Render de los tabs de Inicio 
+     *
+     * @memberof Home
+     */
     tabs = [
         {
             key: 'Inicio',
@@ -298,9 +378,15 @@ export default class Home extends Component {
     ]
 
     renderIcon = icon => ({ isActive }) => (
+
         <Icon size={24} color="#ff8834" name={icon} />
     )
 
+    /**
+     *
+     * Configuración de los tabs del menú 
+     * @param {*} { tab, isActive }
+     */
     renderTab = ({ tab, isActive }) => (
         <FullTab
             isActive={isActive}
@@ -312,47 +398,51 @@ export default class Home extends Component {
 
   
     
+    /**
+     * Barra de navegación
+     *
+     * @static
+     * @memberof Home
+     */
     static navigationOptions = {
         title: "Inicio"
     };
 
-    // Iniciar funciones de chófer, envio de coordenadas del chofer al ws
+    /**
+     * Función para conectar chófer 
+     *
+     * @memberof Home
+     */
+    // Iniciar funciones de chófer, envio de coordenadas del chofer al ws o desconexión del chófer
     conectChofer (){
 
-   
+        // Cambiar la vairiable global del estado del chofer 
         keys.stateConductor=!keys.stateConductor
-
+        // Asignación al estado del chófer
         this.setState({
             stateConductor: keys.stateConductor
         })
         
-        console.log(keys.stateConductor)
-
-        console.log(keys.id_chofer)
-
+        // Validación de estado del conductor
         if(keys.stateConductor==true){
 
             if(keys.id_chofer!=null){
-
+                // Función para generar las coordenadas del usuario
                 this.findCurrentLocationAsync();
 
                 if (this.state.location != null) {
 
-
                     this.findCurrentLocationAsync();
+                    // Socket para emitir las coordenadas al ws
                     keys.socket.emit('coordenadas', {
                         coordenadas: this.state.location.coords, id_chofer: keys.id_chofer,
                         datos_chofer: keys.datos_chofer, datos_vehiculo: keys.datos_vehiculo
                     });
 
-
-
                 }
-    
+                // Interval para emitir coordenadas cada 10 segundos al ws, se duplica del mismo código de arriba 
                 let timerCoordenadas = setInterval(() => {
 
-                 
-                    
                     this.findCurrentLocationAsync();
                     
                     if(this.state.location!=null){
@@ -373,7 +463,7 @@ export default class Home extends Component {
 
             }else{
 
-
+                // Modal en caso de que el usuario no sea el correcto, o no haya login 
                 this.setState({
                     showModal: true,
                     Description: "Ingrese un id para poder acceder a buscar pasajeros",
@@ -382,14 +472,21 @@ export default class Home extends Component {
             }
 
         }else{
+            // Saca al conductor de la lista de conductores en linea
+            keys.socket.emit("popChofer", { id_chofer_socket: keys.id_chofer_socket, });
+            // Se deja de transmitir 
             clearInterval(keys.timerCoordenadas);
-
-            // console.log("timerCoordenadasHome", keys.timerCoordenadas)
-            keys.socket.emit('Exit', 'exit0');
+      
         }
     }
 
+    /*
+    *Función para generar las coordenadas del dispositivo móvil
+    * 
+    *@memberof Home
+    */
     findCurrentLocationAsync = async () => {
+        // Variable para solicitar permisos de gps del dispositivo
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
 
         if (status !== 'granted') {
@@ -402,16 +499,18 @@ export default class Home extends Component {
         this.setState({ location });
     };
 
- 
 
- 
-   
-    
 
+    /**
+     *Render principal del componente 
+     *
+     * @returns
+     * @memberof Home
+     */
     render() {
         return (
             <View style={{flex:1}}>
-
+                {/* Modal Genérico para monstrar mensajes de la app  */}
                 <View>
 
                     <Modal
@@ -455,11 +554,12 @@ export default class Home extends Component {
                     </Modal>
 
                 </View>
-
+                
+                {/*MAPA*/}
                 <MapView
 
                     style={{ top:"-20%", height:"120%"}}
-
+                        // Región del mapa que se muestra, se to posición actual 
                         region={
                             this.state.myPosition!=null?
                             {
@@ -488,7 +588,7 @@ export default class Home extends Component {
 
 
                 </MapView>
-                
+                {/* Barra superior: Switch de conexión o desconexión, botón de ayuda y configuración */}
                 <View style={{
                     flexDirection: "row",
                     position: "absolute", //use absolute position to show button on top of the map
@@ -536,13 +636,13 @@ export default class Home extends Component {
                     </Image>
 
                 </View>
-
+                {/* Banner promocional */}
                 <View style={{ flexDirection: "row", position: "absolute", left: "6%", top:"74%"}}>
                    
                    <Text style={{alignSelf:"center", paddingTop:5, paddingBottom:5}}>Banner promocional de referidos</Text>
 
                </View>
-
+                {/* Vista para acceder a notificaciones, esa funcionalidad es de otro módulo */}
                 <View style={{ flexDirection: "row", position:"absolute", left: "6%", top:"82%"}}>
 
                     <View style={{flex:1}}>
@@ -617,7 +717,7 @@ export default class Home extends Component {
         );
     }
 }
-
+// Estilos de Home.js App Chófer
 const styles = StyleSheet.create({
     container:{
         backgroundColor: "#f0f4f7",

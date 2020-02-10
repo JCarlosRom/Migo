@@ -14,7 +14,8 @@ export default keys={
         nombreUsuario: 'Juan Hernandez',
         CURP: 'GUGL970208MCMTRR05',
         numeroTelefono: "3121942513",
-        correoElectronico: "15460810@itcolima.edu.mx"
+        correoElectronico: "15460810@itcolima.edu.mx",
+        imgUsuario: "http://35.203.57.92/JimmyPerfiles/carlos.jpg"
 
     },
     categoriaVehiculo:1,
@@ -27,6 +28,7 @@ export default keys={
         Matricula: null,
         tipoVehiculo: null,
         categoriaVehiculo: null,
+        imgVehiculo: null
 
     },
     // Datos del chófer
@@ -35,7 +37,8 @@ export default keys={
         nombreChofer: null,
         Estrellas: null,
         Reconocimientos: null,
-        Telefono: null 
+        Telefono: null,
+        imgChofer: null
 
     },
     // Información de viajes 
@@ -76,6 +79,6 @@ export default keys={
     Chat: [],
     HoraServicio:null,
     // urlSocket: 'http://192.168.0.13:3001', 
-    urlSocket: 'http://35.203.42.33:3001/',
+    urlSocket: 'http://35.203.57.92:3001/',
 
 }

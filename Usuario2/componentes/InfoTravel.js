@@ -1,3 +1,4 @@
+// Importación de librerías
 import React, { Component } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, Image } from "react-native";
 import { StackActions, NavigationActions } from 'react-navigation';
@@ -6,9 +7,15 @@ import keys from "./global";
 import Modal from "react-native-modal";
 import call from 'react-native-phone-call'
 
-
-
+// Clase principal de InfoTravel
 export default class InfoTravel extends Component {
+
+    /**
+     *Creates an instance of InfoTravel.
+     * Constructor de la clase InfoTravel
+     * @param {*} props
+     * @memberof InfoTravel
+     */
     constructor(props) {
         super(props);
         this.state = {
@@ -26,11 +33,12 @@ export default class InfoTravel extends Component {
 
     }
 
-    //  origin = { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude };
-    //  destination = { latitude: this.state.Destino.latitude, longitude: this.state.Destino.longitude };
-    //  GOOGLE_MAPS_APIKEY = '…';
 
-
+    /**
+     * Función para llamar al chofer
+     *
+     * @memberof InfoTravel
+     */
     callPhoneFunction() {
         const args = {
             number: keys.datos_chofer.Telefono, // String value with the number to call
@@ -41,13 +49,20 @@ export default class InfoTravel extends Component {
     }
 
 
+
+    /**
+     * Ciclo de vida para antes de que se monte el componente
+     *
+     * @memberof InfoTravel
+     */
     async componentWillMount() {
 
-   
+        // Variables de navigation
         Type = this.props.navigation.getParam('typeTravel', 'No Address');
         timeArrival = this.props.navigation.getParam('timeArrival',null)
         Llegada = this.props.navigation.getParam('Arrival', null)
-        console.log(Type)
+        
+        // Tipo travel integrado
         if (Type =="Travel_Integrado"){
             
             var d = new Date(); // get current date
@@ -63,6 +78,7 @@ export default class InfoTravel extends Component {
 
             
         }else{
+            // Tipo de viaje Viaje sin destino
             if (Type =="Travel_SinDestino"){
                 console.log(keys.travelInfo.Parada1)
                 var d = new Date(); // get current date
@@ -75,6 +91,7 @@ export default class InfoTravel extends Component {
                     Arrival: Llegada
                 })
             }else{
+                // Tipo de viaje, Viaje multiples paradas 
                 if (Type =="TravelMP"){
                     console.log(keys.travelInfo.Parada1)
                     var d = new Date(); // get current date
@@ -86,6 +103,7 @@ export default class InfoTravel extends Component {
                         Arrival: Llegada
                     })
                 }else{
+                    // Tipo de viaje, Viaje multiples 2
                     if (keys.type == "Multiple 2 paradas") { 
                     
                         var d = new Date(); // get current date
@@ -102,16 +120,21 @@ export default class InfoTravel extends Component {
         }
     }
 
-
-
-
-
-
-
+    /**
+     * Barra de navegación de InfoTravel
+     *
+     * @static
+     * @memberof InfoTravel
+     */
     static navigationOptions = {
         title: "Información"
     };
 
+    /**
+     * Función para cambiar el tipo de pago
+     *
+     * @memberof InfoTravel
+     */
     changePay(){
 
         if(keys.typePay==1){
@@ -127,30 +150,36 @@ export default class InfoTravel extends Component {
         })
     }
 
+    /**
+     * Función para el chat
+     *
+     * @memberof InfoTravel
+     */
     Chat() {
 
         keys.socket.removeAllListeners("chat_usuario");
         this.props.navigation.navigate("Chat")
     }
 
+    /**
+     * Función para cancelar el servicio
+     *
+     * @memberof InfoTravel
+     */
     cancelarServicio() {
-
+        // Generar la hora actual
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
         horaActual = d.toLocaleTimeString()
-
-        console.log("Hora Actual", horaActual);
-        console.log("Hora Servicio", keys.HoraServicio);
-
+        // Verificar si la hora actual es menor a la hora limite
         if (horaActual < keys.HoraServicio) {
-
+            // Se vacia el array de chat
             keys.Chat = [];
-
+            // Transacción de cancelación 
             keys.socket.emit("cancelaUsuario", { id: keys.id_servicio })
-        
+            // Se envia el mensaje de cancelación al usuario
             keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
-
-
+            // Se navega al componente de Inicio 
             const resetAction = StackActions.reset({
                 index: 0,
                 actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
@@ -159,6 +188,7 @@ export default class InfoTravel extends Component {
 
             this.props.navigation.dispatch(resetAction);
         } else {
+            // Mensaje de cancelación
             this.setState({
                 showModalCancel:false,
                 showModal: true,
@@ -168,6 +198,11 @@ export default class InfoTravel extends Component {
 
     }
 
+    /**
+     * Función para cambiar los destinos
+     *
+     * @memberof InfoTravel
+     */
     goChangeDestino(){
 
         var d = new Date(); // get current date
@@ -176,7 +211,7 @@ export default class InfoTravel extends Component {
 
         console.log("Hora Actual", horaActual);
         console.log("Hora Servicio", keys.HoraServicio);
-
+        // Validación de 3 minutos
         if (horaActual < keys.HoraServicio) {
 
             this.props.navigation.navigate("changeDestinoView", { type: keys.type })
@@ -196,6 +231,12 @@ export default class InfoTravel extends Component {
 
 
 
+    /**
+     * Render principal del componente 
+     *
+     * @returns
+     * @memberof InfoTravel
+     */
     render() {
         return (
             <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -302,6 +343,7 @@ export default class InfoTravel extends Component {
                     </Modal>
 
                 </View>
+                {/* Información de llegada de conductor */}
                 <View style={styles.area}>
                     <View style={{flex:3}}>
                         {this.state.Arrival?
@@ -328,7 +370,7 @@ export default class InfoTravel extends Component {
                 >
                     <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, alignSelf: "center" }}>Verifica la matricula y los detalles del auto</Text>
                 </View>
-
+                {/* Información del chófer */}
                 <View style={styles.area}>
                     <Image
                         style={{ width: 50, height: 50 }}
@@ -345,11 +387,11 @@ export default class InfoTravel extends Component {
 
                     </View>
                 </View>
-
+                {/* Nombre y reconocimientos */}
                 <View style={{ alignSelf: "center", backgroundColor: "white" }}>
                     <Text >{keys.datos_chofer.nombreChofer}<Text>*{keys.datos_chofer.Estrellas}</Text> <Icon name="star"></Icon> <Text>* {keys.datos_chofer.Reconocimientos}</Text></Text>
                 </View>
-
+                {/* Telefono y cancelación */}
                 <View style={styles.area}>
                     <Icon name = "phone" onPress={()=>this.callPhoneFunction()} color="#ff8834" size={30} onPress={()=>this.callPhoneFunction()}></Icon>
                     <View style={{ paddingLeft: 10 }}></View>
@@ -367,7 +409,7 @@ export default class InfoTravel extends Component {
                         })}
                     ></Button>
                 </View>
-
+                {/* Cambio de destino */}
                 <View style={{
                     flexDirection: "row",
                     paddingBottom: 10,
@@ -389,7 +431,7 @@ export default class InfoTravel extends Component {
                     </View>
                 </View>
                 <View style={styles.line}></View>
-
+                {/* Cambio de tipo de pago */}
                 <View style={{
                     flexDirection: "row",
                     paddingBottom: 10,
@@ -416,7 +458,7 @@ export default class InfoTravel extends Component {
                 </View>
 
                 <View style={styles.line}></View>
-                
+                {/* Compartir el destino */}
                 <View style={{
                     flexDirection: "row",
                     paddingBottom: 10,
@@ -486,7 +528,7 @@ export default class InfoTravel extends Component {
     }
 }
 
-
+// Estilo de InfoTravel
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f0f4f7",

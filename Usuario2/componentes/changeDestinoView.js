@@ -1,19 +1,22 @@
+// Importaciones de librerías 
 import React, { Component } from "react";
 import { Text, View, StyleSheet, FlatList, TouchableHighlight } from "react-native";
-import { Divider, CheckBox, Button, Input } from "react-native-elements";
+import { Button, Input } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import axios from "axios";
 import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import { ScrollView } from "react-native-gesture-handler";
 import { StackActions, NavigationEvents, NavigationActions } from 'react-navigation';
 import keys from "./global";
-import * as Permissions from 'expo-permissions';
-import SocketIOClient from 'socket.io-client/dist/socket.io.js';
-import call from 'react-native-phone-call';
-
+// Clase principal del componente
 export default class changeDestinoView extends Component {
 
+    /**
+     *Creates an instance of changeDestinoView.
+     * Controlador de la clase ChangeViewDestino
+     * @param {*} props
+     * @memberof changeDestinoView
+     */
     constructor(props) {
 
         super(props);
@@ -73,18 +76,34 @@ export default class changeDestinoView extends Component {
 
     }
 
+    /**
+     * Barra de navegación superior
+     *
+     * @static
+     * @memberof changeDestinoView
+     */
     static navigationOptions = {
         title: "Cambiar destino"
     };
 
-    // Function to show the buttons of position of arrivals
+    
+    /**
+     * Función para mostrar la posición de los destinos 
+     *
+     * @memberof changeDestinoView
+     */
     showPositionArrival() {
         this.state = {
             showPositionArrival: false
         };
     }
 
-    // Function to hide the field of stops
+    
+    /**
+     *  Función para ocultar los campos de parada
+     *
+     * @memberof changeDestinoView
+     */
     hideArrival() {
 
         if (showNewArrival == true) {
@@ -115,10 +134,13 @@ export default class changeDestinoView extends Component {
 
     }
 
-    // Hide the delete buttons
-    hideDeleteButtons() {
-
     
+    /**
+     * Ocultar los botones de eliminar
+     *
+     * @memberof changeDestinoView
+     */
+    hideDeleteButtons() {
 
         this.setState({
             showButtonsDelete: !this.state.showButtonPlaces,
@@ -128,7 +150,12 @@ export default class changeDestinoView extends Component {
     }
 
 
-    // Asignar el orden de las paradas a los inputs
+    /**
+     *  Asignar el orden de las paradas a los inputs
+     *
+     * @param {*} place
+     * @memberof changeDestinoView
+     */
     setplaceArrival(place) {
 
 
@@ -206,10 +233,15 @@ export default class changeDestinoView extends Component {
 
     }
 
+    /**
+     * Ciclo de vida para antes de que se monte el componente
+     *
+     * @memberof changeDestinoView
+     */
     componentWillMount(){
 
         Flag = this.props.navigation.getParam("type", false);
-        console.log(Flag)
+        // Asignación de las direcciones en los inputs correspondientes, según el tipo de viaje
         if (Flag =="Unico"){
             this.setState({
 
@@ -249,6 +281,11 @@ export default class changeDestinoView extends Component {
     }
 
 
+    /**
+     * Auto Complete de direcciones para el primer input
+     *
+     * @param {*} destination
+     */
     autocompleteGoogle1 = async destination => {
         this.setState({
             myPosition: {
@@ -290,6 +327,11 @@ export default class changeDestinoView extends Component {
         }
     };
 
+    /**
+     * AutoComplete para direcciones en el segundo input
+     *
+     * @param {*} destination2
+     */
     autocompleteGoogle2 = async destination2 => {
         this.setState({
             destination2: destination2
@@ -324,6 +366,11 @@ export default class changeDestinoView extends Component {
         }
     };
 
+    /**
+     * AutoComplete de direcciones para el tercer input 
+     *
+     * @param {*} destination3
+     */
     autocompleteGoogle3 = async destination3 => {
         this.setState({
             destination3: destination3
@@ -360,6 +407,11 @@ export default class changeDestinoView extends Component {
     };
 
 
+    /**
+     * AutoComplete de direcciones para el cuarto input
+     *
+     * @param {*} destination4
+     */
     autocompleteGoogle4 = async destination4 => {
         this.setState({ destination4: destination4 });
 
@@ -395,6 +447,12 @@ export default class changeDestinoView extends Component {
 
 
 
+    /**
+     * Generador vista de elementos de predicciones de direcciones
+     *
+     * @param {*} { item }
+     * @returns
+     */
     Item = ({ item }) => {
 
 
@@ -422,6 +480,11 @@ export default class changeDestinoView extends Component {
     };
 
 
+    /**
+     * Función para asignar el número de parada de cada dirección
+     *
+     * @param {*} description
+     */
     setDirectionInput = (description) => {
         if (this.state.flagDestino == "1") {
             this.setState({
@@ -468,9 +531,12 @@ export default class changeDestinoView extends Component {
 
 
 
+    /**
+     * Función para asignar el focus en input nuevo generado
+     *
+     * @param {*} e
+     */
     showArrival = (e) => {
-
-
 
         if (showNewArrival == false) {
 
@@ -503,6 +569,10 @@ export default class changeDestinoView extends Component {
 
     }
 
+    /**
+     * Función para limpiar el input principal de la vista 
+     *
+     */
     clear = () => {
         this.setState({
             myPosition: {
@@ -512,27 +582,21 @@ export default class changeDestinoView extends Component {
     };
 
 
+    /**
+     * Validación de destinos correctos
+     *
+     * @param {*} Destino
+     * @memberof changeDestinoView
+     */
     async DestinosFavoritosTravel(Destino) {
-
-
-
 
         if (this.state.myPosition.addressInput != "") {
 
-
-
             try {
-
-                // console.log(this.state.myPosition.addressInput)
-                // console.log(Destino);
 
                 let puntoPartida = await Location.geocodeAsync(this.state.myPosition.addressInput);
 
                 let DestinoCords = await Location.geocodeAsync(Destino);
-
-                // console.log(puntoPartida);
-
-                // console.log(DestinoCords);
 
                 if (puntoPartida.length == 0) {
                     this.setState({
@@ -577,11 +641,15 @@ export default class changeDestinoView extends Component {
 
 
 
-    // Función para iniciar el viaje 
+    
+    /**
+     *  Función para iniciar el viaje
+     *
+     */
     Travel = () => {
 
         
-
+        // Validación del viaje de SinDestino
         if (this.state.myPosition.addressInput != "" && this.state.destination4 == "" && this.state.showNewArrival == false && this.state.showNewArrival2 == false) {
 
             keys.travelInfo.puntoPartida = this.state.myPosition;
@@ -603,7 +671,7 @@ export default class changeDestinoView extends Component {
 
                 } else {
 
-
+                    // Validación de tipo de viaje Unico 
                     keys.travelInfo.puntoPartida = this.state.myPosition;
                     keys.travelInfo.Parada1 = this.state.destination4;
 
@@ -681,7 +749,7 @@ export default class changeDestinoView extends Component {
                                                 })
 
                                             } else {
-
+                                                // Validación de tipo de viaje Multiple
                                                 keys.travelInfo.puntoPartida = this.state.myPosition;
                                                 keys.travelInfo.Parada1 = this.state.destination2;
                                                 keys.travelInfo.Parada2 = this.state.destination3;
@@ -739,7 +807,7 @@ export default class changeDestinoView extends Component {
 
                                     if (this.state.destination4 != "") {
 
-
+                                        // Validación de viaje: Multiples Paradas 2
                                         keys.travelInfo.puntoPartida = this.state.myPosition;
                                         keys.travelInfo.Parada1 = this.state.destination2;
                                         keys.travelInfo.Parada3 = this.state.destination4;
@@ -789,6 +857,12 @@ export default class changeDestinoView extends Component {
 
     }
 
+    /**
+     * Render principal del componente
+     *
+     * @returns
+     * @memberof changeDestinoView
+     */
     render(){
         return(
       
@@ -796,7 +870,7 @@ export default class changeDestinoView extends Component {
             <ScrollView style={styles.container}>
                 <View>
 
-
+                    {/* Modal genérico para mensajes */}
                     <Modal
                         isVisible={this.state.showModal}
 
@@ -838,7 +912,7 @@ export default class changeDestinoView extends Component {
                     </Modal>
 
                 </View>
-
+                {/* Botón para reestablecer inputs */}
                 <View
                     style={{
                         flexDirection: "row",
@@ -865,6 +939,7 @@ export default class changeDestinoView extends Component {
                 </View>
             
                 {/* View lugares */}
+                {/* Inputs de direcciones y lista de predicciones por input */}
                 <View style={{
                     backgroundColor: "#fff", paddingLeft: 20,
                     paddingBottom: 10
@@ -908,6 +983,7 @@ export default class changeDestinoView extends Component {
 
 
                     </View>
+                    {/* Lista de predicciones de destinos */}
                     {this.state.showListdestination ? (
                         <FlatList
                             style={{
@@ -991,7 +1067,7 @@ export default class changeDestinoView extends Component {
 
                             </View>
 
-
+                            {/* Botón para ocultar input */}
                             {!this.state.showButtonsDelete ?
 
                                 <View style={{ width: 25 }}>
@@ -1010,6 +1086,7 @@ export default class changeDestinoView extends Component {
 
 
                         </View>
+                        {/* Lista de predicciones de dirección */}
                         {this.state.showListdestination2 ? (
                             <FlatList
                                 style={{
@@ -1129,6 +1206,7 @@ export default class changeDestinoView extends Component {
                     </View> :
                     null
                 }
+                {/* Parada final  */}
                 <View style={{
                     backgroundColor: "#fff", paddingLeft: 20
                 }}>
@@ -1187,7 +1265,7 @@ export default class changeDestinoView extends Component {
                         </View>
 
 
-
+                        {/* Botón para ocultar el input */}
                         {!this.state.showButtonsDelete ?
 
                             <View style={{ width: 25 }}>
@@ -1220,7 +1298,7 @@ export default class changeDestinoView extends Component {
 
 
                 </View>
-
+                {/* Botón de confirmación */}
                 <View style={{ backgroundColor: "white", position: "relative", marginTop: 80 }}>
 
                     <Button title="Confirmar"
@@ -1238,7 +1316,7 @@ export default class changeDestinoView extends Component {
 
 
 }
-
+// Estilos de changeDestinoView
 const styles = StyleSheet.create({
     container: {
         paddingTop: 20,

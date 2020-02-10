@@ -1,9 +1,6 @@
 import React from "react";
-import { View, Text, Button } from "react-native";
 import {
   createAppContainer,
-  StackActions,
-  NavigationActions
 } from "react-navigation"; // Version can be specified in package.json
 import { createStackNavigator } from "react-navigation-stack";
 
@@ -57,7 +54,10 @@ const MainStack = createStackNavigator({
     screen: TravelMP2Change
   },
   Travel_Integrado: {
-    screen: Travel_Integrado
+    screen: Travel_Integrado,
+    navigationOptions: {
+      gesturesEnabled: false,
+    },
   },
   Travel_IntegradoChange: {
     screen: Travel_IntegradoChange

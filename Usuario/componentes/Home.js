@@ -91,20 +91,32 @@ export default class Home extends Component {
      * @memberof Home
      */
     async changetoConfigureTravel(){
-        // Se genera una constante con los datos de la dirección de punto de partida
-        const AddressCoordinates = await Location.geocodeAsync(this.state.myPosition.addressInput);
-        // Se navega hacia el componente travel, con los parametros de la dirección (String) y Coordenadas
-        const resetAction = StackActions.reset({
-            index: 0,
-            actions: [NavigationActions.navigate({ routeName: 'Travel', params: { 
-                Address: this.state.myPosition.addressInput,
-                Latitude: AddressCoordinates[0]["latitude"],
-                Longitude: AddressCoordinates[0]["longitude"]
-            } })],
-            key:undefined
-        });
 
-        this.props.navigation.dispatch(resetAction);
+        console.log(this.state.myPosition.addressInput);
+        
+
+        if(this.state.myPosition.addressInput!="" && this.state.myPosition.addressInput!=null){
+
+            // Se genera una constante con los datos de la dirección de punto de partida
+            const AddressCoordinates = await Location.geocodeAsync(this.state.myPosition.addressInput);
+            // Se navega hacia el componente travel, con los parametros de la dirección (String) y Coordenadas
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Travel', params: { 
+                    Address: this.state.myPosition.addressInput,
+                    Latitude: AddressCoordinates[0]["latitude"],
+                    Longitude: AddressCoordinates[0]["longitude"]
+                } })],
+                key:undefined
+            });
+    
+            this.props.navigation.dispatch(resetAction);
+        }else{
+            this.setState({
+                showModal: true,
+                Descripcion: "Punto de encuentro no válido"
+            })
+        }
     }
 
     
@@ -332,7 +344,7 @@ export default class Home extends Component {
         // Método para consultar destinos
         try {
             //console.log(this.props.switchValue);
-            const res = await axios.post('http://35.203.42.33:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
+            const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz204/MostrarDestinosFavoritos', {
                 id_usuario: this.state.id_usuario
             });
 
@@ -673,12 +685,12 @@ export default class Home extends Component {
         if(this.state.myPosition.addressInput!=""){
 
             try {
-                
+                // Creación de las coordenadas de punto de partida y destino
                 let puntoPartida = await Location.geocodeAsync(this.state.myPosition.addressInput);  
                 
                 let DestinoCords = await Location.geocodeAsync(Destino);
 
-                
+                // Mensaje en caso de dirección incorrecta 
                 if(puntoPartida.length==0 ){
                     this.setState({
                         showModal:true,
