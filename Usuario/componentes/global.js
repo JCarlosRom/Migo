@@ -21,6 +21,7 @@ export default keys={
     categoriaVehiculo:1,
     tipoVehiculo:null, 
     tipoServicio:null,
+    
     // Chofer
     datos_vehiculo: {
         id_unidad: null,

@@ -513,7 +513,7 @@ export default class Travel_Integrado extends Component {
 
                 this.setState({ intervaltimerAceptViaje });
 
-                console.log("timerAceptViajeTI",this.state.timerAceptViaje);
+              
 
                 if (this.state.timerAceptViaje == 0) {
 
@@ -780,12 +780,14 @@ export default class Travel_Integrado extends Component {
                 })
             }
             if(this.state.minutosUsuario ==0 && this.state.segundosUsuario ==0){
+
+                keys.socket.emit("EsperaUsuarioTerminoChofer",{id_socket_usuario: keys.id_usuario_socket});
                 clearInterval(intervalEsperaUsuario)
                 this.setState({
                     finTimerUsuario:true
                 })
             }
-            console.log("timeUsuario",this.state.timeUsuario)
+            // console.log("timeUsuario",this.state.timeUsuario)
         }, 1000)
 
         keys.intervalEsperaUsuario = intervalEsperaUsuario;
@@ -821,6 +823,11 @@ export default class Travel_Integrado extends Component {
     async iniciarViaje(){
         // Limpiar el intervalo de la espera de usuario 
         clearInterval(keys.intervalEsperaUsuario)
+
+        // Socket para notificar al usuario el inicio del viaje 
+        keys.socket.emit("aceptViaje", {
+            id_socket_usuario: keys.id_usuario_socket
+        })
 
         this.setState({
             HomeTravel: false,

@@ -54,7 +54,7 @@ export default keys={
     GOOGLE_MAPS_APIKEY : 'AIzaSyCr7ftfdqWm1eSgHKPqQe30D6_vzqhv_IY',
     Tarifa: 0,
     Peaje:0,
-    HoraServicio:null,
+    HoraServicio:null, 
     numeroSoporte:"018001234567",
     intervaltimerAceptViaje: null,
     intervalBroadcastCoordinates:null,

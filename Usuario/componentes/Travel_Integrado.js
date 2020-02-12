@@ -1,5 +1,6 @@
 // Importación de librerías 
 import React, { Component } from "react";
+import { getDistance } from "geolib";
 import { View, Text, StyleSheet, Image, BackHandler  } from "react-native";
 import Modal from "react-native-modal";
 import { Button } from "react-native-elements";
@@ -40,6 +41,25 @@ export default class Travel_Integrado extends Component {
             
             
         })
+
+        keys.socket.on("tarifaCancelacionInicioViaje", num =>{
+
+            keys.Tarifa.tarifa_cancelacion= num.tarifaCancelacion;
+
+            console.log(keys.Tarifa.tarifa_cancelacion);
+            
+
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+            
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
+        })
+
         // Socket para recibir el id nuevo del chofer
         keys.socket.on("sendIdChoferUsuario",(num)=>{
             keys.id_chofer_socket = num.id_socket_chofer;
@@ -154,7 +174,15 @@ export default class Travel_Integrado extends Component {
             timer_coordenadasUsuario: null,
             Change:false,
             Vehicles: null,
-            showVehicles:true
+            showVehicles:true,
+            initViajeUsuario:false,
+            tiempoExcedidoUsuario:false,
+            distanciaViajeCancelacion:0,
+            duracionViajeCancelacion: 0, 
+            // Timers espera usuario 
+            minutosUsuario: 0,
+            segundosUsuario: 0,
+            timeUsuario: null
 
         };
 
@@ -330,8 +358,55 @@ export default class Travel_Integrado extends Component {
 
         });
 
+        keys.socket.on('aceptViajeUsuario', num =>{
+            this.setState({
+                initViajeUsuario: true 
+            })
+
+            console.log("Inicio viaje ");
+            
+        })
+
+        keys.socket.on('EsperaUsuarioTerminoUsuario', num =>{
+            this.setState({
+                tiempoExcedidoUsuario:true
+            })
+
+            // Interval para el cronometro de 2 minutos de manera regresiva 
+            let intervalEsperaUsuario = setInterval(() => {
+                if (this.state.segundosUsuario == 59) {
+                    this.setState({
+                        segundosUsuario: 0,
+                        minutosUsuario: this.state.minutosUsuario + 1
+
+                    })
+                } else {
+                    this.setState({
+                        segundosUsuario: this.state.segundosUsuario + 1
+                    })
+                }
+
+                if (this.state.segundosUsuario < 10) {
+
+                    this.setState({
+                        timeUsuario: this.state.minutosUsuario + ":0" + this.state.segundosUsuario
+                    })
+                } else {
+                    this.setState({
+                        timeUsuario: this.state.minutosUsuario + ":" + this.state.segundosUsuario
+                    })
+                }
+              
+                console.log("timeUsuario", this.state.timeUsuario)
+            }, 1000)
+
+            keys.intervalEsperaUsuario = intervalEsperaUsuario;
+        })
+
         // Socket para terminar el viaje
         keys.socket.on('terminarViajeUsuario', num => {
+
+            clearInterval(keys.intervalEsperaUsuario)
 
             BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
@@ -347,13 +422,15 @@ export default class Travel_Integrado extends Component {
 
             this.props.navigation.dispatch(resetAction);
         });
+
         // Socket para cancelación por chofer
         keys.socket.on("cancelViajeUsuario", num =>{
-
+            
             BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
-
-         
+            
             keys.Chat = [];
+
+            clearInterval(keys.intervalEsperaUsuario)
 
             const resetAction = StackActions.reset({
                 index: 0,
@@ -990,8 +1067,12 @@ export default class Travel_Integrado extends Component {
      */
     cancelarServicio(){
 
-        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+        console.log(this.state.initViajeUsuario);
+        
 
+        BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+        clearInterval(keys.intervalEsperaUsuario)
+    
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
         horaActual = d.toLocaleTimeString()
@@ -1004,17 +1085,17 @@ export default class Travel_Integrado extends Component {
         this.setState({
             
             showModalCancel: false,
-        
-
             
         })
         // Emit para enviar al chofe que se canceló el viaje 
         keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
-
-        if(horaActual<keys.HoraServicio){
-            // Después de 3 minutos
+        // Antes de tres minutos, sin iniciar el viaje y sin exceder el tiempo de espera: Sin cobro de cancelación
+        if(horaActual<keys.HoraServicio && this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == false){
+            // Antes de 3 minutos
             // Emit para la cancelación el viaje 
-            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+            console.log("Antes de tres minutos, sin iniciar el viaje y sin excederse el tiempo de espera, Sin cobro de cancelación");
+
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
 
             const resetAction = StackActions.reset({
                 index: 0,
@@ -1025,16 +1106,73 @@ export default class Travel_Integrado extends Component {
             this.props.navigation.dispatch(resetAction);
             
         }else{
-            // Antes de 3 minutos
-            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
-            const resetAction = StackActions.reset({
-                index: 0,
-                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
-                key: undefined
-            });
-    
-            this.props.navigation.dispatch(resetAction);
+            // Después de 3 minutos, sin iniciar el viaje y sin exceder el tiempo: con cobro de cancelación 
+            if (horaActual > keys.HoraServicio && this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == false) {
+                console.log("Despues de tres minutos, sin iniciar el viaje y sin excederse el tiempo de espera: Con cobro de cancelación");
+                
+        
+                // Después de 3 minutos
+                keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+                const resetAction = StackActions.reset({
+                    index: 0,
+                    actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+                    key: undefined
+                });
 
+                this.props.navigation.dispatch(resetAction);
+            }
+
+
+        }
+        // Viaje iniciado, tiempo de espera excedido: false
+        
+        if(this.state.initViajeUsuario==true ){
+
+            
+
+            if (this.state.tiempoExcedidoUsuario == true){
+
+                console.log("Viaje iniciado y tiempo excedido de usuario: True");
+                
+
+                var distanciaCancelacion = getDistance(
+                    { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                    { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                );
+
+                this.setState({
+                    distanciaViajeCancelacion: distanciaCancelacion
+                })
+
+                console.log("DistanciaCancelacion", this.state.distanciaViajeCancelacion)
+
+                keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                    id_usuario_socket: keys.id_usuario_socket, distancia: this.state.distanciaViajeCancelacion, duracion: this.state.duracionViajeCancelacion, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                    , istiempoExcedido: true, tiempoExcedido: this.state.minutosUsuario
+                })
+            }else{
+                if(this.state.tiempoExcedidoUsuario == false){
+
+                    console.log("Viaje iniciado y tiempo excedido usuario: false ");
+                    
+                    keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                        id_usuario_socket: keys.id_usuario_socket, distancia: this.state.distanciaViajeCancelacion, duracion: this.state.duracionViajeCancelacion, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                        ,istiempoExcedido: false, tiempoExcedido: undefined
+                    })
+                }
+            }
+
+          
+        }else{
+            if (this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == true ){
+                
+                console.log("Viaje no iniciado y tiempo excedido usuari: true");
+                
+                keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                    id_usuario_socket: keys.id_usuario_socket, distancia: 0, duracion: 0, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                    , istiempoExcedido: true, tiempoExcedido: this.state.minutosUsuario
+                })
+            }
         }
 
     }
