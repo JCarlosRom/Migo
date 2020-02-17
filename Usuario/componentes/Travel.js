@@ -13,7 +13,7 @@ import keys from "./global";
 
 export default class Travel extends Component {
     constructor(props) {
-
+        // alert("12/02/2020")
 
         if (keys.socket == null) {
 
@@ -99,11 +99,7 @@ export default class Travel extends Component {
 
     async componentDidMount(){
 
-        const intervalId = BackgroundTimer.setInterval(() => {
-            // this will be executed every 200 ms
-            // even when app is the the background
-            console.log('tic');
-        }, 1000);
+      
 
         const myLocation = await Location.getCurrentPositionAsync({});
         latitude = myLocation.coords.latitude;

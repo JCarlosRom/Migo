@@ -92,6 +92,7 @@ export default class Inicio extends Component {
 
         // Elimina el socket 
         keys.socket.removeAllListeners("recorrido_id_usuario");
+    
         // Inicializa el chat
         keys.Chat = [];
 

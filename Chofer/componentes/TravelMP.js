@@ -311,7 +311,7 @@ export default class TravelMP extends Component {
 
                 this.setState({ intervaltimerAceptViaje });
 
-                console.log("timerAceptViajeMP",this.state.timerAceptViaje);
+                // console.log("timerAceptViajeMP",this.state.timerAceptViaje);
 
                 if (this.state.timerAceptViaje == 0) {
 
@@ -763,6 +763,7 @@ export default class TravelMP extends Component {
                 })
             }
             if (this.state.minutosUsuario == 0 && this.state.segundosUsuario == 0) {
+                keys.socket.emit("EsperaUsuarioTerminoChofer", { id_socket_usuario: keys.id_usuario_socket });
                 clearInterval(intervalEsperaUsuario)
                 this.setState({
                     finTimerUsuario: true
@@ -1054,6 +1055,11 @@ export default class TravelMP extends Component {
             Travel: true,
 
 
+        })
+
+        // Socket para notificar al usuario el inicio del viaje 
+        keys.socket.emit("aceptViaje", {
+            id_socket_usuario: keys.id_usuario_socket
         })
         // Intervalo para generar el cronometro del tiempo de viaje 
         let intervalTimeTravel = setInterval(() => {

@@ -397,7 +397,7 @@ export default class Travel_Integrado extends Component {
                     })
                 }
               
-                console.log("timeUsuario", this.state.timeUsuario)
+                // console.log("timeUsuario", this.state.timeUsuario)
             }, 1000)
 
             keys.intervalEsperaUsuario = intervalEsperaUsuario;
@@ -1152,6 +1152,18 @@ export default class Travel_Integrado extends Component {
                 })
             }else{
                 if(this.state.tiempoExcedidoUsuario == false){
+
+
+                    var distanciaCancelacion = getDistance(
+                        { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                        { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                    );
+
+                    this.setState({
+                        distanciaViajeCancelacion: distanciaCancelacion
+                    })
+
+                    console.log("DistanciaCancelacion", this.state.distanciaViajeCancelacion)
 
                     console.log("Viaje iniciado y tiempo excedido usuario: false ");
                     

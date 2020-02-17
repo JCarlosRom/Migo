@@ -798,8 +798,7 @@ export default class Travel_Integrado extends Component {
             id_socket_usuario: keys.id_usuario_socket
         });
 
-        
-        
+
     }
 
 

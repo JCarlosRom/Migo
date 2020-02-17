@@ -1,8 +1,9 @@
 import React, { Component } from "react";
+import { getDistance } from "geolib";
 import { View, Text, StyleSheet, Image, BackHandler } from "react-native";
 import { StackActions, NavigationActions } from 'react-navigation';
 import Modal from "react-native-modal";
-import { Button } from "react-native-elements";
+import { Button, ThemeConsumer } from "react-native-elements";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import MapView, {Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { ScrollView } from "react-native-gesture-handler";
@@ -126,7 +127,15 @@ export default class TravelMP extends Component {
         infoVehicleTipo:"",
         infoVehicleLlegada:"",
         Vehicles: null,
-        showVehicles:true
+        showVehicles:true,
+        initViajeUsuario: false,
+        tiempoExcedidoUsuario: false,
+        distanciaViajeCancelacion: 0,
+        duracionViajeCancelacion: 0,
+        // Timers espera usuario 
+        minutosUsuario: 0,
+        segundosUsuario: 0,
+        timeUsuario: null
     };
 
     constructor(props) {
@@ -144,6 +153,25 @@ export default class TravelMP extends Component {
 
 
         })
+
+        keys.socket.on("tarifaCancelacionInicioViaje", num => {
+
+            keys.Tarifa.tarifa_cancelacion = keys.Tarifa.tarifaBase+ num.tarifaCancelacion;
+
+            console.log(keys.Tarifa.tarifa_cancelacion);
+
+
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+
+            const resetAction = StackActions.reset({
+                index: 0,
+                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+                key: undefined
+            });
+
+            this.props.navigation.dispatch(resetAction);
+        })
+
         // Socket para recibir el id nuevo del chofer
         keys.socket.on("sendIdChoferUsuario", (num) => {
             keys.id_chofer_socket = num.id_socket_chofer;
@@ -245,7 +273,6 @@ export default class TravelMP extends Component {
 
             BackHandler.addEventListener("hardwareBackPress", this.handleBackButton)
 
-            
 
         });
         
@@ -293,6 +320,8 @@ export default class TravelMP extends Component {
 
         keys.socket.on('terminarViajeUsuario', (num) => {
 
+            clearInterval(keys.intervalEsperaUsuario)
+
             BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
             keys.Chat = []
@@ -309,6 +338,8 @@ export default class TravelMP extends Component {
         })
 
         keys.socket.on("cancelViajeUsuario", num => {
+
+            clearInterval(keys.intervalEsperaUsuario)
 
             BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
 
@@ -379,6 +410,51 @@ export default class TravelMP extends Component {
             })
             
         });
+
+        keys.socket.on('aceptViajeUsuario', num => {
+            this.setState({
+                initViajeUsuario: true
+            })
+
+            console.log("Inicio viaje ");
+
+        })
+
+        keys.socket.on('EsperaUsuarioTerminoUsuario', num => {
+            this.setState({
+                tiempoExcedidoUsuario: true
+            })
+
+            // Interval para el cronometro de 2 minutos de manera regresiva 
+            let intervalEsperaUsuario = setInterval(() => {
+                if (this.state.segundosUsuario == 59) {
+                    this.setState({
+                        segundosUsuario: 0,
+                        minutosUsuario: this.state.minutosUsuario + 1
+
+                    })
+                } else {
+                    this.setState({
+                        segundosUsuario: this.state.segundosUsuario + 1
+                    })
+                }
+
+                if (this.state.segundosUsuario < 10) {
+
+                    this.setState({
+                        timeUsuario: this.state.minutosUsuario + ":0" + this.state.segundosUsuario
+                    })
+                } else {
+                    this.setState({
+                        timeUsuario: this.state.minutosUsuario + ":" + this.state.segundosUsuario
+                    })
+                }
+
+                // console.log("timeUsuario", this.state.timeUsuario)
+            }, 1000)
+
+            keys.intervalEsperaUsuario = intervalEsperaUsuario;
+        })
 
 
         keys.socket.on('statusChofer', num => {
@@ -539,7 +615,7 @@ export default class TravelMP extends Component {
         if(this.state.routeParada1== true && this.state.routeParada2 ==true && this.state.routeParada3 ==true){
 
             try {
-                console.log(this.state.distance);
+                console.log("Distancia",this.state.distance);
                 console.log(this.state.duration);
                 //console.log(this.props.switchValue);
                 const res = await axios.post('http://35.203.57.92:3003/webservice/interfaz164/UsuarioCalculoPrecios', {
@@ -1064,7 +1140,11 @@ export default class TravelMP extends Component {
 
     cancelarServicio() {
 
+        console.log(this.state.initViajeUsuario);
+
+
         BackHandler.removeEventListener("hardwareBackPress", this.handleBackButton)
+        clearInterval(keys.intervalEsperaUsuario)
 
         var d = new Date(); // get current date
         d.setHours(d.getHours(), d.getMinutes(), 0, 0);
@@ -1079,15 +1159,16 @@ export default class TravelMP extends Component {
 
             showModalCancel: false,
 
-
-
         })
-
+        // Emit para enviar al chofe que se canceló el viaje 
         keys.socket.emit('cancelViajeUsuario', { id_chofer_socket: keys.id_chofer_socket });
+        // Antes de tres minutos, sin iniciar el viaje y sin exceder el tiempo de espera: Sin cobro de cancelación
+        if (horaActual < keys.HoraServicio && this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == false) {
+            // Antes de 3 minutos
+            // Emit para la cancelación el viaje 
+            console.log("Antes de tres minutos, sin iniciar el viaje y sin excederse el tiempo de espera, Sin cobro de cancelación");
 
-        if (horaActual < keys.HoraServicio) {
-
-            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
 
             const resetAction = StackActions.reset({
                 index: 0,
@@ -1098,19 +1179,202 @@ export default class TravelMP extends Component {
             this.props.navigation.dispatch(resetAction);
 
         } else {
+            // Después de 3 minutos, sin iniciar el viaje y sin exceder el tiempo: con cobro de cancelación 
+            if (horaActual > keys.HoraServicio && this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == false) {
+                console.log("Despues de tres minutos, sin iniciar el viaje y sin excederse el tiempo de espera: Con cobro de cancelación");
 
-            keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: false, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
-            const resetAction = StackActions.reset({
-                index: 0,
-                actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
-                key: undefined
-            });
 
-            this.props.navigation.dispatch(resetAction);
+                // Después de 3 minutos
+                keys.socket.emit("cancelaUsuario", { id: keys.id_servicio, isCobro: true, idUsuario: keys.datos_usuario.id_usuario, tarifa_cancelacion: keys.Tarifa.tarifa_cancelacion })
+                const resetAction = StackActions.reset({
+                    index: 0,
+                    actions: [NavigationActions.navigate({ routeName: 'Inicio', params: { Flag: "CancelarServicio" } })],
+                    key: undefined
+                });
 
+                this.props.navigation.dispatch(resetAction);
+            }
+
+
+        }
+        // Viaje iniciado, tiempo de espera excedido: false
+
+        if (this.state.initViajeUsuario == true) {
+
+
+            if (this.state.tiempoExcedidoUsuario == true) {
+
+                console.log("Viaje iniciado y tiempo excedido de usuario: True");
+
+                var totalDistancia = 0;
+
+                if (this.state.routeParada1 == true) {
+
+                    var distanciaCancelacion1 = getDistance(
+                        { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                        { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion1;
+                    console.log("route1: ", distanciaCancelacion1, ",", totalDistancia);
+
+                }
+
+                if (this.state.routeParada2 == true) {
+
+                    var distanciaCancelacion1 = getDistance(
+                        { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                        { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion1;
+                    console.log("route1: ", distanciaCancelacion1, ",", totalDistancia);
+
+                    var distanciaCancelacion2 = getDistance(
+                        { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] },
+                        { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion2;
+                    console.log("route2: ", distanciaCancelacion2, ",", totalDistancia);
+                }
+
+                if (this.state.routeParada3 == true) {
+
+                    var distanciaCancelacion1 = getDistance(
+                        { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                        { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion1;
+                    console.log("route1: ", distanciaCancelacion1, ",", totalDistancia);
+
+                    var distanciaCancelacion2 = getDistance(
+                        { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] },
+                        { latitude: this.state.Paradas[1]["latitude"], longitude: this.state.Paradas[1]["longitude"] }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion2;
+                    console.log("route2: ", distanciaCancelacion2, ",", totalDistancia);
+
+                    var distanciaCancelacion3 = getDistance(
+                        { latitude: this.state.Paradas[1]["latitude"], longitude: this.state.Paradas[1]["longitude"] },
+                        { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                    );
+
+                    totalDistancia = totalDistancia + distanciaCancelacion3;
+
+                    console.log("route3: ", distanciaCancelacion3, ",", totalDistancia);
+                }
+
+
+
+                totalDistancia = totalDistancia / 1000; 
+                console.log("DistanciaCancelacion", totalDistancia)
+
+
+                keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                    id_usuario_socket: keys.id_usuario_socket, distancia: totalDistancia, duracion: this.state.duracionViajeCancelacion, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                    , istiempoExcedido: true, tiempoExcedido: this.state.minutosUsuario
+                })
+
+                totalDistancia = 0;
+
+            } else {
+                if (this.state.tiempoExcedidoUsuario == false) {
+
+
+                    var totalDistancia = 0;
+
+                    if (this.state.routeParada1 == true) {
+
+                        var distanciaCancelacion1 = getDistance(
+                            { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                            { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion1;
+                        console.log("route1: ",distanciaCancelacion1, ",", totalDistancia);
+
+                    }
+
+                    if (this.state.routeParada2 == true) {
+
+                        var distanciaCancelacion1 = getDistance(
+                            { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                            { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion1;
+                        console.log("route1: ", distanciaCancelacion1, ",", totalDistancia);
+
+                        var distanciaCancelacion2 = getDistance(
+                            { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] },
+                            { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion2;
+                        console.log("route2: ",distanciaCancelacion2, ",", totalDistancia);
+                    }
+
+                    if (this.state.routeParada3 == true) {
+
+                        var distanciaCancelacion1 = getDistance(
+                            { latitude: this.state.myPosition.latitude, longitude: this.state.myPosition.longitude },
+                            { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion1;
+                        console.log("route1: ", distanciaCancelacion1, ",", totalDistancia);
+
+                        var distanciaCancelacion2 = getDistance(
+                            { latitude: this.state.Paradas[0]["latitude"], longitude: this.state.Paradas[0]["longitude"] },
+                            { latitude: this.state.Paradas[1]["latitude"], longitude: this.state.Paradas[1]["longitude"] }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion2;
+                        console.log("route2: ", distanciaCancelacion2, ",", totalDistancia);
+
+                        var distanciaCancelacion3 = getDistance(
+                            { latitude: this.state.Paradas[1]["latitude"], longitude: this.state.Paradas[1]["longitude"] },
+                            { latitude: this.state.positionChofer.latitude, longitude: this.state.positionChofer.longitude }
+                        );
+
+                        totalDistancia = totalDistancia + distanciaCancelacion3;
+
+                        console.log("route3: ",distanciaCancelacion3, ",", totalDistancia);
+                    }
+
+
+                    totalDistancia = totalDistancia/1000; 
+                    console.log("DistanciaCancelacion", totalDistancia)
+
+                    console.log("Viaje iniciado y tiempo excedido usuario: false ");
+
+                    keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                        id_usuario_socket: keys.id_usuario_socket, distancia: totalDistancia, duracion: this.state.duracionViajeCancelacion, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                        , istiempoExcedido: false, tiempoExcedido: undefined
+                    })
+
+                    totalDistancia = 0;
+                }
+            }
+
+
+        } else {
+            if (this.state.initViajeUsuario == false && this.state.tiempoExcedidoUsuario == true) {
+
+                console.log("Viaje no iniciado y tiempo excedido usuari: true");
+
+                keys.socket.emit("cancelarViajeUsuarioInicioViaje", {
+                    id_usuario_socket: keys.id_usuario_socket, distancia: 0, duracion: 0, tipo: (keys.tipoVehiculo == 1 && keys.tipoServicio == 1 ? 1 : (keys.tipoVehiculo == 2 && keys.tipoServicio == 1) ? 2 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 3 : (keys.tipoVehiculo == 1 && keys.tipoServicio == 2) ? 4 : 1)
+                    , istiempoExcedido: true, tiempoExcedido: this.state.minutosUsuario
+                })
+            }
         }
 
     }
+
 
     render() {
         return (

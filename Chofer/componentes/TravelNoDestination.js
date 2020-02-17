@@ -258,7 +258,7 @@ export default class TravelNoDestination extends Component {
     fleet_chofer_usuario = () => {
         // Envio de coordenadas de chofer hacia usuario emite al socket 'seguimiento_chofer' de usuario
         let intervalBroadcastCoordinates = setInterval(() => {
-            console.log("room_chofer_usuario TND")
+            // console.log("room_chofer_usuario TND")
             this.findCurrentLocationAsync();
             if (this.state.location != null && keys.id_usuario_socket != undefined) {
 
@@ -375,7 +375,7 @@ export default class TravelNoDestination extends Component {
 
             this.setState({ intervaltimerAceptViaje });
 
-            console.log("timerAceptViajeTND",this.state.timerAceptViaje);
+            // console.log("timerAceptViajeTND",this.state.timerAceptViaje);
 
             if (this.state.timerAceptViaje == 0) {
 
@@ -594,12 +594,13 @@ export default class TravelNoDestination extends Component {
                 })
             }
             if (this.state.minutosUsuario == 0 && this.state.segundosUsuario == 0) {
+                keys.socket.emit("EsperaUsuarioTerminoChofer", { id_socket_usuario: keys.id_usuario_socket });
                 clearInterval(intervalEsperaUsuario)
                 this.setState({
                     finTimerUsuario: true
                 })
             }
-            console.log("timeUsuario", this.state.timeUsuario)
+            // console.log("timeUsuario", this.state.timeUsuario)
         }, 1000)
 
         keys.intervalEsperaUsuario = intervalEsperaUsuario;
@@ -688,6 +689,11 @@ export default class TravelNoDestination extends Component {
         
              
             }
+
+            // Socket para notificar al usuario el inicio del viaje 
+            keys.socket.emit("aceptViaje", {
+                id_socket_usuario: keys.id_usuario_socket
+            })
     
         
 

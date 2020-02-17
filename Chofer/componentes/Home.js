@@ -42,7 +42,7 @@ export default class Home extends Component {
      * @memberof Home
      */
     constructor(props) {
-        // alert("Actualizada")
+        // alert("12/02/2020")
 
         super(props);
         // Verificación de si se hace una conexión por socket 
